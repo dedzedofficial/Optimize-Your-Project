@@ -4,6 +4,17 @@
 
 FISHHWB VR Optimizer speeds up recurring VR and VRChat project work: texture import overrides, particle settings, light audits and mesh diagnostics. It does not require the VRChat SDK or any third-party package.
 
+## What this helps with
+
+| Repetitive job | How v0.6.4 helps |
+| --- | --- |
+| Setting PC, Quest and iOS maximum sizes on many textures | Choose a preset or three sizes, then press **OPTIMIZE TEXTURES**. The tool compares importer settings and reimports only textures it changes. |
+| Checking every particle effect for costly modules | **SCAN FOR PROBLEMS** lists high counts, emission and enabled modules; **OPTIMIZE PARTICLES** applies the chosen preset to particle systems in loaded scenes with Unity Undo. |
+| Finding expensive lights in a busy scene | **OPTIMIZE LIGHTS (SCAN HIERARCHY)** lists likely costly lights in loaded scenes and offers an individually confirmed shadow change. |
+| Locating dense meshes without risking an avatar rig | **CHECK SCENE MESHES** reports mesh counts and importer settings for loaded Hierarchy objects; it never changes geometry. |
+
+This is an **Editor workflow tool**: it saves setup and inspection time. It does not measure device frame rate or guarantee a particular VRChat performance rank. Review the results in your target build.
+
 ## Requirements
 
 - Unity **2021.3 LTS or newer**. The package contains Editor code only and does not add runtime components to a build.
@@ -74,7 +85,7 @@ Texture source dimensions do not equal GPU memory usage. Particle overdraw depen
 ```text
 package.json
 Editor/FISHHWBVR/             Editor-only assembly, window, optimizers, scanners, settings
-Documentation/                Architecture notes
+Documentation/                Architecture notes and planned updates
 README.md                     Install, use, safety and troubleshooting
 CHANGELOG.md                  Release history
 LICENSE                       MIT
@@ -85,3 +96,7 @@ LICENSE                       MIT
 [Website](https://fishhwb.github.io/) · [Discord](https://discord.gg/wZGxxkk4Jg) · [Patreon](https://www.patreon.com/cw/DedZed)
 
 FISHHWB VR Optimizer is free and licensed under MIT. Contributions and bug reports are welcome through GitHub issues and pull requests. Please include your Unity version, target platform, reproduction steps and relevant Console errors.
+
+## Planned next update
+
+The [v0.6.5 plan](Documentation/Roadmap.md) covers **Texture Change Preview**, a focused **Avatar Check**, and **OPTIMIZE AVATAR PARTICLES**. These features are planned and are **not included in v0.6.4**.
