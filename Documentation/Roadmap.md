@@ -8,18 +8,20 @@ Turn repeated Unity Editor optimization chores into focused buttons: identify th
 
 The [VRChat avatar performance ranking reference](https://creators.vrchat.com/avatars/avatar-performance-ranking-system/) counts factors including material slots, meshes, particles and lights, but its rank is a static assessment rather than a measurement of runtime frame time. The [avatar optimization guidance](https://creators.vrchat.com/avatars/avatar-optimizing-tips/) highlights material slots, particle rendering and realtime lights as practical areas to examine. For Quest worlds, use the [Android optimization guidance](https://creators.vrchat.com/platforms/android/quest-content-optimization/) alongside measured profiling.
 
-## Planned releases
+## Release progression
 
-| Release | Core automation | Repeated work it removes | Safety boundary |
-| --- | --- | --- | --- |
-| **0.6.5 — Avatar starter** | Texture Change Preview; Avatar Check; OPTIMIZE AVATAR PARTICLES | Inspecting every texture setting and repeating particle changes on one avatar | Texture changes confirmed before import; particle changes use Undo; no rig or geometry edits |
-| **0.6.6 — Scope and rollback** | Selection and folder scope for texture batches; restore last importer batch; per-item status | Repeatedly narrowing a global action and manually restoring changed `.meta` settings | Persistent before-state journal and a preview of restoration; no source-image changes |
-| **0.6.7 — Scene lighting** | Batch review for shadow-casting realtime lights in a selected Hierarchy branch; opt-in batch shadow disable | Opening every light Inspector to turn off the same expensive setting | Preview names and old/new values; keep bake mode and light components intact; Undo |
-| **0.6.8 — Particle workflow** | Per-effect cost shortlist and selected-root batch action; saved custom particle preset | Hunting through large effect hierarchies and re-entering a chosen set of particle limits | Only supported fields change; advanced curves and intentional modules are reported or explicitly opted in |
-| **0.6.9 — Importer housekeeping** | Missing texture platform override fix; selected model importer Read/Write review | Repeating importer tab changes on many assets | Texture format stays untouched; Read/Write changes require an explicit per-model or batch preview because runtime mesh access may depend on it |
-| **1.0 — Reliable release** | Unity version validation, documentation, sample project, automated package checks and release process | Repeated installation troubleshooting and regression checking | No new destructive feature required for 1.0 |
+Use **0.6.5** for the agreed improvement to the current 0.6 line. Each subsequent **minor release** delivers a complete workflow, not one isolated checkbox. Use patch numbers after those milestones for fixes and polish; do not reserve a separate release for every small action.
 
-Each stage should be usable on its own. Release a stage only after testing in a representative Unity project, including an avatar with particles and a VR world scene.
+| Milestone | Theme and headline | Creator benefit |
+| --- | --- | --- |
+| **0.6.4 — Current** | Texture and particle actions, scene light and mesh diagnostics | First useful set of repeatable Editor buttons |
+| **0.6.5 — Avatar starter** | Preview texture edits; check one avatar; optimize its particles | Try the tool on an avatar and know what will change |
+| **0.7.0 — Controlled batches** | Optimize by project, folder or selection; restore the last texture batch | Safely handle many assets without repeating Inspector work |
+| **0.8.0 — World effects** | Selected-branch particle batches and reviewed light-shadow batches | Tackle the scene work VR world creators repeat most |
+| **0.9.0 — Quest preparation** | Cross-platform texture override fixes and reviewed model importer changes | Prepare PC/Quest assets without visiting every import tab |
+| **1.0.0 — Creator workflow** | One guided preview and run for a selected avatar or scene branch, built from the proven actions above | Finish a routine optimization pass from one place |
+
+These are proposed scopes, not dates or guarantees. New features move into release notes only when implemented and tested. Each milestone must work on its own; fixes to a released milestone can ship as 0.7.1, 0.8.1 and so on.
 
 ## 0.6.5: Texture Change Preview and first avatar buttons
 
@@ -44,37 +46,46 @@ Apply the existing particle preset to particle systems under the selected avatar
 
 **Helps:** applying one sensible cap across an avatar's effect hierarchy without modifying world effects elsewhere in the scene.
 
-## 0.6.6: Safer repeated batches
+## 0.7.0: Controlled batches and recovery
 
-- **Scope picker:** Whole project, selected asset folder, or textures referenced under a selected scene root. Display scope and item count before running. The default remains explicit; never silently widen a selected scope.
-- **Restore last texture batch:** Persist exact before-values for every touched platform override in a small project-local history record. Offer a preview and restore only paths whose importers still match the tool's recorded after-values; flag user edits as conflicts instead of overwriting them.
-- **Useful completion report:** Per-asset errors, changed/unchanged/skipped totals, and a copyable list for investigating failures. Do not force a full rescan after a successful batch.
+**Headline:** choose exactly what the texture button touches, then be able to restore a batch.
 
-**Helps:** creators who try a preset, compare the result on Quest, and want to revise it without manually undoing hundreds of importer tabs.
+- **Scope picker:** Whole project, selected asset folder, or textures referenced under a selected scene root. Show scope and item count before preview. Never silently widen a selected scope.
+- **Restore last texture batch:** Save exact before-values for touched platform overrides in a project-local history record. Preview restoration; restore only importers that still match recorded after-values, and flag subsequent user edits as conflicts.
+- **Completion report:** Changed, unchanged, excluded, unsupported and failed counts, with paths and a copyable failure list. A second identical run should reimport nothing.
 
-## 0.6.7: Hierarchy light automation
+**Helps:** creators iterating on Quest texture settings across hundreds of assets without manually editing or restoring importer tabs.
 
-- In a loaded scene or selected Hierarchy branch, list realtime lights with shadows, range, type and owning GameObject.
-- Provide **DISABLE SELECTED SHADOWS** only after a review list. Record a single Unity Undo group, change only shadow mode, and report changed versus already off. Leave baked/mixed configuration and light intensity untouched.
-- Preserve the individual review action from v0.6.4. Do not claim that disabling shadows is always visually acceptable.
+## 0.8.0: World effects workflow
 
-**Helps:** world creators turning off shadows on a set of decorative lights without opening each Inspector. VRChat cautions that realtime avatar lights and shadows can be particularly costly; the visual decision still belongs to the creator.
+**Headline:** optimize particles and light shadows within a chosen scene branch, using a review list.
 
-## 0.6.8: Particle repetition at scale
+- **PARTICLES IN SELECTION:** apply the existing preset to a selected Hierarchy branch, not the entire scene. Rank effects for review using observable settings such as maximum count, constant emission, trails, collision, mesh rendering, lights, shadows and transparent material. Label the ranking a heuristic, not measured GPU cost.
+- **REVIEW SCENE LIGHTS:** list realtime shadow-casting lights in the selected branch with type, range and owning object. **DISABLE SELECTED SHADOWS** changes only checked lights after confirmation. One Undo group restores the batch; leave bake mode, intensity and light objects intact.
+- **Shared custom particle preset:** save a named preset with the project so collaborators can repeat the same changes; visual modules remain explicit opt-ins.
 
-- Reuse the current preset under a **selected Hierarchy branch**, not just the whole scene or selected avatar.
-- Rank effects for review using observable settings: `maxParticles`, constant emission rate, mesh renderer, trails, collision, particle lights, shadows and transparent material. Label the ranking **heuristic**, never measured GPU time.
-- Store one named custom preset in project settings so collaborators can run the same buttons with the same limits. Require an explicit opt-in for disabling any visual module; only cap supported constant values automatically.
+**Helps:** effects-heavy worlds where dozens of particle and light components need the same limited set of settings changed. VRChat notes that large transparent particles can cost more than raw counts suggest, so the review list does not equate particle count with actual frame time.
 
-**Helps:** effects-heavy avatars and worlds whose particle systems are nested in prefabs or subgroups. VRChat notes that a few large transparent particles can cost more than numerous small opaque ones, so raw particle count alone is not enough.
+## 0.9.0: Quest preparation and importer chores
 
-## 0.6.9: Importer chores with higher risk
+**Headline:** automate platform importer checks after avatar and world edits are under control.
 
-- **FIX MISSING TEXTURE OVERRIDES:** use the chosen preset to add only missing platform maximum-size overrides for supported textures in the chosen scope. Keep the existing format and compression data.
-- **REVIEW MODEL READ/WRITE:** list imported models used by the selected root with Read/Write on. Offer a previewed batch change only for checked models, with a warning that scripts, mesh baking and other runtime access can require readability. Reimport changed models only.
-- Do **not** automatically decimate, merge meshes or delete materials. Those operations can affect rigs, UVs, blendshapes, animation and avatar appearance.
+- **PC / QUEST TEXTURE VIEW:** compare the platform caps for textures in the chosen scope; flag missing Android overrides and show which files a proposed Quest preset would change. **FIX MISSING OVERRIDES** adds only selected missing size overrides, preserving format, compression and source images.
+- **MODEL READ/WRITE REVIEW:** list models used by a selected root that are imported as readable. Offer a previewed, checked batch action; warn that scripts, mesh baking and other runtime operations may depend on Read/Write. Reimport changed models only and provide a restore path.
+- **Quest readiness summary:** report work still needed using actual observed settings. Do not claim a VRChat rating or device frame-rate result based on this static summary.
 
-**Helps:** repetitive importer housekeeping while keeping potentially breaking model changes opt-in.
+**Helps:** creators preparing an Android / Quest version who would otherwise work through platform and model importer tabs asset by asset. No automatic decimation, mesh merging or material deletion.
+
+## 1.0.0: Complete creator workflow
+
+**Headline:** one guided run that brings the proven actions together without hiding their effects.
+
+1. Select an avatar root or loaded scene branch and choose PC, Quest or both.
+2. Show a single prioritized preview: texture import changes, particle settings and eligible light-shadow changes. Leave mesh geometry diagnostic only.
+3. Include or exclude items, run the selected actions, and produce a concise completion report with restoration options for importers and Undo for scene changes.
+4. Ship a sample avatar/scene, a clean Git URL installation check, compatibility tests for supported Unity versions, a clear changelog and regression coverage for cancellation and second-run no-op behavior.
+
+**Helps:** an experienced creator finish a routine pass in minutes while still seeing exactly which assets or components will be edited. This is an integration of tested 0.6–0.9 actions; it is not a new automatic decimation or hidden "optimize everything" button.
 
 ## Engineering rules for every release
 
