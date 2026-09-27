@@ -1,10 +1,20 @@
 # FISHHWB VR Optimizer: automation roadmap
 
-**Current release: v0.6.4.** Everything below is proposed future work, not a feature in the current package. Version numbers are planning targets, not release dates.
+**Current release: v0.6.4.** Everything below is proposed future work, not a feature in the current package. Version numbers are planning targets, not release dates. The existing Git URL package is **Unity Editor only**.
 
 ## Product goal
 
-Turn repeated Unity Editor optimization chores into focused buttons: identify the relevant assets or scene objects, preview material changes when necessary, update only changed settings, and show exactly what happened. Prioritize **textures and particles**, then the recurring avatar and world tasks around them. Do not promise a frame-rate improvement from a static scan; verify results in the target platform build.
+Turn repeated Unity Editor optimization chores into focused buttons: identify the relevant assets or scene objects, preview material changes when necessary, update only changed settings, and show exactly what happened. Prioritize **textures and particles**, then recurring avatar, world and indie-game tasks around them. Do not promise a frame-rate improvement from a static scan; verify results in the target platform build.
+
+The window should eventually offer three **workflow choices**, not three separate packages or a wall of options:
+
+| Workflow | Default scope | Useful actions |
+| --- | --- | --- |
+| **VR Avatar** | Selected avatar root | Texture preview, avatar check, particle preset |
+| **VR World** | Selected scene branch or loaded scenes | Texture preview, particle changes, reviewed light shadows |
+| **Unity Game** | Selected folder or scene branch | Texture and Sprite import caps, particle and light changes, reviewed model and audio imports |
+
+Every action still shows its actual scope. A game developer should be able to use the same texture button without adopting VRChat conventions. VRChat-specific checks remain optional.
 
 The [VRChat avatar performance ranking reference](https://creators.vrchat.com/avatars/avatar-performance-ranking-system/) counts factors including material slots, meshes, particles and lights, but its rank is a static assessment rather than a measurement of runtime frame time. The [avatar optimization guidance](https://creators.vrchat.com/avatars/avatar-optimizing-tips/) highlights material slots, particle rendering and realtime lights as practical areas to examine. For Quest worlds, use the [Android optimization guidance](https://creators.vrchat.com/platforms/android/quest-content-optimization/) alongside measured profiling.
 
@@ -16,10 +26,11 @@ Use **0.6.5** for the agreed improvement to the current 0.6 line. Each subsequen
 | --- | --- | --- |
 | **0.6.4 — Current** | Texture and particle actions, scene light and mesh diagnostics | First useful set of repeatable Editor buttons |
 | **0.6.5 — Avatar starter** | Preview texture edits; check one avatar; optimize its particles | Try the tool on an avatar and know what will change |
-| **0.7.0 — Controlled batches** | Optimize by project, folder or selection; restore the last texture batch | Safely handle many assets without repeating Inspector work |
-| **0.8.0 — World effects** | Selected-branch particle batches and reviewed light-shadow batches | Tackle the scene work VR world creators repeat most |
-| **0.9.0 — Quest preparation** | Cross-platform texture override fixes and reviewed model importer changes | Prepare PC/Quest assets without visiting every import tab |
-| **1.0.0 — Creator workflow** | One guided preview and run for a selected avatar or scene branch, built from the proven actions above | Finish a routine optimization pass from one place |
+| **0.7.0 — Controlled batches** | Project, folder or selection scope; texture batch restoration; first Unity Game workflow choice | Safely handle game and VR textures without repeating Inspector work |
+| **0.8.0 — Scene effects** | Selected-branch particle batches and reviewed light-shadow batches | Tackle effects and lighting in VR worlds and indie-game levels |
+| **0.9.0 — Platform imports** | PC/mobile texture override fixes and reviewed model/audio importer actions | Prepare Quest or mobile games without visiting every import tab |
+| **1.0.0 — Unity creator workflow** | One guided preview and run for an avatar, scene branch or game asset folder | Finish a routine VR or indie-game optimization pass from one place |
+| **After 1.0 — Other engines** | Prove a Godot editor add-on, then investigate an Unreal Editor plugin | Bring proven repetitive actions to other engines using their native tools |
 
 These are proposed scopes, not dates or guarantees. New features move into release notes only when implemented and tested. Each milestone must work on its own; fixes to a released milestone can ship as 0.7.1, 0.8.1 and so on.
 
@@ -46,17 +57,18 @@ Apply the existing particle preset to particle systems under the selected avatar
 
 **Helps:** applying one sensible cap across an avatar's effect hierarchy without modifying world effects elsewhere in the scene.
 
-## 0.7.0: Controlled batches and recovery
+## 0.7.0: Controlled batches and recovery for Unity games
 
 **Headline:** choose exactly what the texture button touches, then be able to restore a batch.
 
 - **Scope picker:** Whole project, selected asset folder, or textures referenced under a selected scene root. Show scope and item count before preview. Never silently widen a selected scope.
 - **Restore last texture batch:** Save exact before-values for touched platform overrides in a project-local history record. Preview restoration; restore only importers that still match recorded after-values, and flag subsequent user edits as conflicts.
 - **Completion report:** Changed, unchanged, excluded, unsupported and failed counts, with paths and a copyable failure list. A second identical run should reimport nothing.
+- **Unity Game workflow choice:** use a selected asset folder or scene root without an avatar or VRChat SDK. Add Sprite / 2D texture handling as a separate, opt-in texture-type choice after confirming import settings can be preserved; a 2D developer should not need to change every Sprite manually.
 
-**Helps:** creators iterating on Quest texture settings across hundreds of assets without manually editing or restoring importer tabs.
+**Helps:** creators iterating on Quest textures or PC/mobile game art across hundreds of assets without manually editing or restoring importer tabs.
 
-## 0.8.0: World effects workflow
+## 0.8.0: Scene effects workflow
 
 **Headline:** optimize particles and light shadows within a chosen scene branch, using a review list.
 
@@ -64,28 +76,39 @@ Apply the existing particle preset to particle systems under the selected avatar
 - **REVIEW SCENE LIGHTS:** list realtime shadow-casting lights in the selected branch with type, range and owning object. **DISABLE SELECTED SHADOWS** changes only checked lights after confirmation. One Undo group restores the batch; leave bake mode, intensity and light objects intact.
 - **Shared custom particle preset:** save a named preset with the project so collaborators can repeat the same changes; visual modules remain explicit opt-ins.
 
-**Helps:** effects-heavy worlds where dozens of particle and light components need the same limited set of settings changed. VRChat notes that large transparent particles can cost more than raw counts suggest, so the review list does not equate particle count with actual frame time.
+**Helps:** effects-heavy VR worlds and indie-game levels where dozens of particle and light components need the same limited set of settings changed. VRChat notes that large transparent particles can cost more than raw counts suggest, so the review list does not equate particle count with actual frame time.
 
-## 0.9.0: Quest preparation and importer chores
+## 0.9.0: Platform preparation and importer chores
 
-**Headline:** automate platform importer checks after avatar and world edits are under control.
+**Headline:** automate PC/mobile importer checks after avatar and scene actions are under control.
 
-- **PC / QUEST TEXTURE VIEW:** compare the platform caps for textures in the chosen scope; flag missing Android overrides and show which files a proposed Quest preset would change. **FIX MISSING OVERRIDES** adds only selected missing size overrides, preserving format, compression and source images.
+- **PC / MOBILE TEXTURE VIEW:** compare platform caps for textures in the chosen scope; flag missing Android and iOS overrides and show which files a chosen Quest or general mobile preset would change. **FIX MISSING OVERRIDES** adds only selected missing size overrides, preserving format, compression and source images.
 - **MODEL READ/WRITE REVIEW:** list models used by a selected root that are imported as readable. Offer a previewed, checked batch action; warn that scripts, mesh baking and other runtime operations may depend on Read/Write. Reimport changed models only and provide a restore path.
-- **Quest readiness summary:** report work still needed using actual observed settings. Do not claim a VRChat rating or device frame-rate result based on this static summary.
+- **AUDIO IMPORT PREVIEW (Unity Game):** group short sound effects and long music or ambience for review, then optionally apply checked platform load type or compression settings to selected clips. Show old/new settings and allow restoration; never change all audio based on duration alone, since playback and quality needs differ. Unity exposes these through [`AudioImporterSampleSettings`](https://docs.unity3d.com/2022.3/Documentation/ScriptReference/AudioImporterSampleSettings.html).
+- **Platform readiness summary:** report work still needed using actual observed settings. Do not claim a VRChat rating or device frame-rate result based on this static summary.
 
-**Helps:** creators preparing an Android / Quest version who would otherwise work through platform and model importer tabs asset by asset. No automatic decimation, mesh merging or material deletion.
+**Helps:** creators preparing Quest avatars or Android/iOS indie games who would otherwise work through platform, model and audio importer tabs asset by asset. No automatic decimation, mesh merging or material deletion.
 
-## 1.0.0: Complete creator workflow
+## 1.0.0: Complete Unity creator workflow
 
 **Headline:** one guided run that brings the proven actions together without hiding their effects.
 
-1. Select an avatar root or loaded scene branch and choose PC, Quest or both.
-2. Show a single prioritized preview: texture import changes, particle settings and eligible light-shadow changes. Leave mesh geometry diagnostic only.
+1. Choose **VR Avatar**, **VR World** or **Unity Game**, then select an avatar root, loaded scene branch or asset folder and a PC/mobile target.
+2. Show a single prioritized preview of applicable texture import changes, particle settings, eligible light-shadow changes and any explicitly selected importer action. Leave mesh geometry diagnostic only.
 3. Include or exclude items, run the selected actions, and produce a concise completion report with restoration options for importers and Undo for scene changes.
 4. Ship a sample avatar/scene, a clean Git URL installation check, compatibility tests for supported Unity versions, a clear changelog and regression coverage for cancellation and second-run no-op behavior.
 
-**Helps:** an experienced creator finish a routine pass in minutes while still seeing exactly which assets or components will be edited. This is an integration of tested 0.6–0.9 actions; it is not a new automatic decimation or hidden "optimize everything" button.
+**Helps:** an experienced VR or indie-game creator finish a routine pass in minutes while still seeing exactly which assets or components will be edited. This integrates tested 0.6–0.9 actions; it is not a hidden "optimize everything" button.
+
+## After 1.0: Other engine options
+
+The Unity Package Manager package cannot run in another engine. Treat each new engine as a **separate native editor add-on** with its own installation instructions, versioning and tests. Reuse the product approach—scope, preview, compare, apply, restore and report—rather than copying Unity importer code or assuming equal engine settings.
+
+1. **Godot pilot:** build a small `EditorPlugin` add-on with one complete workflow: select a project folder, preview texture import settings, apply checked changes, then restore a batch. Validate against a supported Godot version and a real 2D/3D sample project before adding particle or light actions. Godot exposes editor extension points through [`EditorPlugin`](https://docs.godotengine.org/en/stable/classes/class_editorplugin.html).
+2. **Unreal investigation and pilot:** use editor-only tooling such as Editor Utility Widgets or Python to trial a selected-folder texture import review. First confirm the appropriate asset API, transaction/undo behavior and packaging path in the targeted Unreal version. Epic documents editor scripting and utility widgets for asset workflows: [Scripting and Automating the Unreal Editor](https://dev.epicgames.com/documentation/unreal-engine/scripting-and-automating-the-unreal-editor).
+3. **Shared roadmap, engine-specific behavior:** use common terms for what a batch proposes and records, but maintain separate rules for each engine's texture, particle and light systems. A feature ships for an engine only after native preview, cancellation, restoration and test coverage exist there.
+
+**Release approach:** decide the first non-Unity engine from actual creator demand and a working prototype. A Godot or Unreal add-on starts at its own pre-1.0 version; do not label an untested port as part of the Unity 1.0.0 release.
 
 ## Engineering rules for every release
 
