@@ -99,4 +99,4 @@ FISHHWB VR Optimizer is free and licensed under MIT. Contributions and bug repor
 
 ## Planned next update
 
-The [v0.6.5 plan](Documentation/Roadmap.md) covers **Texture Change Preview**, a focused **Avatar Check**, and **OPTIMIZE AVATAR PARTICLES**. These features are planned and are **not included in v0.6.4**.
+The [automation roadmap](Documentation/Roadmap.md) stages future work from v0.6.5 through 1.0. The first stage covers **Texture Change Preview**, a focused **Avatar Check**, and **OPTIMIZE AVATAR PARTICLES**. Later stages address scoped batches, restoration, scene light changes, particle workflows and importer housekeeping. These features are planned and are **not included in v0.6.4**.
