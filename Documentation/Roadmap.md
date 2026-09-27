@@ -10,8 +10,8 @@ The window should eventually offer three **workflow choices**, not three separat
 
 | Workflow | Default scope | Useful actions |
 | --- | --- | --- |
-| **VR Avatar** | Selected avatar root | Texture preview, avatar check, particle preset |
-| **VR World** | Selected scene branch or loaded scenes | Texture preview, particle changes, reviewed light shadows |
+| **VR Avatar** | Selected avatar root | Texture preview, avatar check, particle preset; optional platform-specific guidance after platform validation |
+| **VR World** | Selected scene branch or loaded scenes | Texture preview, particle changes, reviewed light shadows; optional platform-specific guidance after platform validation |
 | **Unity Game** | Selected folder or scene branch | Texture and Sprite import caps, particle and light changes, reviewed model and audio imports |
 
 Every action still shows its actual scope. A game developer should be able to use the same texture button without adopting VRChat conventions. VRChat-specific checks remain optional.
@@ -27,12 +27,25 @@ Use **0.6.5** for the agreed improvement to the current 0.6 line. Each subsequen
 | **0.6.4 — Current** | Texture and particle actions, scene light and mesh diagnostics | First useful set of repeatable Editor buttons |
 | **0.6.5 — Avatar starter** | Preview texture edits; check one avatar; optimize its particles | Try the tool on an avatar and know what will change |
 | **0.7.0 — Controlled batches** | Project, folder or selection scope; texture batch restoration; first Unity Game workflow choice | Safely handle game and VR textures without repeating Inspector work |
-| **0.8.0 — Scene effects** | Selected-branch particle batches and reviewed light-shadow batches | Tackle effects and lighting in VR worlds and indie-game levels |
-| **0.9.0 — Platform imports** | PC/mobile texture override fixes and reviewed model/audio importer actions | Prepare Quest or mobile games without visiting every import tab |
-| **1.0.0 — Unity creator workflow** | One guided preview and run for an avatar, scene branch or game asset folder | Finish a routine VR or indie-game optimization pass from one place |
+| **0.8.0 — Scene effects** | Selected-branch particle batches and reviewed light-shadow batches; validate a ChilloutVR choice | Tackle effects and lighting in VR worlds and indie-game levels |
+| **0.9.0 — Platform imports** | PC/mobile texture override fixes, reviewed model/audio importer actions and Resonite preparation guidance | Prepare assets for more destinations without visiting every import tab |
+| **1.0.0 — Unity creator workflow** | One guided preview and run for an avatar, scene branch or game asset folder, with validated platform choices | Finish a routine VR or indie-game optimization pass from one place |
 | **After 1.0 — Other engines** | Prove a Godot editor add-on, then investigate an Unreal Editor plugin | Bring proven repetitive actions to other engines using their native tools |
 
 These are proposed scopes, not dates or guarantees. New features move into release notes only when implemented and tested. Each milestone must work on its own; fixes to a released milestone can ship as 0.7.1, 0.8.1 and so on.
+
+## VR social platform expansion
+
+**Platform selection changes recommendations, not the meaning of Unity importer settings.** The main optimizer remains useful without choosing a social platform. Add a platform choice only after testing against that platform's current creator tooling; unsupported or unavailable integrations must say so in the UI.
+
+| Platform | Practical automation path | Release gate |
+| --- | --- | --- |
+| **VRChat** | Keep optional avatar/world guidance on top of the Unity texture, particle and light buttons; do not require the SDK for the core package. | Verify any SDK-specific check and current performance guidance in a VRChat project. |
+| **ChilloutVR** | Its [Content Creation Kit uses Unity](https://docs.chilloutvr.net/cck/setup/), so reuse proven Unity actions. In 0.8.0, investigate an optional CCK-aware avatar/world choice that detects the installed kit and reports only verified platform-specific issues. | Test in a supported CCK project; do not change CCK components, rigs or upload settings automatically. |
+| **Resonite** | Offer a **preparation report** for meshes, textures and effects when a creator is preparing source assets. Resonite also documents a [UnitySDK import route](https://wiki.resonite.com/UnitySDK), but Unity import settings cannot be assumed to describe final in-game behavior. | Test the real Resonite import path and consult its [optimization guidance](https://wiki.resonite.com/Optimization_guidelines/) before suggesting any platform-specific automatic fix. |
+| **Meta Horizon Worlds** | Investigate a separate asset-preparation or editor workflow for its [Desktop Editor model import](https://developers.meta.com/horizon-worlds/learn/videos/importing-custom-models/). The Unity package must not claim it can edit a Horizon world. | Prove a supported interchange format and an authorized workflow in the native creator tools; no platform claims based on Unity scene scans. |
+
+**Sequence:** general Unity actions first; verified ChilloutVR support as a Unity-based pilot; Resonite preparation reporting; Horizon Worlds investigation after the core Unity workflow is stable. Additional social VR platforms can be evaluated using the same criteria instead of being added as empty dropdown entries. A platform-specific button should remove an actual repetitive creator task, such as applying reviewed asset caps to a selected avatar, rather than only displaying a score.
 
 ## 0.6.5: Texture Change Preview and first avatar buttons
 
@@ -75,6 +88,7 @@ Apply the existing particle preset to particle systems under the selected avatar
 - **PARTICLES IN SELECTION:** apply the existing preset to a selected Hierarchy branch, not the entire scene. Rank effects for review using observable settings such as maximum count, constant emission, trails, collision, mesh rendering, lights, shadows and transparent material. Label the ranking a heuristic, not measured GPU cost.
 - **REVIEW SCENE LIGHTS:** list realtime shadow-casting lights in the selected branch with type, range and owning object. **DISABLE SELECTED SHADOWS** changes only checked lights after confirmation. One Undo group restores the batch; leave bake mode, intensity and light objects intact.
 - **Shared custom particle preset:** save a named preset with the project so collaborators can repeat the same changes; visual modules remain explicit opt-ins.
+- **ChilloutVR validation pilot:** test the same selected avatar/world actions in a supported Unity + CCK project. Show a platform choice only for checks and actions that have been validated there; keep the core actions usable without CCK.
 
 **Helps:** effects-heavy VR worlds and indie-game levels where dozens of particle and light components need the same limited set of settings changed. VRChat notes that large transparent particles can cost more than raw counts suggest, so the review list does not equate particle count with actual frame time.
 
@@ -86,6 +100,7 @@ Apply the existing particle preset to particle systems under the selected avatar
 - **MODEL READ/WRITE REVIEW:** list models used by a selected root that are imported as readable. Offer a previewed, checked batch action; warn that scripts, mesh baking and other runtime operations may depend on Read/Write. Reimport changed models only and provide a restore path.
 - **AUDIO IMPORT PREVIEW (Unity Game):** group short sound effects and long music or ambience for review, then optionally apply checked platform load type or compression settings to selected clips. Show old/new settings and allow restoration; never change all audio based on duration alone, since playback and quality needs differ. Unity exposes these through [`AudioImporterSampleSettings`](https://docs.unity3d.com/2022.3/Documentation/ScriptReference/AudioImporterSampleSettings.html).
 - **Platform readiness summary:** report work still needed using actual observed settings. Do not claim a VRChat rating or device frame-rate result based on this static summary.
+- **Resonite preparation report:** list source meshes, textures and effects from a selected hierarchy and link each finding to the source asset. Label the output as pre-import guidance, not a measured Resonite performance result or an automatic in-game optimizer.
 
 **Helps:** creators preparing Quest avatars or Android/iOS indie games who would otherwise work through platform, model and audio importer tabs asset by asset. No automatic decimation, mesh merging or material deletion.
 
@@ -93,7 +108,7 @@ Apply the existing particle preset to particle systems under the selected avatar
 
 **Headline:** one guided run that brings the proven actions together without hiding their effects.
 
-1. Choose **VR Avatar**, **VR World** or **Unity Game**, then select an avatar root, loaded scene branch or asset folder and a PC/mobile target.
+1. Choose **VR Avatar**, **VR World** or **Unity Game**, then select an avatar root, loaded scene branch or asset folder and a PC/mobile target. An optional social-platform choice appears only for validated integrations.
 2. Show a single prioritized preview of applicable texture import changes, particle settings, eligible light-shadow changes and any explicitly selected importer action. Leave mesh geometry diagnostic only.
 3. Include or exclude items, run the selected actions, and produce a concise completion report with restoration options for importers and Undo for scene changes.
 4. Ship a sample avatar/scene, a clean Git URL installation check, compatibility tests for supported Unity versions, a clear changelog and regression coverage for cancellation and second-run no-op behavior.
@@ -119,7 +134,7 @@ The Unity Package Manager package cannot run in another engine. Treat each new e
 5. **Large-project behavior:** process in chunks, show progress and cancellation, avoid scans every editor frame and avoid full AssetDatabase refreshes unless required.
 6. **Modular scanners and actions:** add new modules without rewriting `VRProjectScanner`; separate analysis from mutation.
 7. **Honest metrics:** label importer dimensions, estimated costs and static VRChat limits correctly. Use Unity Profiler and on-device testing for frame-rate claims.
-8. **Compatibility:** keep the core editor package free of external dependencies; optional VRChat-specific checks must be guarded by presence of the SDK and Unity version.
+8. **Compatibility:** keep the core editor package free of external dependencies; optional VRChat or ChilloutVR checks must be guarded by presence of the relevant SDK/CCK and supported Unity version. Do not transfer one platform's limits to another.
 
 ## Release acceptance checklist
 
