@@ -10,11 +10,9 @@ namespace FISHHWB.VROptimizer
         {
             if (!light) return false;
             bool shadows = light.shadows != LightShadows.None;
-            bool range = settings.capLightRange && light.type != LightType.Directional && light.range > settings.maxLightRange;
-            if (!shadows && !range) return false;
+            if (!shadows) return false;
             Undo.RecordObject(light, "Optimize VR Light");
             if (shadows) light.shadows = LightShadows.None;
-            if (range) light.range = settings.maxLightRange;
             EditorUtility.SetDirty(light);
             return true;
         }

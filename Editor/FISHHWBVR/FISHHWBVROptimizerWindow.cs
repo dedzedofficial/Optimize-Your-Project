@@ -7,101 +7,138 @@ namespace FISHHWB.VROptimizer
 {
     internal sealed class FISHHWBVROptimizerWindow : EditorWindow
     {
+        static readonly int[] Sizes = { 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384 };
+        static readonly string[] SizeNames = { "32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "Custom..." };
         VRSettings settings;
         List<VRIssue> results = new List<VRIssue>();
         Vector2 scroll;
-        string summary = "Ready. Scans include imported assets and currently loaded scenes.";
+        bool showParticleOptions;
+        string summary = "Ready. Choose an action below to begin.";
 
         [MenuItem("FISHHWB/VR Optimizer")]
-        static void Open() { GetWindow<FISHHWBVROptimizerWindow>("VR Optimizer").minSize = new Vector2(480, 560); }
+        static void Open() { GetWindow<FISHHWBVROptimizerWindow>("VR Optimizer").minSize = new Vector2(440, 520); }
         void OnEnable() { settings = VRSettings.Load(); }
+
+        static void Header(string heading, string subtitle)
+        {
+            var rect = GUILayoutUtility.GetRect(1, 66, GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(rect, EditorGUIUtility.isProSkin ? new Color(.13f, .23f, .29f) : new Color(.78f, .87f, .9f));
+            var title = new GUIStyle(EditorStyles.boldLabel) { fontSize = 18, alignment = TextAnchor.MiddleCenter };
+            var small = new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.MiddleCenter };
+            if (EditorGUIUtility.isProSkin) { title.normal.textColor = Color.white; small.normal.textColor = new Color(.8f, .9f, .95f); }
+            GUI.Label(new Rect(rect.x, rect.y + 8, rect.width, 28), heading, title);
+            GUI.Label(new Rect(rect.x, rect.y + 37, rect.width, 19), subtitle, small);
+        }
+
+        static int SizeField(string label, int value)
+        {
+            int index = Array.IndexOf(Sizes, value);
+            int selected = EditorGUILayout.Popup(label, index < 0 ? Sizes.Length : index, SizeNames);
+            if (selected < Sizes.Length) return Sizes[selected];
+            int typed = EditorGUILayout.IntField("Custom " + label, value);
+            return Mathf.Clamp(Mathf.ClosestPowerOfTwo(Mathf.Max(32, typed)), 32, 16384);
+        }
 
         void OnGUI()
         {
             if (settings == null) settings = VRSettings.Load();
             scroll = EditorGUILayout.BeginScrollView(scroll);
+            Header("FISHHWB VR OPTIMIZER", "v0.6.4  •  Free tools for VR creators");
             GUILayout.Space(10);
-            var title = new GUIStyle(EditorStyles.boldLabel) { fontSize = 19, alignment = TextAnchor.MiddleCenter };
-            GUILayout.Label("FISHHWB VR OPTIMIZER", title);
-            GUILayout.Label("v0.6.3", new GUIStyle(EditorStyles.centeredGreyMiniLabel));
-            GUILayout.Space(12);
             EditorGUI.BeginChangeCheck();
-            settings.target = (VRTarget)EditorGUILayout.EnumPopup("Target Platform", settings.target);
-            var preset = (VRTexturePreset)EditorGUILayout.EnumPopup("Texture Preset", settings.texturePreset);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("TEXTURES", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Set maximum imported size for each platform.", EditorStyles.wordWrappedMiniLabel);
+            var preset = (VRTexturePreset)EditorGUILayout.EnumPopup("Preset", settings.texturePreset);
             if (preset != settings.texturePreset) settings.SetTexturePreset(preset);
-            EditorGUILayout.LabelField("Platform maximum sizes", EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
-            settings.pc = EditorGUILayout.IntField("PC / Standalone", settings.pc);
-            settings.android = EditorGUILayout.IntField("Android / Quest", settings.android);
-            settings.ios = EditorGUILayout.IntField("iOS", settings.ios);
+            settings.pc = SizeField("PC / Standalone", settings.pc);
+            settings.android = SizeField("Android / Quest", settings.android);
+            settings.ios = SizeField("iOS", settings.ios);
             if (EditorGUI.EndChangeCheck()) settings.texturePreset = VRTexturePreset.Custom;
-            settings.overridePC = EditorGUILayout.Toggle("Override PC", settings.overridePC);
-            settings.overrideAndroid = EditorGUILayout.Toggle("Override Android", settings.overrideAndroid);
-            settings.overrideIOS = EditorGUILayout.Toggle("Override iOS", settings.overrideIOS);
-            settings.compression = EditorGUILayout.Toggle("Compress", settings.compression);
-            settings.quality = EditorGUILayout.IntSlider("Compression Quality", settings.quality, 0, 100);
-            settings.crunch = EditorGUILayout.Toggle("Crunch (supported types)", settings.crunch);
-            settings.changeMipmaps = EditorGUILayout.Toggle("Change Color Mipmaps", settings.changeMipmaps);
-            if (settings.changeMipmaps) settings.mipmaps = EditorGUILayout.Toggle("Generate Mipmaps", settings.mipmaps);
-            settings.changeFilter = EditorGUILayout.Toggle("Change Filter Mode", settings.changeFilter);
-            if (settings.changeFilter) settings.filter = (FilterMode)EditorGUILayout.EnumPopup("Filter Mode", settings.filter);
-            settings.changeAniso = EditorGUILayout.Toggle("Change Anisotropy", settings.changeAniso);
-            if (settings.changeAniso) settings.aniso = EditorGUILayout.IntSlider("Anisotropy", settings.aniso, 0, 16);
-            GUILayout.Space(8);
-            var particlePreset = (VRParticlePreset)EditorGUILayout.EnumPopup("Particle Preset", settings.particlePreset);
-            if (particlePreset != settings.particlePreset) settings.SetParticlePreset(particlePreset);
-            EditorGUI.BeginChangeCheck();
-            settings.capParticles = EditorGUILayout.Toggle("Cap Particle Count", settings.capParticles);
-            if (settings.capParticles) settings.maxParticles = EditorGUILayout.IntField("Maximum Particles", settings.maxParticles);
-            settings.capLifetime = EditorGUILayout.Toggle("Cap Constant Lifetime", settings.capLifetime);
-            if (settings.capLifetime) settings.maxLifetime = EditorGUILayout.FloatField("Maximum Lifetime", settings.maxLifetime);
-            settings.disableTrails = EditorGUILayout.Toggle("Disable Trails", settings.disableTrails);
-            settings.disableCollision = EditorGUILayout.Toggle("Disable Collision", settings.disableCollision);
-            settings.disableNoise = EditorGUILayout.Toggle("Disable Noise", settings.disableNoise);
-            settings.disableLights = EditorGUILayout.Toggle("Disable Particle Lights", settings.disableLights);
-            settings.disableShadows = EditorGUILayout.Toggle("Disable Particle Shadows", settings.disableShadows);
-            settings.disableSubEmitters = EditorGUILayout.Toggle("Disable Sub Emitters", settings.disableSubEmitters);
-            if (EditorGUI.EndChangeCheck()) settings.particlePreset = VRParticlePreset.Custom;
-            GUILayout.Space(8);
-            settings.capLightRange = EditorGUILayout.Toggle("Cap Confirmed Light Range", settings.capLightRange);
-            if (settings.capLightRange) settings.maxLightRange = EditorGUILayout.FloatField("Maximum Light Range", settings.maxLightRange);
-            if (EditorGUI.EndChangeCheck()) { settings.Sanitize(); settings.Save(); }
+            GUILayout.Space(4);
+            if (GUILayout.Button("OPTIMIZE TEXTURES", GUILayout.Height(34))) OptimizeTextures();
+            EditorGUILayout.EndVertical();
 
-            GUILayout.Space(12);
-            if (GUILayout.Button("OPTIMIZE TEXTURES", GUILayout.Height(32))) OptimizeTextures();
-            if (GUILayout.Button("OPTIMIZE PARTICLES", GUILayout.Height(32))) OptimizeParticles();
-            if (GUILayout.Button("OPTIMIZE LIGHTS (AUDIT)", GUILayout.Height(32))) Scan(VRCategory.Light);
-            if (GUILayout.Button("SCAN FOR PROBLEMS", GUILayout.Height(32))) Scan(null);
-            if (GUILayout.Button("CHECK MESHES", GUILayout.Height(32))) Scan(VRCategory.Mesh);
-            EditorGUILayout.HelpBox(summary, MessageType.Info);
-            if (results.Count > 0)
+            GUILayout.Space(6);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("PARTICLES", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Optimize particle systems in loaded scenes. Supports Undo.", EditorStyles.wordWrappedMiniLabel);
+            var particlePreset = (VRParticlePreset)EditorGUILayout.EnumPopup("Preset", settings.particlePreset);
+            if (particlePreset != settings.particlePreset) settings.SetParticlePreset(particlePreset);
+            showParticleOptions = EditorGUILayout.Foldout(showParticleOptions, "Particle controls", true);
+            if (showParticleOptions)
             {
-                int critical = 0, warning = 0, info = 0;
-                foreach (var issue in results) { if (issue.Severity == VRSeverity.Critical) critical++; else if (issue.Severity == VRSeverity.Warning) warning++; else info++; }
-                EditorGUILayout.LabelField("RESULTS  |  Critical: " + critical + "   Warnings: " + warning + "   Info: " + info, EditorStyles.boldLabel);
-                foreach (var issue in results)
-                {
-                    EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                    EditorGUILayout.LabelField(issue.Severity + "  •  " + issue.Category, EditorStyles.boldLabel);
-                    EditorGUILayout.LabelField(issue.Message, EditorStyles.wordWrappedLabel);
-                    if (!string.IsNullOrEmpty(issue.AssetPath)) EditorGUILayout.LabelField(issue.AssetPath, EditorStyles.miniLabel);
-                    EditorGUILayout.BeginHorizontal();
-                    using (new EditorGUI.DisabledScope(!issue.Target))
-                        if (GUILayout.Button("SELECT", GUILayout.Width(90))) { Selection.activeObject = issue.Target; EditorGUIUtility.PingObject(issue.Target); }
-                    if (issue.CanOptimize && (issue.Category == VRCategory.Texture || string.IsNullOrEmpty(issue.AssetPath)) &&
-                        GUILayout.Button(issue.Category == VRCategory.Light ? "REVIEW & OPTIMIZE" : "OPTIMIZE", GUILayout.Width(150))) OptimizeIssue(issue);
-                    EditorGUILayout.EndHorizontal();
-                    EditorGUILayout.EndVertical();
-                }
+                EditorGUI.indentLevel++;
+                EditorGUI.BeginChangeCheck();
+                settings.capParticles = EditorGUILayout.Toggle("Cap Particle Count", settings.capParticles);
+                if (settings.capParticles) settings.maxParticles = EditorGUILayout.IntField("Maximum Particles", settings.maxParticles);
+                settings.capLifetime = EditorGUILayout.Toggle("Cap Constant Lifetime", settings.capLifetime);
+                if (settings.capLifetime) settings.maxLifetime = EditorGUILayout.FloatField("Maximum Lifetime", settings.maxLifetime);
+                settings.disableTrails = EditorGUILayout.Toggle("Disable Trails", settings.disableTrails);
+                settings.disableCollision = EditorGUILayout.Toggle("Disable Collision", settings.disableCollision);
+                settings.disableNoise = EditorGUILayout.Toggle("Disable Noise", settings.disableNoise);
+                settings.disableLights = EditorGUILayout.Toggle("Disable Particle Lights", settings.disableLights);
+                settings.disableShadows = EditorGUILayout.Toggle("Disable Shadows", settings.disableShadows);
+                settings.disableSubEmitters = EditorGUILayout.Toggle("Disable Sub Emitters", settings.disableSubEmitters);
+                if (EditorGUI.EndChangeCheck()) settings.particlePreset = VRParticlePreset.Custom;
+                EditorGUI.indentLevel--;
             }
+            GUILayout.Space(4);
+            if (GUILayout.Button("OPTIMIZE PARTICLES", GUILayout.Height(34))) OptimizeParticles();
+            EditorGUILayout.EndVertical();
+
+            GUILayout.Space(6);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("SCENE CHECKS", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Checks lights and meshes in currently loaded Hierarchy scenes.", EditorStyles.wordWrappedMiniLabel);
+            if (GUILayout.Button("OPTIMIZE LIGHTS (SCAN HIERARCHY)", GUILayout.Height(30))) Scan(VRCategory.Light);
+            if (GUILayout.Button("CHECK SCENE MESHES", GUILayout.Height(30))) Scan(VRCategory.Mesh);
+            EditorGUILayout.EndVertical();
+
+            GUILayout.Space(6);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("PROJECT SCAN", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Project textures and particle prefabs; lights, meshes and particles in loaded scenes.", EditorStyles.wordWrappedMiniLabel);
+            if (GUILayout.Button("SCAN FOR PROBLEMS", GUILayout.Height(34))) Scan(null);
+            EditorGUILayout.EndVertical();
+            if (EditorGUI.EndChangeCheck()) { settings.Sanitize(); settings.Save(); }
+            GUILayout.Space(8);
+            EditorGUILayout.HelpBox(summary, MessageType.Info);
+            DrawResults();
             GUILayout.Space(12);
-            EditorGUILayout.LabelField("FISHHWB | DED ZED     •     This package is free.", EditorStyles.centeredGreyMiniLabel);
+            EditorGUILayout.LabelField("FISHHWB | DED ZED  •  This package is free", EditorStyles.centeredGreyMiniLabel);
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("WEBSITE")) Application.OpenURL("https://fishhwb.github.io/");
             if (GUILayout.Button("DISCORD")) Application.OpenURL("https://discord.gg/wZGxxkk4Jg");
             if (GUILayout.Button("PATREON")) Application.OpenURL("https://www.patreon.com/cw/DedZed");
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndScrollView();
+        }
+
+        void DrawResults()
+        {
+            if (results.Count == 0) return;
+            int critical = 0, warning = 0, info = 0;
+            foreach (var issue in results)
+                if (issue.Severity == VRSeverity.Critical) critical++;
+                else if (issue.Severity == VRSeverity.Warning) warning++;
+                else info++;
+            EditorGUILayout.LabelField("RESULTS  •  " + critical + " critical   " + warning + " warnings   " + info + " info", EditorStyles.boldLabel);
+            foreach (var issue in results)
+            {
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                EditorGUILayout.LabelField(issue.Severity + "  •  " + issue.Category, EditorStyles.boldLabel);
+                EditorGUILayout.LabelField(issue.Message, EditorStyles.wordWrappedLabel);
+                if (!string.IsNullOrEmpty(issue.AssetPath)) EditorGUILayout.LabelField(issue.AssetPath, EditorStyles.miniLabel);
+                EditorGUILayout.BeginHorizontal();
+                using (new EditorGUI.DisabledScope(!issue.Target))
+                    if (GUILayout.Button("SELECT", GUILayout.Width(90))) { Selection.activeObject = issue.Target; EditorGUIUtility.PingObject(issue.Target); }
+                if (issue.CanOptimize && (issue.Category == VRCategory.Texture || string.IsNullOrEmpty(issue.AssetPath)) &&
+                    GUILayout.Button(issue.Category == VRCategory.Light ? "REVIEW & OPTIMIZE" : "OPTIMIZE", GUILayout.Width(150))) OptimizeIssue(issue);
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.EndVertical();
+            }
         }
 
         void Scan(VRCategory? category)
@@ -133,8 +170,6 @@ namespace FISHHWB.VROptimizer
         void OptimizeParticles()
         {
             int scanned = 0, changed = 0;
-            // Scene objects and the current Prefab Stage support the normal Unity Undo workflow.
-            // Prefab assets elsewhere are reported by the scanner and edited in Prefab Mode.
             bool cancelled = false;
             try
             {
@@ -147,7 +182,7 @@ namespace FISHHWB.VROptimizer
                 }
             }
             finally { EditorUtility.ClearProgressBar(); }
-            summary = (cancelled ? "Cancelled. Partial results: " : "PARTICLE OPTIMIZATION COMPLETE. ") + "Loaded scene systems scanned: " + scanned + ", changed: " + changed + ". Save scenes to persist; use Undo to revert. Open prefab assets in Prefab Mode to edit safely.";
+            summary = (cancelled ? "Cancelled. Partial results: " : "PARTICLE OPTIMIZATION COMPLETE. ") + "Loaded scene systems scanned: " + scanned + ", changed: " + changed + ". Save scenes to persist; use Undo to revert.";
         }
         void OptimizeIssue(VRIssue issue)
         {
@@ -155,9 +190,9 @@ namespace FISHHWB.VROptimizer
             if (issue.Category == VRCategory.Texture && !string.IsNullOrEmpty(issue.AssetPath)) changed = VRTextureOptimizer.Optimize(issue.AssetPath, settings);
             else if (issue.Category == VRCategory.Particle && issue.Target is ParticleSystem p && string.IsNullOrEmpty(issue.AssetPath)) changed = VRParticleOptimizer.Optimize(p, settings);
             else if (issue.Category == VRCategory.Light && string.IsNullOrEmpty(issue.AssetPath) && issue.Target is Light light &&
-                     EditorUtility.DisplayDialog("Optimize " + light.name, "Disable shadows on this light" + (settings.capLightRange ? " and cap its range" : "") + "? You can undo the change.", "Optimize", "Cancel"))
+                     EditorUtility.DisplayDialog("Optimize " + light.name, "Disable shadows on this light? You can undo the change.", "Optimize", "Cancel"))
                 changed = VRLightOptimizer.Optimize(light, settings);
-            summary = changed ? "Optimized selected item. Scan again to update results." : "No settings changed. For prefab particles, open the prefab in Prefab Mode first.";
+            summary = changed ? "Optimized selected item. Scan again to update results." : "No settings changed.";
         }
     }
 }

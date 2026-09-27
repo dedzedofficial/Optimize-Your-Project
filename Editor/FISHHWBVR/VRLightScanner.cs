@@ -6,7 +6,7 @@ namespace FISHHWB.VROptimizer
     internal sealed class VRLightScanner : IVRScanner
     {
         public void ScanAsset(string path, VRSettings settings, List<VRIssue> issues)
-        { foreach (var light in VRProjectScanner.PrefabObjects<Light>(path)) Inspect(light, path, issues); }
+        { }
         public void ScanScene(VRSettings settings, List<VRIssue> issues)
         {
             int realtime = 0;

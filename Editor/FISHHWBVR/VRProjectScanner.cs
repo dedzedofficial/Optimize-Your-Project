@@ -17,7 +17,8 @@ namespace FISHHWB.VROptimizer
             var issues = new List<VRIssue>();
             cancelled = false;
             var paths = new List<string>();
-            foreach (var guid in AssetDatabase.FindAssets("t:Texture t:Prefab t:Model"))
+            if (only != VRCategory.Light && only != VRCategory.Mesh)
+            foreach (var guid in AssetDatabase.FindAssets("t:Texture t:Prefab"))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 if (path.StartsWith("Assets/", StringComparison.Ordinal) && !paths.Contains(path)) paths.Add(path);
