@@ -84,7 +84,6 @@ Apply the existing particle preset to particle systems under the selected avatar
 | Other social VR preparation | Generate platform-specific asset preparation where verified | After 1.0 |
 
 Each candidate needs an exact before/after preview where importer or visual behavior changes, and a verified way back. Keep VRChat, ChilloutVR, Resonite and Horizon Worlds integrations separate where their creator pipelines differ.
-
 ## 0.7.0: Controlled batches and recovery for Unity games
 
 **Headline:** choose exactly what the texture button touches, then be able to restore a batch.
