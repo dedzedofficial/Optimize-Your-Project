@@ -1,19 +1,18 @@
 # FISHHWB VR Optimizer
 
-**Version 0.6.5 · Free Unity Editor package · FISHHWB | Ded Zed**
+**Version 0.6.6 · Free Unity Editor package · FISHHWB | Ded Zed**
 
 FISHHWB VR Optimizer speeds up recurring VR and VRChat project work: texture import overrides, particle settings, light audits and mesh diagnostics. It does not require the VRChat SDK or any third-party package.
 
 ## What this helps with
 
-| Repetitive job | How v0.6.5 helps |
-| --- | --- |
-| Setting PC, Quest and iOS maximum sizes on many textures | Choose a preset or three sizes, then press **OPTIMIZE TEXTURES**. The tool compares importer settings and reimports only textures it changes. |
-| Checking every particle effect for costly modules | **SCAN FOR PROBLEMS** lists high counts, emission and enabled modules; **OPTIMIZE PARTICLES** applies the chosen preset to particle systems in loaded scenes with Unity Undo. |
-| Finding expensive lights in a busy scene | **OPTIMIZE LIGHTS (SCAN HIERARCHY)** lists likely costly lights in loaded scenes and offers an individually confirmed shadow change. |
-| Locating dense meshes without risking an avatar rig | **CHECK SCENE MESHES** reports mesh counts and importer settings for loaded Hierarchy objects; it never changes geometry. |
+Choose **WORLD** or **AVATAR**, then press **TEXTURES**, **PARTICLES**, **LIGHTS**, **MESHES** or (for avatars) **MATERIALS** to show only that area's findings. Results can display **ALL**, **CRITICAL** or **WARNING**; All also includes informational findings. World texture checks cover project assets; World particle, light and mesh actions target loaded scenes. Avatar actions target a selected scene hierarchy. A selected avatar is required on the Avatar page.
 
-This is an **Editor workflow tool**: it saves setup and inspection time. It does not measure device frame rate or guarantee a particular VRChat performance rank. Review the results in your target build.
+Texture import sizes are entered directly for PC, Android and iOS. **PREVIEW TEXTURE CHANGES** shows effective caps and individual include controls before **APPLY SELECTED TEXTURES**. Existing stricter overrides remain stricter. Particle controls are direct switches and limits, and particle changes use Unity Undo.
+
+**PREVIEW MESH COMPRESSION** lists imported model assets used in the current scene or avatar, their current compression, proposed level and renderer usage. Select specific models before applying. Reimporting a model can affect its appearance; inspect results in Unity and your target build. Mesh compression is primarily an asset-size option, not a guaranteed frame-rate improvement. Restore importer changes with version control if necessary. Models under immutable packages and meshes without a model importer are skipped.
+
+This is an Editor workflow tool. It does not measure device frame rate or guarantee a VRChat performance rank.
 
 ## Requirements
 
@@ -25,7 +24,7 @@ This is an **Editor workflow tool**: it saves setup and inspection time. It does
 
 [**ADD TO VCC**](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FVR-Optimizer%2Findex.json)
 
-This button adds the package repository to Creator Companion, where you can then add **FISHHWB VR Optimizer** to a project. It requires a published VPM release and GitHub Pages configured to deploy from **GitHub Actions**. Until the v0.6.5 tag is published and `https://dedzedofficial.github.io/VR-Optimizer/index.json` loads, use the Git installation below. A Git URL cannot be added directly as a VCC package repository.
+This button adds the package repository to Creator Companion, where you can then add **FISHHWB VR Optimizer** to a project. It requires a published VPM release and GitHub Pages configured to deploy from **GitHub Actions**. Until the v0.6.6 tag is published and `https://dedzedofficial.github.io/VR-Optimizer/index.json` loads, use the Git installation below. A Git URL cannot be added directly as a VCC package repository.
 
 ## Install from GitHub
 
@@ -41,40 +40,30 @@ This button adds the package repository to Creator Companion, where you can then
 5. Click **Add** and allow Unity to import the package.
 6. Open **FISHHWB → VR Optimizer** from the top menu.
 
-This repository has `package.json` at its root, so no `?path=` suffix is needed. For a reproducible installation, append a released tag after publishing one, for example `https://github.com/dedzedofficial/VR-Optimizer.git#v0.6.4`. A private repository requires Git credentials on the developer's machine; public users cannot install a private repository by URL. GitHub's **Download ZIP** is source distribution, not the Git URL install method. If Git installation is unavailable, extract the repository into `Packages/com.fishhwb.vr-optimizer` inside your Unity project and add it as an embedded package.
-
-## Avatar workflow (v0.6.5)
-
-Select an avatar root in a loaded scene and press **CHECK AVATAR** to inventory textures, materials, slots, skinned triangles, particles and lights. **OPTIMIZE AVATAR PARTICLES** updates only that hierarchy and supports Undo. Choose avatar-only texture scope, press **PREVIEW TEXTURE CHANGES**, review PC/Android/iOS effective caps, untick exclusions and press **APPLY SELECTED**. Untick avatar-only scope to preview the whole project. Existing stricter importer overrides remain stricter; the preview does not increase them.
+This repository has `package.json` at its root, so no `?path=` suffix is needed. For a reproducible installation, append a released tag after publishing one, for example `https://github.com/dedzedofficial/VR-Optimizer.git#v0.6.6` (once tagged). A private repository requires Git credentials on the developer's machine; public users cannot install a private repository by URL. GitHub's **Download ZIP** is source distribution, not the Git URL install method. If Git installation is unavailable, extract the repository into `Packages/com.fishhwb.vr-optimizer` inside your Unity project and add it as an embedded package.
 
 ## Quick start
 
-1. Open **FISHHWB → VR Optimizer** and review the texture sizes and particle preset.
-2. Select a **Texture Preset**: PC Quality (4096/1024/1024), Quest Balanced (2048/512/512), Quest Performance (1024/256/256), or Custom. Values are maximum importer caps in PC/Android/iOS order, not permanent image resizes.
-3. Use each platform size dropdown. Choose **Custom...** to type a size; Unity-compatible power-of-two values from 32 to 16384 are used. The optimizer only changes platform maximum size overrides and preserves compression, mipmaps, filters and source images.
-4. Select a **Particle Preset**: Conservative, Balanced, Quest Performance, or Custom. Review every particle checkbox before optimizing; the Quest Performance preset disables several costly modules intentionally.
-5. Press **SCAN FOR PROBLEMS** for an audit or run one of the focused actions. The scan has INFO, WARNING and CRITICAL results, SELECT links and safe individual actions where supported.
+1. Open **FISHHWB → VR Optimizer**.
+2. Pick **WORLD** or **AVATAR**. On Avatar, select the avatar root from a loaded scene.
+3. Press an area button to see that area's issues. Use **ALL**, **CRITICAL** or **WARNING** to filter the list and **SELECT** to locate the source.
+4. Set texture caps or particle controls directly; preview changes and review selections before applying. Mesh compression also requires a review and confirmation.
 
-## Actions
+## Actions and scope
 
-| Button | What it does | What to check afterward |
+| Area | World | Avatar |
 | --- | --- | --- |
-| **OPTIMIZE TEXTURES** | Scans supported 2D Default and Normal Map texture importers under `Assets`, applies platform size overrides, and reimports only changed assets. Existing stricter size limits stay stricter. | Check representative textures in the target build, especially normal maps, alpha and compression. Importer changes should be reverted through source control if needed. |
-| **OPTIMIZE PARTICLES** | Optimizes particle systems in currently loaded scenes, applying only the selected caps and module switches. Uses Unity Undo. | Check appearance and performance; save scenes when satisfied. Prefab assets outside loaded scenes are audited by the project scan but are not batch edited. |
-| **OPTIMIZE LIGHTS (SCAN HIERARCHY)** | Reports lights in loaded Hierarchy scenes only. A scene light can be changed through **REVIEW & OPTIMIZE** after a per-light confirmation: its shadows are disabled. | Use Unity Undo if the result changes the scene's intended lighting. There is no automatic bulk light change. |
-| **SCAN FOR PROBLEMS** | Reads project texture imports and particle prefabs, plus particles, lights and meshes in loaded Hierarchy scenes. | Select each reported asset or object and assess it in context. The scan never applies changes. |
-| **CHECK SCENE MESHES** | Reports mesh vertices, triangles and bounds for objects in loaded Hierarchy scenes, plus model importer Read/Write, compression and import optimization when applicable. | Decide manually whether model changes are safe for rigs, UVs, blendshapes and animation. |
+| Textures | Project assets under `Assets` | Textures referenced by materials on the selected hierarchy |
+| Particles | Loaded scenes | Selected hierarchy |
+| Lights | Loaded scenes | Selected hierarchy |
+| Meshes | Loaded scenes | Selected hierarchy; imported model compression preview |
+| Materials | — | Repeated and empty material slots, plus renderers with many slots |
 
-**Individual OPTIMIZE** is available for supported textures and scene particles. Prefab asset particle and light issues can be selected for inspection; open the prefab in Prefab Mode to edit it through Unity. The results list is a snapshot: rerun the scan to refresh it after edits.
+Issue reports are diagnostic. Light shadow changes require per-light confirmation; particle scene changes use Undo. Texture and model importer changes should be reviewed in version control before batch editing.
 
-### Particle preset details
+## Particle controls
 
-- **Conservative:** caps maximum particles to 500 when higher; preserves costly modules.
-- **Balanced:** caps maximum particles to 500 and disables particle shadow casting; leaves other modules intact.
-- **Quest Performance:** caps particles to 250 and constant lifetime to 10 seconds; disables trails, collision, noise, particle lights and shadows. Sub emitters remain enabled unless explicitly checked.
-- **Custom:** each setting is controlled by its checkbox and value.
-
-A cap affects only higher values. Lifetime capping applies only to constant start lifetime, not random ranges or curves. Emission, sorting, simulation space, 3D size/rotation, mesh rendering and potential overdraw are reported for review rather than silently rewritten.
+Set the maximum particle count and optional constant lifetime cap directly. Toggle trails, collision, noise, lights, shadows and sub emitters individually. A cap affects only higher values. Lifetime capping applies only to a constant start lifetime. Emission, sorting, simulation space, 3D size/rotation, mesh rendering and potential overdraw are reported for review.
 
 ## Safety and scope
 
@@ -87,8 +76,8 @@ Texture source dimensions do not equal GPU memory usage. Particle overdraw depen
 - **Package Manager cannot install from Git:** verify Git is installed, the URL ends in `.git`, and you have permission to access the repository. For private repos, configure Git authentication outside Unity.
 - **No FISHHWB menu appears:** wait for Unity compilation, then inspect Console compiler errors. Confirm that `Editor/FISHHWBVR/FISHHWB.VROptimizer.Editor.asmdef` and root `package.json` are present.
 - **Texture still looks large:** platform importer caps take effect for the selected build target. Check the texture's Inspector platform tab and switch the Unity build target before comparing output.
-- **No scene particles or lights found:** open the scene containing the objects and run the scan again. Particle prefabs are audited as assets, while particle bulk optimization and light/mesh audits are limited to loaded scenes.
-- **A preset changed a desired effect:** press **Edit → Undo** for scene object edits. For importer settings, restore the asset metadata (`.meta`) from version control.
+- **No scene particles or lights found:** open the scene containing the objects and run the scan again. The World page filters particle findings to loaded scenes; project texture checks include assets.
+- **An action changed a desired effect:** press **Edit → Undo** for scene object edits. For importer settings, restore the asset metadata (`.meta`) from version control.
 
 ## Repository layout
 
@@ -107,6 +96,6 @@ LICENSE                       MIT
 
 FISHHWB VR Optimizer is free and licensed under MIT. Contributions and bug reports are welcome through GitHub issues and pull requests. Please include your Unity version, target platform, reproduction steps and relevant Console errors.
 
-## Planned next update
+## Future updates
 
-The [automation roadmap](Documentation/Roadmap.md) stages a v0.6.5 avatar update, 0.7.0 controlled batches for VR and Unity games, 0.8.0 scene effects, 0.9.0 PC/mobile importer workflows, and a 1.0.0 Unity creator workflow. The first stage covers **Texture Change Preview**, a focused **Avatar Check**, and **OPTIMIZE AVATAR PARTICLES**. Later stages add repeatable tasks for indie-game projects and investigate social VR support beyond VRChat: ChilloutVR in Unity, Resonite asset preparation and a separate Horizon Worlds workflow. Godot and Unreal editor add-ons are longer-term options after Unity 1.0. **Those features are planned, not included in v0.6.4; this package currently runs only in Unity.**
+See the [automation roadmap](Documentation/Roadmap.md) for planned batch restoration, scene branch actions, reviewed model imports, avatar material checks and options for other creator platforms. These are plans, not shipped features.

@@ -80,7 +80,7 @@ namespace FISHHWB.VROptimizer
                     slots++;
                     if (!material)
                     {
-                        issues.Add(new VRIssue(VRSeverity.Info, VRCategory.Mesh, renderer.name + ": Empty material slot", renderer));
+                        issues.Add(new VRIssue(VRSeverity.Info, VRCategory.Material, renderer.name + ": Empty material slot", renderer));
                         continue;
                     }
                     materials[material] = materials.TryGetValue(material, out int count) ? count + 1 : 1;
@@ -91,10 +91,10 @@ namespace FISHHWB.VROptimizer
                     }
                 }
                 if (renderer.sharedMaterials.Length > 4)
-                    issues.Add(new VRIssue(VRSeverity.Info, VRCategory.Mesh, renderer.name + ": " + renderer.sharedMaterials.Length + " material slots", renderer));
+                    issues.Add(new VRIssue(VRSeverity.Info, VRCategory.Material, renderer.name + ": " + renderer.sharedMaterials.Length + " material slots", renderer));
             }
             foreach (var pair in materials)
-                if (pair.Value > 1) issues.Add(new VRIssue(VRSeverity.Info, VRCategory.Mesh,
+                if (pair.Value > 1) issues.Add(new VRIssue(VRSeverity.Info, VRCategory.Material,
                     pair.Key.name + " used in " + pair.Value + " slots", pair.Key));
             int particles = root.GetComponentsInChildren<ParticleSystem>(true).Length;
             int lights = root.GetComponentsInChildren<Light>(true).Length;

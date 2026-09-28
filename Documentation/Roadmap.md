@@ -1,6 +1,6 @@
 # FISHHWB VR Optimizer: automation roadmap
 
-**Current package target: v0.6.5.** Later milestones below are proposed future work, not a feature in the current package. Version numbers are planning targets, not release dates. The existing Git URL package is **Unity Editor only**.
+**Current package target: v0.6.6.** Later milestones below are proposed future work. Version numbers are planning targets, not release dates. The existing Git URL package is **Unity Editor only**.
 
 ## Product goal
 
@@ -10,7 +10,7 @@ The window should eventually offer three **workflow choices**, not three separat
 
 | Workflow | Default scope | Useful actions |
 | --- | --- | --- |
-| **VR Avatar** | Selected avatar root | Texture preview, avatar check, particle preset; optional platform-specific guidance after platform validation |
+| **VR Avatar** | Selected avatar root | Texture preview, avatar check, particle controls; optional platform-specific guidance after platform validation |
 | **VR World** | Selected scene branch or loaded scenes | Texture preview, particle changes, reviewed light shadows; optional platform-specific guidance after platform validation |
 | **Unity Game** | Selected folder or scene branch | Texture and Sprite import caps, particle and light changes, reviewed model and audio imports |
 
@@ -20,12 +20,13 @@ The [VRChat avatar performance ranking reference](https://creators.vrchat.com/av
 
 ## Release progression
 
-Use **0.6.5** for the agreed improvement to the current 0.6 line. Each subsequent **minor release** delivers a complete workflow, not one isolated checkbox. Use patch numbers after those milestones for fixes and polish; do not reserve a separate release for every small action.
+Use **0.6.6** for the World/Avatar UI and reviewed mesh compression. Each subsequent **minor release** delivers a complete workflow, not one isolated checkbox. Use patch numbers after those milestones for fixes and polish; do not reserve a separate release for every small action.
 
 | Milestone | Theme and headline | Creator benefit |
 | --- | --- | --- |
 | **0.6.4 — Foundation** | Texture and particle actions, scene light and mesh diagnostics | First useful set of repeatable Editor buttons |
-| **0.6.5 — Current implementation** | Preview texture edits; check one avatar; optimize its particles | Try the tool on an avatar and know what will change |
+| **0.6.5 — Avatar starter** | Preview texture edits; check one avatar; optimize its particles | Try the tool on an avatar and know what will change |
+| **0.6.6 — Current implementation** | World / Avatar pages, area issue buttons, severity filters, direct controls, reviewed mesh compression | Find one issue type and selectively apply a model compression level |
 | **0.7.0 — Controlled batches** | Project, folder or selection scope; texture batch restoration; first Unity Game workflow choice | Safely handle game and VR textures without repeating Inspector work |
 | **0.8.0 — Scene effects** | Selected-branch particle batches and reviewed light-shadow batches; validate a ChilloutVR choice | Tackle effects and lighting in VR worlds and indie-game levels |
 | **0.9.0 — Platform imports** | PC/mobile texture override fixes, reviewed model/audio importer actions and Resonite preparation guidance | Prepare assets for more destinations without visiting every import tab |
@@ -66,17 +67,17 @@ Select one avatar root in the Hierarchy. Show a concise inventory of used textur
 
 ### OPTIMIZE AVATAR PARTICLES
 
-Apply the existing particle preset to particle systems under the selected avatar root only. Show found, changed, unchanged and skipped totals. Record scene changes through Unity Undo. If the selected root is a prefab asset instead of an editable scene object, make the editing behavior explicit before changes.
+Apply the selected particle controls to particle systems under the selected avatar root only. Show found, changed, unchanged and skipped totals. Record scene changes through Unity Undo. If the selected root is a prefab asset instead of an editable scene object, make the editing behavior explicit before changes.
 
 **Helps:** applying one sensible cap across an avatar's effect hierarchy without modifying world effects elsewhere in the scene.
 
-## Additional update options after 0.6.5
+## Additional update options after 0.6.6
 
 | Candidate | Repetitive job removed | Sensible stage |
 | --- | --- | --- |
 | Material usage map | Locate duplicate and unused material slots across an avatar | 0.7.x |
 | Texture restore batches | Restore importer overrides after a rejected Quest test | 0.7.0 |
-| Scene branch presets | Apply one particle preset to an effects hierarchy | 0.8.0 |
+| Scene branch controls | Apply saved particle controls to an effects hierarchy | 0.8.0 |
 | Shadow review batch | Turn off selected realtime shadows with one Undo group | 0.8.0 |
 | Model importer review | Find and selectively disable Read/Write on safe assets | 0.9.0 |
 | Game audio import groups | Review groups of clips and apply chosen settings once | 0.9.0 |
@@ -84,6 +85,22 @@ Apply the existing particle preset to particle systems under the selected avatar
 | Other social VR preparation | Generate platform-specific asset preparation where verified | After 1.0 |
 
 Each candidate needs an exact before/after preview where importer or visual behavior changes, and a verified way back. Keep VRChat, ChilloutVR, Resonite and Horizon Worlds integrations separate where their creator pipelines differ.
+
+## Mesh and avatar work to evaluate
+
+| Stage | Mesh or avatar task | Safe release boundary |
+| --- | --- | --- |
+| 0.7.x | Record model importer changes for batch restoration | Restore only importers whose current settings still match the tool's last edit |
+| 0.7.x | Find unused or duplicate material slots in a selected avatar | Preview references; report only until animation and shader behavior can be checked |
+| 0.8.x | Selected branch mesh audit with large bounds and redundant hidden meshes | Never remove components without a dependency and animation review |
+| 0.8.x | Avatar effect inventory and per-system particle selections | Apply only checked scene objects with a single Undo group |
+| 0.9.x | Reviewed model Read/Write changes and mesh optimization import flags | Require per-model opt-in and verify scripts that need CPU mesh access |
+| 0.9.x | Optional LOD authoring guidance for world props | Avoid automatic LOD generation that alters silhouettes or collision |
+| 1.x | Mesh merge candidates for repeated static props | Check occlusion, lightmaps, materials, colliders and draw calls first; no blind joining |
+| 1.x | Avatar material and skinned mesh workflows | Require animation/rig/shader compatibility validation and a reversible result |
+
+Mesh compression reduces stored mesh data but is not a reliable way to improve frame rate. Prioritize profiling, visibility and draw-call investigations where those are the bottlenecks. Performance estimates must be measured in the target build.
+
 ## 0.7.0: Controlled batches and recovery for Unity games
 
 **Headline:** choose exactly what the texture button touches, then be able to restore a batch.
@@ -99,9 +116,9 @@ Each candidate needs an exact before/after preview where importer or visual beha
 
 **Headline:** optimize particles and light shadows within a chosen scene branch, using a review list.
 
-- **PARTICLES IN SELECTION:** apply the existing preset to a selected Hierarchy branch, not the entire scene. Rank effects for review using observable settings such as maximum count, constant emission, trails, collision, mesh rendering, lights, shadows and transparent material. Label the ranking a heuristic, not measured GPU cost.
+- **PARTICLES IN SELECTION:** apply the selected controls to a selected Hierarchy branch, not the entire scene. Rank effects for review using observable settings such as maximum count, constant emission, trails, collision, mesh rendering, lights, shadows and transparent material. Label the ranking a heuristic, not measured GPU cost.
 - **REVIEW SCENE LIGHTS:** list realtime shadow-casting lights in the selected branch with type, range and owning object. **DISABLE SELECTED SHADOWS** changes only checked lights after confirmation. One Undo group restores the batch; leave bake mode, intensity and light objects intact.
-- **Shared custom particle preset:** save a named preset with the project so collaborators can repeat the same changes; visual modules remain explicit opt-ins.
+- **Shared particle settings:** optionally save a project configuration for repeat actions; the interface retains direct controls and visual modules remain explicit opt-ins.
 - **ChilloutVR validation pilot:** test the same selected avatar/world actions in a supported Unity + CCK project. Show a platform choice only for checks and actions that have been validated there; keep the core actions usable without CCK.
 
 **Helps:** effects-heavy VR worlds and indie-game levels where dozens of particle and light components need the same limited set of settings changed. VRChat notes that large transparent particles can cost more than raw counts suggest, so the review list does not equate particle count with actual frame time.
@@ -110,7 +127,7 @@ Each candidate needs an exact before/after preview where importer or visual beha
 
 **Headline:** automate PC/mobile importer checks after avatar and scene actions are under control.
 
-- **PC / MOBILE TEXTURE VIEW:** compare platform caps for textures in the chosen scope; flag missing Android and iOS overrides and show which files a chosen Quest or general mobile preset would change. **FIX MISSING OVERRIDES** adds only selected missing size overrides, preserving format, compression and source images.
+- **PC / MOBILE TEXTURE VIEW:** compare platform caps for textures in the chosen scope; flag missing Android and iOS overrides and show which files the entered Quest or general mobile cap would change. **FIX MISSING OVERRIDES** adds only selected missing size overrides, preserving format, compression and source images.
 - **MODEL READ/WRITE REVIEW:** list models used by a selected root that are imported as readable. Offer a previewed, checked batch action; warn that scripts, mesh baking and other runtime operations may depend on Read/Write. Reimport changed models only and provide a restore path.
 - **AUDIO IMPORT PREVIEW (Unity Game):** group short sound effects and long music or ambience for review, then optionally apply checked platform load type or compression settings to selected clips. Show old/new settings and allow restoration; never change all audio based on duration alone, since playback and quality needs differ. Unity exposes these through [`AudioImporterSampleSettings`](https://docs.unity3d.com/2022.3/Documentation/ScriptReference/AudioImporterSampleSettings.html).
 - **Platform readiness summary:** report work still needed using actual observed settings. Do not claim a VRChat rating or device frame-rate result based on this static summary.

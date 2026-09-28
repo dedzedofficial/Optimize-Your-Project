@@ -34,7 +34,6 @@ namespace FISHHWB.VROptimizer
             var importer = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(mesh)) as ModelImporter;
             if (importer == null) return;
             if (importer.isReadable) Add(VRSeverity.Info, "Read/Write enabled on imported model");
-            if (importer.meshCompression == ModelImporterMeshCompression.Off) Add(VRSeverity.Info, "Mesh compression disabled");
             if (!importer.optimizeMeshPolygons || !importer.optimizeMeshVertices) Add(VRSeverity.Info, "Import mesh optimization partially disabled");
 
             void Add(VRSeverity severity, string message)

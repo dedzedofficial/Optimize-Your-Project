@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.6
+
+- Split the Editor into World and Avatar pages with focused issue buttons and All / Critical / Warning filters.
+- Removed preset UI and kept direct texture and particle controls.
+- Added selected model importer mesh compression preview and application with per-model exclusion and confirmation.
+- Expanded mesh and avatar roadmap options.
+
 ## 0.6.5
 
 - Selected scene avatar inventory and material-slot checks.

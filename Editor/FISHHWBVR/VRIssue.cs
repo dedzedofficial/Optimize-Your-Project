@@ -3,7 +3,7 @@ using UnityEngine;
 namespace FISHHWB.VROptimizer
 {
     internal enum VRSeverity { Info, Warning, Critical }
-    internal enum VRCategory { Texture, Particle, Light, Mesh }
+    internal enum VRCategory { Texture, Particle, Light, Mesh, Material }
     internal sealed class VRIssue
     {
         public readonly VRSeverity Severity;
