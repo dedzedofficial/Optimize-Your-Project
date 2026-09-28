@@ -1,0 +1,32 @@
+name: Publish VPM package
+on:
+  push:
+    tags:
+      - 'v*'
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: vpm-release
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build package and listing
+        run: python3 scripts/build_vpm.py
+      - name: Publish release archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "v$(python3 -c 'import json; print(json.load(open("package.json"))["version"])')" dist/*.zip --generate-notes
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v4
+        id: deployment

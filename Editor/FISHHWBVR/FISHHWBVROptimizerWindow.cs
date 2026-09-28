@@ -12,6 +12,9 @@ namespace FISHHWB.VROptimizer
         VRSettings settings;
         List<VRIssue> results = new List<VRIssue>();
         Vector2 scroll;
+        GameObject avatar;
+        List<VRTextureChange> preview;
+        bool avatarTextures = true;
         bool showParticleOptions;
         string summary = "Ready. Choose an action below to begin.";
 
@@ -43,8 +46,25 @@ namespace FISHHWB.VROptimizer
         {
             if (settings == null) settings = VRSettings.Load();
             scroll = EditorGUILayout.BeginScrollView(scroll);
-            Header("FISHHWB VR OPTIMIZER", "v0.6.4  •  Free tools for VR creators");
+            Header("FISHHWB VR OPTIMIZER", "v0.6.5  •  Free tools for VR creators");
             GUILayout.Space(10);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("AVATAR", EditorStyles.boldLabel);
+            var selectedAvatar = (GameObject)EditorGUILayout.ObjectField("Scene avatar root", avatar, typeof(GameObject), true);
+            if (GUILayout.Button("USE CURRENT SELECTION")) selectedAvatar = Selection.activeGameObject;
+            if (selectedAvatar != avatar) { avatar = selectedAvatar; preview = null; }
+            using (new EditorGUI.DisabledScope(!VRAvatarWorkflow.EditableRoot(avatar)))
+            {
+                if (GUILayout.Button("CHECK AVATAR"))
+                {
+                    results = VRAvatarWorkflow.Check(avatar, out string overview);
+                    summary = overview;
+                }
+                if (GUILayout.Button("OPTIMIZE AVATAR PARTICLES")) OptimizeAvatarParticles();
+            }
+            if (avatar && !VRAvatarWorkflow.EditableRoot(avatar))
+                EditorGUILayout.HelpBox("Select an avatar root in a loaded scene. Prefab assets must be opened in a scene before editing.", MessageType.Warning);
+            EditorGUILayout.EndVertical();
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("TEXTURES", EditorStyles.boldLabel);
@@ -57,7 +77,20 @@ namespace FISHHWB.VROptimizer
             settings.ios = SizeField("iOS", settings.ios);
             if (EditorGUI.EndChangeCheck()) settings.texturePreset = VRTexturePreset.Custom;
             GUILayout.Space(4);
-            if (GUILayout.Button("OPTIMIZE TEXTURES", GUILayout.Height(34))) OptimizeTextures();
+            bool nextAvatarTextures = EditorGUILayout.ToggleLeft("Only textures used by selected avatar", avatarTextures);
+            if (nextAvatarTextures != avatarTextures) { avatarTextures = nextAvatarTextures; preview = null; }
+            if (GUILayout.Button("PREVIEW TEXTURE CHANGES", GUILayout.Height(34)))
+            {
+                settings.Sanitize();
+                if (avatarTextures && !VRAvatarWorkflow.EditableRoot(avatar))
+                    summary = "Select a scene avatar root, or untick avatar-only scope.";
+                else
+                {
+                    preview = VRAvatarWorkflow.CollectTextures(avatarTextures ? avatar : null, settings);
+                    summary = "Preview: " + preview.Count + " supported textures. Review the effective caps below.";
+                }
+            }
+            DrawPreview();
             EditorGUILayout.EndVertical();
 
             GUILayout.Space(6);
@@ -102,7 +135,7 @@ namespace FISHHWB.VROptimizer
             EditorGUILayout.LabelField("Project textures and particle prefabs; lights, meshes and particles in loaded scenes.", EditorStyles.wordWrappedMiniLabel);
             if (GUILayout.Button("SCAN FOR PROBLEMS", GUILayout.Height(34))) Scan(null);
             EditorGUILayout.EndVertical();
-            if (EditorGUI.EndChangeCheck()) { settings.Sanitize(); settings.Save(); }
+            if (EditorGUI.EndChangeCheck()) { settings.Sanitize(); settings.Save(); preview = null; }
             GUILayout.Space(8);
             EditorGUILayout.HelpBox(summary, MessageType.Info);
             DrawResults();
@@ -114,6 +147,54 @@ namespace FISHHWB.VROptimizer
             if (GUILayout.Button("PATREON")) Application.OpenURL("https://www.patreon.com/cw/DedZed");
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndScrollView();
+        }
+
+        void DrawPreview()
+        {
+            if (preview == null) return;
+            EditorGUILayout.LabelField("TEXTURE PREVIEW (current → proposed PC / Android / iOS)", EditorStyles.boldLabel);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("INCLUDE ALL")) foreach (var item in preview) item.Include = true;
+            if (GUILayout.Button("EXCLUDE ALL")) foreach (var item in preview) item.Include = false;
+            EditorGUILayout.EndHorizontal();
+            foreach (var item in preview)
+            {
+                item.Include = EditorGUILayout.ToggleLeft(item.Path + (item.Changed ? "" : " (unchanged)"), item.Include);
+                EditorGUILayout.LabelField("    " + item.Before[0] + " → " + item.After[0] + " / " + item.Before[1] + " → " + item.After[1] + " / " + item.Before[2] + " → " + item.After[2], EditorStyles.miniLabel);
+            }
+            if (GUILayout.Button("APPLY SELECTED", GUILayout.Height(32)))
+            {
+                int changed = 0, excluded = 0, unchanged = 0, failed = 0;
+                bool cancelled = false;
+                try
+                {
+                    for (int i = 0; i < preview.Count; i++)
+                    {
+                        if (EditorUtility.DisplayCancelableProgressBar("Apply Texture Changes", preview[i].Path, (float)i / preview.Count)) { cancelled = true; break; }
+                        var item = preview[i];
+                        if (!item.Include) { excluded++; continue; }
+                        if (!item.Changed) { unchanged++; continue; }
+                        try { if (VRTextureOptimizer.Optimize(item.Path, settings)) changed++; else unchanged++; }
+                        catch (Exception error) { failed++; Debug.LogError("VR Optimizer: " + item.Path + " — " + error); }
+                    }
+                }
+                finally { EditorUtility.ClearProgressBar(); }
+                summary = (cancelled ? "Cancelled. " : "Complete. ") + "Changed: " + changed + ", unchanged: " + unchanged + ", excluded: " + excluded + ", failed: " + failed + ". Rescan to verify.";
+                preview = null;
+            }
+        }
+
+        void OptimizeAvatarParticles()
+        {
+            if (!VRAvatarWorkflow.EditableRoot(avatar)) return;
+            var particles = avatar.GetComponentsInChildren<ParticleSystem>(true);
+            int changed = 0;
+            int group = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Optimize Avatar Particles");
+            foreach (var particle in particles)
+                if (VRParticleOptimizer.Optimize(particle, settings)) changed++;
+            Undo.CollapseUndoOperations(group);
+            summary = "Avatar particles: " + particles.Length + " found, " + changed + " changed, " + (particles.Length - changed) + " already at preset. Save the scene when satisfied; Undo restores changes.";
         }
 
         void DrawResults()

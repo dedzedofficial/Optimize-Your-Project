@@ -1,14 +1,31 @@
 # FISHHWB VR Optimizer
 
-**Version 0.6.4 · Free Unity Editor package · FISHHWB | Ded Zed**
+**Version 0.6.5 · Free Unity Editor package · FISHHWB | Ded Zed**
 
 FISHHWB VR Optimizer speeds up recurring VR and VRChat project work: texture import overrides, particle settings, light audits and mesh diagnostics. It does not require the VRChat SDK or any third-party package.
+
+## What this helps with
+
+| Repetitive job | How v0.6.5 helps |
+| --- | --- |
+| Setting PC, Quest and iOS maximum sizes on many textures | Choose a preset or three sizes, then press **OPTIMIZE TEXTURES**. The tool compares importer settings and reimports only textures it changes. |
+| Checking every particle effect for costly modules | **SCAN FOR PROBLEMS** lists high counts, emission and enabled modules; **OPTIMIZE PARTICLES** applies the chosen preset to particle systems in loaded scenes with Unity Undo. |
+| Finding expensive lights in a busy scene | **OPTIMIZE LIGHTS (SCAN HIERARCHY)** lists likely costly lights in loaded scenes and offers an individually confirmed shadow change. |
+| Locating dense meshes without risking an avatar rig | **CHECK SCENE MESHES** reports mesh counts and importer settings for loaded Hierarchy objects; it never changes geometry. |
+
+This is an **Editor workflow tool**: it saves setup and inspection time. It does not measure device frame rate or guarantee a particular VRChat performance rank. Review the results in your target build.
 
 ## Requirements
 
 - Unity **2021.3 LTS or newer**. The package contains Editor code only and does not add runtime components to a build.
 - Git installed and accessible to Unity for Git URL installation.
 - A project backup or a version control commit before large texture import changes.
+
+## Add to VRChat Creator Companion
+
+[**ADD TO VCC**](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FVR-Optimizer%2Findex.json)
+
+This button adds the package repository to Creator Companion, where you can then add **FISHHWB VR Optimizer** to a project. It requires a published VPM release and GitHub Pages configured to deploy from **GitHub Actions**. Until the v0.6.5 tag is published and `https://dedzedofficial.github.io/VR-Optimizer/index.json` loads, use the Git installation below. A Git URL cannot be added directly as a VCC package repository.
 
 ## Install from GitHub
 
@@ -25,6 +42,10 @@ FISHHWB VR Optimizer speeds up recurring VR and VRChat project work: texture imp
 6. Open **FISHHWB → VR Optimizer** from the top menu.
 
 This repository has `package.json` at its root, so no `?path=` suffix is needed. For a reproducible installation, append a released tag after publishing one, for example `https://github.com/dedzedofficial/VR-Optimizer.git#v0.6.4`. A private repository requires Git credentials on the developer's machine; public users cannot install a private repository by URL. GitHub's **Download ZIP** is source distribution, not the Git URL install method. If Git installation is unavailable, extract the repository into `Packages/com.fishhwb.vr-optimizer` inside your Unity project and add it as an embedded package.
+
+## Avatar workflow (v0.6.5)
+
+Select an avatar root in a loaded scene and press **CHECK AVATAR** to inventory textures, materials, slots, skinned triangles, particles and lights. **OPTIMIZE AVATAR PARTICLES** updates only that hierarchy and supports Undo. Choose avatar-only texture scope, press **PREVIEW TEXTURE CHANGES**, review PC/Android/iOS effective caps, untick exclusions and press **APPLY SELECTED**. Untick avatar-only scope to preview the whole project. Existing stricter importer overrides remain stricter; the preview does not increase them.
 
 ## Quick start
 
@@ -74,7 +95,7 @@ Texture source dimensions do not equal GPU memory usage. Particle overdraw depen
 ```text
 package.json
 Editor/FISHHWBVR/             Editor-only assembly, window, optimizers, scanners, settings
-Documentation/                Architecture notes
+Documentation/                Architecture notes and planned updates
 README.md                     Install, use, safety and troubleshooting
 CHANGELOG.md                  Release history
 LICENSE                       MIT
@@ -85,3 +106,7 @@ LICENSE                       MIT
 [Website](https://fishhwb.github.io/) · [Discord](https://discord.gg/wZGxxkk4Jg) · [Patreon](https://www.patreon.com/cw/DedZed)
 
 FISHHWB VR Optimizer is free and licensed under MIT. Contributions and bug reports are welcome through GitHub issues and pull requests. Please include your Unity version, target platform, reproduction steps and relevant Console errors.
+
+## Planned next update
+
+The [automation roadmap](Documentation/Roadmap.md) stages a v0.6.5 avatar update, 0.7.0 controlled batches for VR and Unity games, 0.8.0 scene effects, 0.9.0 PC/mobile importer workflows, and a 1.0.0 Unity creator workflow. The first stage covers **Texture Change Preview**, a focused **Avatar Check**, and **OPTIMIZE AVATAR PARTICLES**. Later stages add repeatable tasks for indie-game projects and investigate social VR support beyond VRChat: ChilloutVR in Unity, Resonite asset preparation and a separate Horizon Worlds workflow. Godot and Unreal editor add-ons are longer-term options after Unity 1.0. **Those features are planned, not included in v0.6.4; this package currently runs only in Unity.**

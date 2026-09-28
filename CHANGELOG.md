@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.5
+
+- Selected scene avatar inventory and material-slot checks.
+- Avatar-scoped particle optimization with grouped Unity Undo.
+- Preview and selective application of project or avatar texture caps.
+- VPM release automation and Creator Companion repository button (available after first tagged release and Pages deployment).
+
 ## 0.6.4
 
 - Simplified editor window with platform size dropdowns and custom entry.
