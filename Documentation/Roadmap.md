@@ -39,7 +39,7 @@ These are proposed scopes, not dates or guarantees. New features move into relea
 
 ## Blender track: 0.7.5 preview and later work
 
-The repository root remains the Unity Package Manager package. Blender lives in `Blender/vr_optimizer_blender/` as a separate native add-on. **0.7.5 names the Blender add-on milestone, not the Unity package version.** Do not change Unity's `package.json` until a Unity release is independently ready.
+The repository root remains the Unity Package Manager package. Blender lives in `Blender/vr_optimizer_blender/` as a separate native add-on. **0.7.5 names the Blender add-on milestone, not the Unity package version.** Keep Unity's package ID and 0.6.73 version stable; the display name may follow the shared product identity without changing Unity features.
 
 ### 0.7.5 scope
 
@@ -62,7 +62,7 @@ The repository root remains the Unity Package Manager package. Blender lives in 
 
 Keep the interface short: choose the mesh operation, enter only the size or distance it needs, press one button. Place detailed warnings in a deliberate scan/report action later. Do not claim a VRChat rank or frame-rate increase from triangle counts alone.
 
-#### Camera visibility separation idea (research, after 0.7.5)
+### Camera visibility separation idea (research, after 0.7.5)
 
 Provide a **Camera Visibility Preview** action for a chosen room or area. Place a camera at its center (or use selected cameras), sample all requested directions, test face visibility with frustum and occlusion checks, and report visible/uncertain/hidden faces. On confirmation, separate a **copy** into visible and candidate hidden geometry so the creator can reduce or inspect the latter. Keep source topology, UVs and materials unchanged. Never delete faces automatically. One central camera cannot describe every player viewpoint, mirrors, portals, moving props or the outside of the room; offer multiple camera positions and a conservative uncertainty class before any optimization.
 
