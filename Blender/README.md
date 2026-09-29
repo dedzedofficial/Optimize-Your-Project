@@ -8,6 +8,16 @@ Publisher: FISHHWB | Ded Zed. See the [unified roadmap](../Documentation/Roadmap
 
 After the `blender-v0.7.5` release is published, download `optimize-your-project-blender-0.7.5.zip` from [Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases). Install this add-on ZIP in Blender's **Edit > Preferences > Add-ons > Install...** (or **Get Extensions > Install from Disk** in newer versions), then enable it. In the 3D Viewport press **N** and open the **FISHHWB** tab.
 
+## Blender mesh optimization: common tasks
+
+**How do I reduce a mesh to a triangle limit in Blender?** Select one mesh, set **Triangle Limit** and use **Create Reduced Copy**. The add-on makes a decimated copy at or below that count while keeping the original. This is useful when preparing a static prop for Unity, VRChat or another real-time scene.
+
+**How do I make LOD meshes in Blender?** Select a static mesh and press **Create LOD0 / LOD1 / LOD2**. It creates separate copies at 100%, at most 66% and at most 33% of the original triangle count. These are exportable mesh variants; automatic distance switching is configured later in the target engine.
+
+**How do I join meshes, merge vertices and combine textures?** Select at least two mesh objects, set a weld distance, then use **Join Selected and Merge Vertices**. Enable **Merge Base Color Textures + UVs** when the materials meet the atlas requirements below. The tool creates a new mesh, one Base Color image atlas and remapped UVs. It does not bake normal, metallic or roughness maps.
+
+All actions create copies so you can compare before and after. Inspect the result in Blender and the target engine before replacing production assets.
+
 ## Actions
 
 - **Create Reduced Copy:** select one mesh in Object Mode, enter a triangle limit, then create a decimated duplicate at or below that count. Original remains intact.
