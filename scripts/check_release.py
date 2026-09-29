@@ -32,6 +32,10 @@ assert "DrawUpdateFooter();" in window
 assert "VRUpdateHealth.FarBehind" in window
 assert "Android / Mobile" in window
 assert "FISHHWB VR Optimizer" not in window
+assert "FREE FOR DEVELOPERS" in window
+assert "SUPPORT DEVELOPMENT ON PATREON" in window
+assert "https://www.patreon.com/cw/DedZed" in window
+assert "BeginCard(" in window
 
 project_scanner = (root / "Editor/FISHHWBVR/VRProjectScanner.cs").read_text(encoding="utf-8")
 assert '"Optimize Your Project"' in project_scanner
@@ -56,7 +60,10 @@ assert versions["blender_tag"] == "blender-v" + blender_version
 assert 'bl_idname = "fishhwb.one_click_remesh"' in source_text
 assert 'bl_idname = "fishhwb.merge_vertices"' in source_text
 assert "ONE-CLICK CLEANUP" in source_text
-assert "ADVANCED MESH TOOLS" in source_text
+assert "Show Advanced Mesh Tools" in source_text
+assert "FREE FOR DEVELOPERS" in source_text
+assert "SUPPORT DEVELOPMENT ON PATREON" in source_text
+assert "https://www.patreon.com/cw/DedZed" in source_text
 
 for path in [
     root / "README.md",
