@@ -2,6 +2,8 @@
 
 ## 0.6.7
 
+- Fixed ambiguous PackageInfo compiler reference in the update checker and completed Unity meta coverage for package files.
+
 - Added a Project page with folder-scoped texture compression cleanup, individual platform selections, batch reimports and resolved-format reporting.
 - Added an Editor window icon, a clearly separated Updates page, and more visible job and action sections.
 - Added GitHub stable-release checks, release notes and confirmed Git package updates through Unity Package Manager. Other install sources show update guidance.
