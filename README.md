@@ -88,6 +88,10 @@ LICENSE                       MIT
 
 FISHHWB VR Optimizer is free and licensed under MIT. Contributions and bug reports are welcome through GitHub issues and pull requests. Please include your Unity version, target platform, reproduction steps and relevant Console errors.
 
+## Blender add-on (0.7.5 preview)
+
+The [Blender add-on](Blender/README.md) is a separate native install under `Blender/vr_optimizer_blender/`. It creates reduced mesh copies, joins selected mesh copies with adjustable vertex welding, and can build a Base Color image atlas with remapped UVs for supported materials. Install the `Blender/vr_optimizer_blender` folder as a ZIP through Blender preferences; the repository root Git URL remains the Unity package at v0.6.73. The Blender 0.7.5 source is a preview pending tests in Blender and export round trips. See the [Blender 0.7.5 plan](Documentation/Blender-0.7.5.md).
+
 ## Future updates
 
 See the [automation roadmap](Documentation/Roadmap.md) for planned batch restoration, scene branch actions, reviewed model imports, avatar material checks and options for other creator platforms. These are plans, not shipped features.

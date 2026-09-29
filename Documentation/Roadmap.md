@@ -1,6 +1,6 @@
 # FISHHWB VR Optimizer: automation roadmap
 
-**Current package target: v0.6.73.** Later milestones below are proposed future work. Version numbers are planning targets, not release dates. The existing Git URL package is **Unity Editor only**.
+**Current Unity package target: v0.6.73. Blender 0.7.5 is a separate preview add-on; see [its plan](Blender-0.7.5.md).** Later milestones below are proposed future work. Version numbers are planning targets, not release dates. The existing Git URL package is **Unity Editor only**.
 
 ## Product goal
 
@@ -182,11 +182,11 @@ Mesh compression reduces stored mesh data but is not a reliable way to improve f
 
 **Helps:** an experienced VR or indie-game creator finish a routine pass in minutes while still seeing exactly which assets or components will be edited. This integrates tested 0.6–0.9 actions; it is not a hidden "optimize everything" button.
 
-## After 1.0: Other engine options
+## Other native tool options after the Blender pilot
 
-The Unity Package Manager package cannot run in another engine. Treat each new engine as a **separate native editor add-on** with its own installation instructions, versioning and tests. Reuse the product approach—scope, preview, compare, apply, restore and report—rather than copying Unity importer code or assuming equal engine settings.
+The Unity Package Manager package cannot run in another engine. Blender 0.7.5 is the first separate native pilot. Treat further engines as **separate native editor add-ons** with its own installation instructions, versioning and tests. Reuse the product approach—scope, preview, compare, apply, restore and report—rather than copying Unity importer code or assuming equal engine settings.
 
-1. **Godot pilot:** build a small `EditorPlugin` add-on with one complete workflow: select a project folder, preview texture import settings, apply checked changes, then restore a batch. Validate against a supported Godot version and a real 2D/3D sample project before adding particle or light actions. Godot exposes editor extension points through [`EditorPlugin`](https://docs.godotengine.org/en/stable/classes/class_editorplugin.html).
+1. **Godot pilot after Blender validation:** build a small `EditorPlugin` add-on with one complete workflow: select a project folder, preview texture import settings, apply checked changes, then restore a batch. Validate against a supported Godot version and a real 2D/3D sample project before adding particle or light actions. Godot exposes editor extension points through [`EditorPlugin`](https://docs.godotengine.org/en/stable/classes/class_editorplugin.html).
 2. **Unreal investigation and pilot:** use editor-only tooling such as Editor Utility Widgets or Python to trial a selected-folder texture import review. First confirm the appropriate asset API, transaction/undo behavior and packaging path in the targeted Unreal version. Epic documents editor scripting and utility widgets for asset workflows: [Scripting and Automating the Unreal Editor](https://dev.epicgames.com/documentation/unreal-engine/scripting-and-automating-the-unreal-editor).
 3. **Shared roadmap, engine-specific behavior:** use common terms for what a batch proposes and records, but maintain separate rules for each engine's texture, particle and light systems. A feature ships for an engine only after native preview, cancellation, restoration and test coverage exist there.
 
