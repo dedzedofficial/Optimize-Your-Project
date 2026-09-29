@@ -1,130 +1,106 @@
 # Optimize Your Project
 
-<img src="Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="160">
+<img src="Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="150">
 
-**Unity 0.6.73 · Blender 0.7.5 preview · FISHHWB | Ded Zed**
+**v0.7.0 · General developer optimization tools · Unity + Blender · FISHHWB | Ded Zed**
 
-Optimize Your Project speeds up recurring VR and VRChat project work: texture import overrides, particle settings, light audits and mesh diagnostics. It does not require the VRChat SDK or any third-party package.
+Optimize Your Project is for developers building **any kind of real-time project**. Its priority is removing repetitive optimization work through clear one-click actions, whether you are making a PC game, mobile project, VR title, social experience, prototype, or reusable asset pack. Unity is the first full integration and Blender is the first external creation-tool integration.
 
-## Install by platform
+## Quick install
 
-| Platform | Start here | What happens |
-| --- | --- | --- |
-| VRChat Creator Companion | [Add repository to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json) | Opens VCC to add the package listing. Select your project and add the package there after the VPM listing is published. |
-| Unity without VCC | Copy `https://github.com/dedzedofficial/Optimize-Your-Project.git` into Package Manager → Add package from git URL | Unity installs into the project you have open. |
-| Blender | Follow the [Blender install guide](Blender/README.md) | Install the add-on ZIP from Blender Preferences, then enable it. The 0.7.5 build is a preview. |
+| Platform | Fastest install |
+| --- | --- |
+| **Unity** | Package Manager → **+** → **Add package from git URL** → paste `https://github.com/dedzedofficial/Optimize-Your-Project.git` |
+| **Blender** | Download `optimize-your-project-blender-0.7.0.zip` from Releases → Blender Preferences / Get Extensions → **Install from Disk** |
+| **VRChat / VCC (optional)** | [Add the VPM repository](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the chosen project |
 
-A browser link cannot silently select a Unity project or install files into Blender. The [unified roadmap](Documentation/Roadmap.md#installation-experience) describes a dedicated Blender extension repository and optional project-aware installer to reduce the remaining steps.
+For a fixed Unity release after the v0.7.0 tag is published, use:
 
-## Unity optimization: what this package helps with
+```text
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.0
+```
 
-**How do I batch compress and resize textures in Unity for VRChat or Quest?** Choose World, Avatar or Project, enter PC, Android/Quest and iOS size caps, then use **Compress & Size Textures**. The tool updates eligible import settings and reimports changed textures once. It preserves explicitly selected formats and stricter existing limits.
+## Unity v0.7
 
-**How do I check a VRChat avatar or Unity scene for optimization issues?** Use the selected avatar or loaded World workflow for texture, particle, light and mesh checks. The full Project scan lists individual findings only when requested, with links back to the responsible assets.
+Open **FISHHWB → Optimize Your Project**.
 
-**Can this optimize imported meshes and particle systems?** The Unity package can apply model importer mesh compression, cap selected particle settings and disable selected realtime shadows. Mesh compression does not reduce triangle count. For actual triangle reduction, static LOD copies, mesh joining or Base Color atlases, use the [Blender mesh optimization add-on](Blender/README.md).
+The Unity window now has only two work pages. Neither page requires a VR SDK:
 
-These are Editor workflows for asset preparation. Profile a target build to measure performance; the tool does not calculate a guaranteed FPS gain or VRChat rank.
+- **PROJECT** — replaces the old World + Project split. Texture work uses the chosen Assets folder; particle, imported-mesh and realtime-light jobs operate on loaded scenes.
+- **AVATAR** — runs the same focused jobs against one selected character/avatar hierarchy. This can be used for ordinary game characters as well as social-VR avatars.
 
-## One click workflow
+Each job is a direct action. Detailed findings stay hidden unless you explicitly press **Scan Entire Project**.
 
-Choose **World**, **Avatar**, or **Project** and press the action you want. The work pages do not display individual warnings. Open **Project → Scan Entire Project** to see findings with All, Critical, and Warning filters.
+### Project buttons
 
-- **Compress & Size Textures:** enter maximum PC, Android/Quest and iOS sizes, then press one button. Eligible uncompressed automatic platform imports use Unity's automatic compressed format. Existing explicitly chosen formats and stricter size limits are preserved. Each changed texture is reimported once. World covers textures under Assets, Avatar covers textures referenced by the selected hierarchy, and Project covers the chosen Assets folder.
-- **Optimize Particles:** apply your entered particle count and selected module controls to loaded scenes or the avatar hierarchy. Unity Undo is supported.
-- **Compress Imported Meshes:** apply a chosen Unity model compression level to imported meshes used by loaded scenes or the selected avatar. Confirm the batch before it reimports.
-- **Disable Realtime Shadows:** turn off shadows on realtime lights in the selected scene scope after confirmation. Unity Undo is supported.
-- **Scan Entire Project:** show individual asset and loaded-scene findings only when you request a full scan. Select an item to locate it in Unity.
+- **Compress & Size Textures** — applies platform size caps and automatic compression to supported textures while preserving explicit formats and stricter existing limits.
+- **Optimize Particles** — applies the selected particle limits/settings to loaded scenes or the selected avatar.
+- **Compress Imported Meshes** — changes Unity model-importer mesh compression for model assets used in the current scope.
+- **Disable Realtime Shadows** — disables realtime light shadows in the current scope with Unity Undo support.
+- **Scan Entire Project** — runs the heavier diagnostic pass and shows filterable Critical / Warning results.
 
-The **Updates** page displays your installed version, checks GitHub releases, and offers a direct Unity update for Git installations. Embedded and VCC packages show source-specific update instructions.
+### Small update footer
 
-Importer edits change metadata, not source files. Keep a project backup or version control commit and inspect results in the target build. This tool does not promise a frame-rate improvement or VRChat rank.
+Updates no longer take a full page. The bottom footer shows the installed version and a status dot:
 
-## Requirements
+- **Green** — current.
+- **Orange** — an update is available and the install is one patch release behind.
+- **Red** — two or more patch releases behind, or a newer minor/major release exists. Example: **0.6.3 → 0.6.5** is red.
+- **Grey** — update status has not been checked or could not be resolved.
 
-- Unity **2021.3 LTS or newer**. The package contains Editor code only and does not add runtime components to a build.
-- Git installed and accessible to Unity for Git URL installation.
-- A project backup or a version control commit before large texture import changes.
+Git-installed Unity packages can use the footer update button directly. Embedded/VCC installs show the correct update route instead.
 
-## Add to VRChat Creator Companion
+## Blender v0.7
 
-[**ADD TO VCC**](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json)
+Blender support is also project-general: these tools are intended for game assets, environment props, characters without topology-sensitive rigs, prototypes, VR content, and other real-time workflows.
 
-This button adds the package repository to Creator Companion, where you can then add **Optimize Your Project** to a project. It requires a published VPM release and GitHub Pages configured to deploy from **GitHub Actions**. Until the v0.6.73 tag is published and `https://dedzedofficial.github.io/Optimize-Your-Project/index.json` loads, use the Git installation below. A Git URL cannot be added directly as a VCC package repository.
+The Blender add-on is under `Blender/vr_optimizer_blender/`.
 
-## Install from GitHub
+After installation, open the 3D Viewport sidebar (**N**) → **FISHHWB**.
 
-1. Open your Unity project.
-2. Open **Window → Package Manager**.
-3. Click **+ → Add package from git URL**.
-4. Paste:
+The first section is **ONE-CLICK CLEANUP**:
 
-   ```text
-   https://github.com/dedzedofficial/Optimize-Your-Project.git
-   ```
+- **One-Click Remesh** — makes a new static-mesh copy and remeshes it with an automatically selected detail size.
+- **Merge Duplicate Vertices** — makes a new copy and merges nearby duplicate vertices using **Merge Distance**.
 
-5. Click **Add** and allow Unity to import the package.
-6. Open **FISHHWB → Optimize Your Project** from the top menu.
+The original mesh is kept untouched. Rigged meshes, shape-key meshes, or cases where topology changes are unsafe are rejected rather than silently damaged.
 
-This repository has `package.json` at its root, so no `?path=` suffix is needed. For a reproducible installation, append a released tag after publishing one, for example `https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.6.73` (once tagged). A private repository requires Git credentials on the developer's machine; public users cannot install a private repository by URL. GitHub's **Download ZIP** is source distribution, not the Git URL install method. If Git installation is unavailable, extract the repository into `Packages/com.fishhwb.vr-optimizer` inside your Unity project and add it as an embedded package.
+Existing triangle-limit, join/atlas, and static LOD tools remain under **Advanced Mesh Tools**.
 
-## Replacing an older embedded copy
+## Safety
 
-If the window still says **v0.6.6** or **v0.6.7**, or only shows World and Avatar, Unity is loading the older package. Close Unity, replace the **entire** `Packages/com.fishhwb.vr-optimizer` folder with the contents of this v0.6.73 ZIP (the folder should directly contain `package.json`), then reopen the project. Do not keep a second copy under `Assets` or install a Git copy alongside an embedded copy. The new window shows **WORLD / AVATAR / PROJECT / UPDATES** across the top. If you installed by Git URL instead, GitHub must contain the new release before Package Manager can update it; a downloaded ZIP does not update a Git dependency automatically.
+Optimization changes can affect appearance. Use source control or a backup before large batches and inspect the result in the target platform.
 
-## Quick start
-
-1. Open **FISHHWB → Optimize Your Project**.
-2. Choose **World** for loaded scenes, **Avatar** for a selected root, or **Project** for an Assets folder.
-3. Enter sizes or settings and press an action button. A confirmation appears before importer or light batches.
-4. Use **Project → Scan Entire Project** only when you want individual warnings and issue details.
-
-## Safety and scope
-
-Texture optimization changes **Unity importer metadata**, never source image bytes. Importer changes are not guaranteed to be undoable through Unity Undo; commit your project first. The progress bar can cancel between assets, preserving completed changes. Particles and individual scene lights use Undo. Nothing deletes assets or decimates meshes. No automatic AssetPostprocessor runs on import in this version.
-
-Texture source dimensions do not equal GPU memory usage. Particle overdraw depends on on-screen size and material; light cost depends on the render pipeline and quality settings. Scans report useful heuristics rather than measured frame times. A full diagnostic scan occurs only when you press **Scan Entire Project**. Scene checks inspect only **loaded scenes**; Project texture scans inspect the selected Assets folder. Unopened scene files are not modified or audited.
-
-## Troubleshooting
-
-- **Package Manager cannot install from Git:** verify Git is installed, the URL ends in `.git`, and you have permission to access the repository. For private repos, configure Git authentication outside Unity.
-- **No FISHHWB menu appears:** wait for Unity compilation, then inspect Console compiler errors. Confirm that `Editor/FISHHWBVR/FISHHWB.VROptimizer.Editor.asmdef` and root `package.json` are present.
-- **Texture still looks large:** platform importer caps take effect for the selected build target. Check the texture's Inspector platform tab and switch the Unity build target before comparing output.
-- **No scene particles or lights found:** open the scene containing the objects and run the scan again. The World page filters particle findings to loaded scenes; project texture checks include assets.
-- **An action changed a desired effect:** press **Edit → Undo** for scene object edits. For importer settings, restore the asset metadata (`.meta`) from version control.
+Unity importer jobs change import metadata rather than source image files. Scene particle/light changes support Undo where applicable. Blender quick cleanup creates copies rather than replacing the source mesh.
 
 ## Repository layout
 
 ```text
-package.json
-Editor/FISHHWBVR/             Editor-only assembly, window, optimizers, scanners, settings
-Blender/                      Separate Blender add-on and usage guide
-Documentation/                Architecture notes and unified roadmap
-README.md                     Install, use, safety and troubleshooting
-CHANGELOG.md                  Release history
-LICENSE                       MIT
+package.json                         Unity package manifest
+version.json                         Unity / Blender update feed
+Editor/FISHHWBVR/                   Unity Editor implementation
+Blender/vr_optimizer_blender/       Blender add-on
+Blender/README.md                    Blender install and usage
+Documentation/                      Architecture and roadmap
+scripts/                            Release/package checks
+.github/workflows/                  VPM, Blender and PR validation
 ```
+
+## Release checks
+
+Pull requests run static package checks that validate:
+
+- Unity package/version feed consistency.
+- Blender add-on version consistency and Python syntax.
+- Required branding/package files.
+- v0.7 Project/Avatar UI shape.
+- Presence of the one-click Blender remesh and vertex-merge operators.
+- Buildability of both the Unity VPM archive and Blender add-on ZIP.
+
+Editor runtime testing is still required before publishing a release tag.
 
 ## Community
 
 [Website](https://fishhwb.github.io/) · [Discord](https://discord.gg/wZGxxkk4Jg) · [Patreon](https://www.patreon.com/cw/DedZed)
 
-Optimize Your Project is free and licensed under MIT. Contributions and bug reports are welcome through GitHub issues and pull requests. Please include your Unity version, target platform, reproduction steps and relevant Console errors.
-
-## Blender add-on (0.7.5 preview)
-
-The [Blender add-on](Blender/README.md) is a separate native install under `Blender/vr_optimizer_blender/`. It creates reduced mesh and LOD copies, joins selected mesh copies with adjustable vertex welding, and can build a Base Color image atlas with remapped UVs for supported materials. Install the `Blender/vr_optimizer_blender` folder as a ZIP through Blender preferences; the repository root Git URL remains the Unity package at v0.6.73. The Blender 0.7.5 source is a preview pending tests in Blender and export round trips. See the [unified roadmap](Documentation/Roadmap.md#blender-track-075-preview-and-later-work).
-
-## Release preparation
-
-The GitHub Actions **Check release packages** workflow validates the Unity package manifest, branding paths, VPM archive and Blender ZIP on each PR. It is a packaging check; creators should still test inside both editors.
-
-- **Unity package:** keep the package ID `com.fishhwb.vr-optimizer`. After a clean Unity 2021.3+ Editor test and a verified VPM listing URL, tag the matching manifest version as `v0.6.73`. The `Publish VPM package` workflow creates the ZIP and Pages listing.
-- **Blender add-on:** test installation, join/atlas/LOD actions, Undo, save/reopen and GLB export in supported Blender versions. Then tag `blender-v0.7.5`; the separate `Publish Blender add-on` workflow attaches an installable ZIP to its GitHub release.
-- The new logo comes from the supplied artwork. Its transparent 256-pixel UI copy is included in the Unity package and Blender add-on; the repository Markdown pages use the same mark.
-
-Release tags are separate because the Unity package is 0.6.73 and Blender is 0.7.5. Do not publish either tag until its editor checks pass. See the [unified roadmap](Documentation/Roadmap.md) for later optimization buttons.
-
-## Future updates
-
-See the [automation roadmap](Documentation/Roadmap.md) for planned batch restoration, scene branch actions, reviewed model imports, avatar material checks and options for other creator platforms. These are plans, not shipped features.
+Optimize Your Project is free and licensed under MIT.

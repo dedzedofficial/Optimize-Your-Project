@@ -27,7 +27,7 @@ namespace FISHHWB.VROptimizer
             {
                 for (int i = 0; i < paths.Count; i++)
                 {
-                    if (EditorUtility.DisplayCancelableProgressBar("FISHHWB VR Optimizer", "Scanning assets " + (i + 1) + "/" + paths.Count, paths.Count == 0 ? 1 : (float)i / paths.Count)) { cancelled = true; break; }
+                    if (EditorUtility.DisplayCancelableProgressBar("Optimize Your Project", "Scanning assets " + (i + 1) + "/" + paths.Count, paths.Count == 0 ? 1 : (float)i / paths.Count)) { cancelled = true; break; }
                     foreach (var module in Modules) if (!only.HasValue || Matches(module, only.Value)) module.ScanAsset(paths[i], settings, issues);
                 }
                 if (!cancelled)

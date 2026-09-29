@@ -1,10 +1,10 @@
 bl_info = {
     "name": "Optimize Your Project for Blender",
     "author": "FISHHWB | Ded Zed",
-    "version": (0, 7, 5),
+    "version": (0, 7, 0),
     "blender": (3, 6, 0),
     "location": "View3D > Sidebar > FISHHWB",
-    "description": "Mesh reduction, joining, Base Color atlases and static LOD copies",
+    "description": "One-click remesh and vertex cleanup with optional mesh reduction, joining and LOD tools",
     "category": "Mesh",
 }
 
@@ -437,6 +437,144 @@ class FISHHWB_OT_join_merge(bpy.types.Operator):
             return {'CANCELLED'}
 
 
+
+def _copy_mesh_object(source, context, suffix):
+    copy = source.copy()
+    copy.data = source.data.copy()
+    copy.name = source.name + suffix
+    context.collection.objects.link(copy)
+    copy.matrix_world = source.matrix_world.copy()
+    return copy
+
+
+def _select_only(context, obj):
+    for item in context.selected_objects:
+        item.select_set(False)
+    obj.select_set(True)
+    context.view_layer.objects.active = obj
+
+
+class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
+    bl_idname = "fishhwb.one_click_remesh"
+    bl_label = "One-Click Remesh"
+    bl_description = "Create a safe remeshed copy using an automatic voxel size"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT' and context.active_object is not None and context.active_object.type == 'MESH'
+
+    def execute(self, context):
+        source = context.active_object
+        if source.data.shape_keys or source.vertex_groups or any(m.type == 'ARMATURE' for m in source.modifiers):
+            self.report({'ERROR'}, "One-Click Remesh is for static meshes; rigged or shape-key meshes are skipped")
+            return {'CANCELLED'}
+
+        copy = _copy_mesh_object(source, context, "_Remesh")
+        original_selection = list(context.selected_objects)
+        original_active = source
+
+        try:
+            before = triangle_count(copy.data)
+            if before < 1:
+                raise ValueError("The selected mesh has no triangles")
+
+            max_dimension = max(abs(v) for v in copy.dimensions)
+            if max_dimension <= 0:
+                raise ValueError("The selected mesh has no usable size")
+
+            modifier = copy.modifiers.new("One Click Remesh", 'REMESH')
+            try:
+                modifier.mode = 'VOXEL'
+            except (TypeError, ValueError):
+                modifier.mode = 'SMOOTH'
+
+            if hasattr(modifier, "voxel_size"):
+                modifier.voxel_size = max(max_dimension / 96.0, 0.0001)
+            if hasattr(modifier, "octree_depth"):
+                modifier.octree_depth = 6
+            if hasattr(modifier, "use_smooth_shade"):
+                modifier.use_smooth_shade = True
+
+            depsgraph = context.evaluated_depsgraph_get()
+            context.view_layer.update()
+            evaluated = copy.evaluated_get(depsgraph)
+            result = bpy.data.meshes.new_from_object(
+                evaluated, preserve_all_data_layers=True, depsgraph=depsgraph)
+
+            after = triangle_count(result)
+            if after < 1:
+                bpy.data.meshes.remove(result)
+                raise ValueError("Remesh produced no triangles")
+
+            old_mesh = copy.data
+            copy.modifiers.clear()
+            copy.data = result
+            if old_mesh.users == 0:
+                bpy.data.meshes.remove(old_mesh)
+
+            _select_only(context, copy)
+            self.report({'INFO'}, f"Remeshed copy created: {before:,} -> {after:,} triangles")
+            return {'FINISHED'}
+        except Exception as exc:
+            mesh = copy.data
+            bpy.data.objects.remove(copy, do_unlink=True)
+            if mesh and mesh.users == 0:
+                bpy.data.meshes.remove(mesh)
+            for item in context.selected_objects:
+                item.select_set(False)
+            for item in original_selection:
+                if item and item.name in bpy.data.objects:
+                    item.select_set(True)
+            context.view_layer.objects.active = original_active
+            self.report({'ERROR'}, "Remesh failed: " + str(exc))
+            return {'CANCELLED'}
+
+
+class FISHHWB_OT_merge_vertices(bpy.types.Operator):
+    bl_idname = "fishhwb.merge_vertices"
+    bl_label = "Merge Duplicate Vertices"
+    bl_description = "Create a copy and merge nearby duplicate vertices using the Merge Distance"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT' and context.active_object is not None and context.active_object.type == 'MESH'
+
+    def execute(self, context):
+        source = context.active_object
+        if source.data.shape_keys:
+            self.report({'ERROR'}, "Shape-key meshes are skipped because topology changes can break keys")
+            return {'CANCELLED'}
+
+        copy = _copy_mesh_object(source, context, "_Merged")
+        try:
+            before = len(copy.data.vertices)
+            bm = bmesh.new()
+            try:
+                bm.from_mesh(copy.data)
+                bmesh.ops.remove_doubles(
+                    bm,
+                    verts=list(bm.verts),
+                    dist=max(context.scene.fishhwb_merge_distance, 0.0))
+                bm.to_mesh(copy.data)
+            finally:
+                bm.free()
+
+            copy.data.update()
+            after = len(copy.data.vertices)
+            _select_only(context, copy)
+            self.report({'INFO'}, f"Merged {before - after:,} vertices on {copy.name}")
+            return {'FINISHED'}
+        except Exception as exc:
+            mesh = copy.data
+            bpy.data.objects.remove(copy, do_unlink=True)
+            if mesh and mesh.users == 0:
+                bpy.data.meshes.remove(mesh)
+            self.report({'ERROR'}, "Vertex merge failed: " + str(exc))
+            return {'CANCELLED'}
+
+
 class FISHHWB_PT_tri_limit(bpy.types.Panel):
     bl_label = "Optimize Your Project"
     bl_idname = "FISHHWB_PT_tri_limit"
@@ -447,32 +585,41 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         if _brand_preview and "logo" in _brand_preview:
-            layout.template_icon(icon_value=_brand_preview["logo"].icon_id, scale=4)
+            layout.template_icon(icon_value=_brand_preview["logo"].icon_id, scale=3)
+
         obj = context.active_object
         if obj and obj.type == 'MESH':
-            layout.label(text=f"Source: {obj.name}")
-            layout.label(text=f"Base triangles: {triangle_count(obj.data):,}")
+            layout.label(text=f"Selected: {obj.name}", icon='MESH_DATA')
+            layout.label(text=f"Triangles: {triangle_count(obj.data):,}")
         else:
-            layout.label(text="Select a mesh object", icon='INFO')
-        layout.prop(context.scene, 'fishhwb_tri_limit')
-        layout.prop(context.scene, 'fishhwb_apply_modifiers')
-        layout.operator('fishhwb.tri_limit', icon='MOD_DECIM')
-        layout.separator()
-        layout.label(text="Join selected mesh objects")
-        layout.prop(context.scene, 'fishhwb_merge_distance')
-        layout.prop(context.scene, 'fishhwb_make_atlas')
+            layout.label(text="Select one mesh object", icon='INFO')
+
+        quick = layout.box()
+        quick.label(text="ONE-CLICK CLEANUP", icon='TOOL_SETTINGS')
+        quick.label(text="Creates copies so the source stays untouched.")
+        quick.operator('fishhwb.one_click_remesh', icon='MOD_REMESH')
+        quick.prop(context.scene, 'fishhwb_merge_distance')
+        quick.operator('fishhwb.merge_vertices', icon='AUTOMERGE_ON')
+
+        advanced = layout.box()
+        advanced.label(text="ADVANCED MESH TOOLS")
+        advanced.prop(context.scene, 'fishhwb_tri_limit')
+        advanced.prop(context.scene, 'fishhwb_apply_modifiers')
+        advanced.operator('fishhwb.tri_limit', icon='MOD_DECIM')
+        advanced.separator()
+        advanced.label(text="Join selected mesh objects")
+        advanced.prop(context.scene, 'fishhwb_make_atlas')
         if context.scene.fishhwb_make_atlas:
-            layout.prop(context.scene, 'fishhwb_atlas_size')
-            layout.prop(context.scene, 'fishhwb_atlas_padding')
-        layout.operator('fishhwb.join_merge', icon='AUTOMERGE_ON')
-        layout.separator()
-        layout.label(text="Static Mesh LODs")
-        layout.label(text="LOD0 100%  /  LOD1 66%  /  LOD2 33%")
-        layout.operator('fishhwb.create_lods', icon='MOD_DECIM')
+            advanced.prop(context.scene, 'fishhwb_atlas_size')
+            advanced.prop(context.scene, 'fishhwb_atlas_padding')
+        advanced.operator('fishhwb.join_merge', icon='AUTOMERGE_ON')
+        advanced.separator()
+        advanced.label(text="Static Mesh LODs")
+        advanced.operator('fishhwb.create_lods', icon='MOD_DECIM')
 
 
-classes = (FISHHWB_OT_tri_limit, FISHHWB_OT_join_merge,
-           FISHHWB_OT_create_lods, FISHHWB_PT_tri_limit)
+classes = (FISHHWB_OT_tri_limit, FISHHWB_OT_join_merge, FISHHWB_OT_one_click_remesh,
+           FISHHWB_OT_merge_vertices, FISHHWB_OT_create_lods, FISHHWB_PT_tri_limit)
 
 
 def register():
