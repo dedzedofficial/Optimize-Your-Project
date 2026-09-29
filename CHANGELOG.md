@@ -2,52 +2,45 @@
 
 <img src="Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="96">
 
-The Unity package retains its historical `com.fishhwb.vr-optimizer` ID. Blender add-on previews are tracked in the [unified roadmap](Documentation/Roadmap.md); they are not Unity package releases.
+The product is now positioned as a **general developer optimization toolkit**. The historical Unity package ID `com.fishhwb.vr-optimizer` is retained for installation compatibility; it does not mean the tool is VR-only.
 
-## Unreleased — shared branding and release preparation
+## 0.7.0
 
-- Applied the supplied Optimize Your Project mark to Markdown guides, the Unity window icon and the Blender add-on panel.
-- Added separate Blender release packaging and PR checks for both install archives.
-- Expanded the unified roadmap with specific mesh, texture, LOD and visibility actions and validation gates.
-- Release tags remain separate: Unity `v0.6.73`, Blender `blender-v0.7.5`. Runtime smoke tests are pending.
+- Repositioned Optimize Your Project around general Unity, Blender and real-time development workflows rather than VR-only development.
+- Merged the old Unity World + Project split into one **PROJECT** page for ordinary Unity projects and loaded scenes.
+- Kept **AVATAR** as an optional character hierarchy workflow without requiring the VRChat SDK.
+- Removed the full Updates page and added a compact footer with green/current, orange/one-patch-behind, red/two-patches-or-newer-minor-behind, and grey/unknown status.
+- Added a platform-specific `version.json` feed so Blender releases cannot be mistaken for Unity package updates.
+- Added early Blender **One-Click Remesh** and **Merge Duplicate Vertices** actions.
+- Kept Blender triangle reduction, join/atlas and static LOD tools under a clearer Advanced Mesh Tools section.
+- Simplified installation and usage documentation around direct one-click jobs.
+- Expanded static release validation for version consistency, Blender syntax and v0.7 UI/action expectations.
 
 ## 0.6.73
 
 - Rebuilt World, Avatar and Project pages around direct action buttons; individual findings appear only after Scan Entire Project.
 - Combined texture size caps and eligible automatic compression into one action with a single reimport per changed texture.
-- Kept a dedicated Updates page and fixed the package compiler and meta-file errors.
+- Kept a dedicated Updates page and fixed package compiler and meta-file errors.
 
 ## 0.6.7
 
-- Fixed ambiguous PackageInfo compiler reference in the update checker and completed Unity meta coverage for package files.
-
-- Added a Project page with folder-scoped texture compression cleanup, individual platform selections, batch reimports and resolved-format reporting.
-- Added an Editor window icon, a clearly separated Updates page, and more visible job and action sections.
-- Added GitHub stable-release checks, release notes and confirmed Git package updates through Unity Package Manager. Other install sources show update guidance.
+- Fixed ambiguous PackageInfo compiler reference in the update checker and completed Unity meta coverage.
+- Added project texture compression cleanup and update checks.
 
 ## 0.6.6
 
-- Split the Editor into World and Avatar pages with focused issue buttons and All / Critical / Warning filters.
-- Removed preset UI and kept direct texture and particle controls.
-- Added selected model importer mesh compression preview and application with per-model exclusion and confirmation.
-- Expanded mesh and avatar roadmap options.
+- Split the Editor into World and Avatar pages with focused issue buttons and filters.
+- Removed preset UI and added reviewed mesh compression.
 
 ## 0.6.5
 
-- Selected scene avatar inventory and material-slot checks.
-- Avatar-scoped particle optimization with grouped Unity Undo.
-- Preview and selective application of project or avatar texture caps.
-- VPM release automation and Creator Companion repository button (available after first tagged release and Pages deployment).
+- Added avatar inventory, avatar-scoped particle optimization and texture previews.
+- Added VPM release automation and Creator Companion repository support.
 
 ## 0.6.4
 
-- Simplified editor window with platform size dropdowns and custom entry.
-- Removed target selector and advanced texture importer controls; preserve existing compression and filtering.
-- Light and mesh checks now inspect loaded Hierarchy scenes only.
+- Simplified texture size controls and narrowed scene checks.
 
 ## 0.6.3
 
-- Native platform texture overrides and configurable PC, Quest and iOS presets.
-- Undoable loaded-scene particle optimization and individually confirmed light edits.
-- Modular texture, particle, light and imported mesh diagnostics with cancellable scans.
-- Git URL Unity Package Manager layout and editor-only assembly.
+- Added platform texture overrides, particle optimization, light/mesh diagnostics and Git URL package support.
