@@ -4,6 +4,16 @@
 
 Optimize Your Project speeds up recurring VR and VRChat project work: texture import overrides, particle settings, light audits and mesh diagnostics. It does not require the VRChat SDK or any third-party package.
 
+## Install by platform
+
+| Platform | Start here | What happens |
+| --- | --- | --- |
+| VRChat Creator Companion | [Add repository to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json) | Opens VCC to add the package listing. Select your project and add the package there after the VPM listing is published. |
+| Unity without VCC | Copy `https://github.com/dedzedofficial/Optimize-Your-Project.git` into Package Manager → Add package from git URL | Unity installs into the project you have open. |
+| Blender | Follow the [Blender install guide](Blender/README.md) | Install the add-on ZIP from Blender Preferences, then enable it. The 0.7.5 build is a preview. |
+
+A browser link cannot silently select a Unity project or install files into Blender. The [unified roadmap](Documentation/Roadmap.md#installation-experience) describes a dedicated Blender extension repository and optional project-aware installer to reduce the remaining steps.
+
 ## One click workflow
 
 Choose **World**, **Avatar**, or **Project** and press the action you want. The work pages do not display individual warnings. Open **Project → Scan Entire Project** to see findings with All, Critical, and Warning filters.
