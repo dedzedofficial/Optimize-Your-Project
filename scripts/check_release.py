@@ -32,8 +32,9 @@ with ZipFile(root / "dist" / f"{manifest['name']}-{manifest['version']}.zip") as
 listing = json.loads((root / "dist/index.json").read_text(encoding="utf-8"))
 assert "Optimize-Your-Project/index.json" in listing["url"]
 env.pop("GITHUB_REF_NAME", None)
-subprocess.run([sys.executable, "scripts/build_blender.py"], cwd=root, env=env, check=True)
-with ZipFile(root / "dist/optimize-your-project-blender-0.7.5.zip") as package:
+built = subprocess.run([sys.executable, "scripts/build_blender.py"], cwd=root, env=env,
+                       check=True, capture_output=True, text=True)
+with ZipFile(Path(built.stdout.strip())) as package:
     assert package.testzip() is None
     assert "vr_optimizer_blender/optimize-your-project-logo.png" in package.namelist()
 print("Static release checks passed; Blender and Unity runtime tests still required.")
