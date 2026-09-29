@@ -25,11 +25,18 @@ namespace FISHHWB.VROptimizer
         string summary = "Choose a job and press its button.";
         bool showParticleControls;
 
+        GUIStyle cardStyle;
+        GUIStyle cardTitleStyle;
+        GUIStyle sectionTitleStyle;
+        GUIStyle sectionDetailStyle;
+        GUIStyle primaryButtonStyle;
+        GUIStyle compactButtonStyle;
+
         [MenuItem("FISHHWB/Optimize Your Project")]
         static void Open()
         {
             var window = GetWindow<FISHHWBVROptimizerWindow>();
-            window.minSize = new Vector2(390, 560);
+            window.minSize = new Vector2(420, 600);
             window.titleContent = new GUIContent("Optimize Your Project", window.icon);
         }
 
@@ -45,12 +52,22 @@ namespace FISHHWB.VROptimizer
         void OnGUI()
         {
             if (settings == null) settings = VRSettings.Load();
+            EnsureStyles();
 
             scroll = EditorGUILayout.BeginScrollView(scroll);
             Header();
-            GUILayout.Space(8);
+            GUILayout.Space(10);
 
-            var next = (Page)GUILayout.Toolbar((int)page, new[] { "PROJECT", "CHARACTER / AVATAR" }, GUILayout.Height(34));
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Space(8);
+            var next = (Page)GUILayout.Toolbar(
+                (int)page,
+                new[] { "PROJECT", "CHARACTER / AVATAR" },
+                GUILayout.Height(38),
+                GUILayout.ExpandWidth(true));
+            GUILayout.Space(8);
+            EditorGUILayout.EndHorizontal();
+
             if (next != page)
             {
                 page = next;
@@ -58,57 +75,152 @@ namespace FISHHWB.VROptimizer
                 summary = "Choose a job and press its button.";
             }
 
+            GUILayout.Space(12);
+
+            EditorGUILayout.BeginHorizontal();
             GUILayout.Space(10);
+            EditorGUILayout.BeginVertical();
 
             if (page == Page.Project) DrawProject();
             else DrawAvatar();
 
-            GUILayout.Space(8);
-            EditorGUILayout.HelpBox(summary, MessageType.Info);
+            DrawResultCard();
+            DrawSupportPanel();
             DrawUpdateFooter();
             DrawLinksFooter();
+
+            EditorGUILayout.EndVertical();
+            GUILayout.Space(10);
+            EditorGUILayout.EndHorizontal();
+
+            GUILayout.Space(8);
             EditorGUILayout.EndScrollView();
+        }
+
+        void EnsureStyles()
+        {
+            if (cardStyle != null) return;
+
+            cardStyle = new GUIStyle(EditorStyles.helpBox)
+            {
+                padding = new RectOffset(12, 12, 10, 12),
+                margin = new RectOffset(0, 0, 0, 8)
+            };
+
+            cardTitleStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 12,
+                wordWrap = true
+            };
+
+            sectionTitleStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 16,
+                wordWrap = true
+            };
+
+            sectionDetailStyle = new GUIStyle(EditorStyles.wordWrappedMiniLabel)
+            {
+                fontSize = 10
+            };
+
+            primaryButtonStyle = new GUIStyle(GUI.skin.button)
+            {
+                fontStyle = FontStyle.Bold,
+                fixedHeight = 38,
+                margin = new RectOffset(0, 0, 8, 0)
+            };
+
+            compactButtonStyle = new GUIStyle(GUI.skin.button)
+            {
+                fontStyle = FontStyle.Bold,
+                fixedHeight = 26
+            };
+        }
+
+        void BeginCard(string title, string description)
+        {
+            EditorGUILayout.BeginVertical(cardStyle);
+            EditorGUILayout.LabelField(title, cardTitleStyle);
+            if (!string.IsNullOrEmpty(description))
+                EditorGUILayout.LabelField(description, sectionDetailStyle);
+            GUILayout.Space(4);
+            DrawSeparator();
+        }
+
+        static void EndCard()
+        {
+            EditorGUILayout.EndVertical();
+        }
+
+        static void DrawSeparator()
+        {
+            var rect = GUILayoutUtility.GetRect(1, 1, GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(
+                rect,
+                EditorGUIUtility.isProSkin
+                    ? new Color(.18f, .42f, .43f, .65f)
+                    : new Color(.20f, .52f, .50f, .55f));
+            GUILayout.Space(5);
+        }
+
+        bool ActionButton(string label)
+        {
+            var previous = GUI.backgroundColor;
+            GUI.backgroundColor = EditorGUIUtility.isProSkin
+                ? new Color(.40f, .82f, .76f)
+                : new Color(.46f, .78f, .72f);
+            bool pressed = GUILayout.Button(label, primaryButtonStyle);
+            GUI.backgroundColor = previous;
+            return pressed;
+        }
+
+        void DrawSectionIntro(string title, string description)
+        {
+            EditorGUILayout.LabelField(title, sectionTitleStyle);
+            EditorGUILayout.LabelField(description, sectionDetailStyle);
+            GUILayout.Space(6);
         }
 
         void Header()
         {
-            var rect = GUILayoutUtility.GetRect(1, 68, GUILayout.ExpandWidth(true));
-            EditorGUI.DrawRect(
-                rect,
-                EditorGUIUtility.isProSkin
-                    ? new Color(.075f, .14f, .16f)
-                    : new Color(.78f, .88f, .87f));
+            var rect = GUILayoutUtility.GetRect(1, 84, GUILayout.ExpandWidth(true));
+            var background = EditorGUIUtility.isProSkin
+                ? new Color(.055f, .095f, .11f)
+                : new Color(.84f, .93f, .91f);
+            var accent = EditorGUIUtility.isProSkin
+                ? new Color(.23f, .72f, .67f)
+                : new Color(.12f, .55f, .50f);
+
+            EditorGUI.DrawRect(rect, background);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 3, rect.width, 3), accent);
 
             if (icon)
-                GUI.DrawTexture(new Rect(rect.x + 12, rect.y + 10, 48, 48), icon, ScaleMode.ScaleToFit, true);
+                GUI.DrawTexture(new Rect(rect.x + 15, rect.y + 13, 56, 56), icon, ScaleMode.ScaleToFit, true);
 
-            var title = new GUIStyle(EditorStyles.boldLabel) { fontSize = 15 };
-            var detail = new GUIStyle(EditorStyles.miniLabel);
+            var title = new GUIStyle(EditorStyles.boldLabel) { fontSize = 17 };
+            var detail = new GUIStyle(EditorStyles.miniLabel) { fontSize = 10 };
 
             if (EditorGUIUtility.isProSkin)
             {
                 title.normal.textColor = Color.white;
-                detail.normal.textColor = new Color(.68f, .86f, .83f);
+                detail.normal.textColor = new Color(.69f, .86f, .83f);
             }
 
-            GUI.Label(new Rect(rect.x + 70, rect.y + 10, rect.width - 80, 24), "OPTIMIZE YOUR PROJECT", title);
+            GUI.Label(new Rect(rect.x + 82, rect.y + 14, rect.width - 94, 25), "OPTIMIZE YOUR PROJECT", title);
             GUI.Label(
-                new Rect(rect.x + 70, rect.y + 37, rect.width - 80, 20),
-                "v" + VRUpdateChecker.CurrentVersion + "  •  ONE-CLICK OPTIMIZATION",
+                new Rect(rect.x + 82, rect.y + 42, rect.width - 94, 18),
+                "Free developer tools • one-click optimization • v" + VRUpdateChecker.CurrentVersion,
                 detail);
         }
 
         void DrawProject()
         {
-            EditorGUILayout.LabelField("UNITY PROJECT", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField(
-                "Optimize project assets and the scenes currently loaded in Unity. Run only the job you need.",
-                EditorStyles.wordWrappedMiniLabel);
+            DrawSectionIntro(
+                "PROJECT",
+                "Fast, focused optimization for assets and loaded scenes. Pick a job, run it, and keep moving.");
 
-            GUILayout.Space(6);
-
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("ASSET SCOPE", EditorStyles.boldLabel);
+            BeginCard("ASSET SCOPE", "Choose which Assets folder texture jobs should work inside.");
             string chosen = EditorGUILayout.TextField("Assets folder", projectFolder);
             if (chosen != projectFolder) projectFolder = chosen;
 
@@ -118,7 +230,7 @@ namespace FISHHWB.VROptimizer
 
             if (!valid)
                 EditorGUILayout.HelpBox("Enter an existing folder under Assets.", MessageType.Warning);
-            EditorGUILayout.EndVertical();
+            EndCard();
 
             using (new EditorGUI.DisabledScope(!valid))
                 TextureCard(null, "TEXTURES", "Resize and compress supported textures in the selected Assets folder.", projectFolder);
@@ -127,31 +239,27 @@ namespace FISHHWB.VROptimizer
             MeshCard(null);
             LightCard(null);
 
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("PROJECT CHECK", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField(
-                "Only use this when you want a detailed list. Normal one-click jobs stay clean and do not print every issue.",
-                EditorStyles.wordWrappedMiniLabel);
+            BeginCard(
+                "PROJECT CHECK",
+                "Need more detail? Run a full scan only when you want a list of findings and direct links to problem assets.");
 
-            if (GUILayout.Button("SCAN ENTIRE PROJECT", GUILayout.Height(34)))
+            if (ActionButton("SCAN ENTIRE PROJECT"))
             {
                 issues = VRProjectScanner.Scan(settings, null, out bool cancelled);
                 summary = (cancelled ? "Partial scan: " : "Project scan complete: ") + issues.Count + " findings.";
             }
 
-            EditorGUILayout.EndVertical();
+            EndCard();
             DrawIssues();
         }
 
         void DrawAvatar()
         {
-            EditorGUILayout.LabelField("CHARACTER / AVATAR", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField(
-                "Use the same simple jobs on one selected character or avatar hierarchy.",
-                EditorStyles.wordWrappedMiniLabel);
+            DrawSectionIntro(
+                "CHARACTER / AVATAR",
+                "Optimize one character hierarchy without changing the rest of your loaded scene.");
 
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("CHARACTER / AVATAR ROOT", EditorStyles.boldLabel);
+            BeginCard("CHARACTER / AVATAR ROOT", "Select the root object you want these one-click jobs to target.");
             avatar = (GameObject)EditorGUILayout.ObjectField(avatar, typeof(GameObject), true);
 
             if (GUILayout.Button("USE CURRENT SELECTION"))
@@ -160,7 +268,7 @@ namespace FISHHWB.VROptimizer
             bool valid = VRAvatarWorkflow.EditableRoot(avatar);
             if (!valid)
                 EditorGUILayout.HelpBox("Select a character or avatar root in a loaded scene.", MessageType.Info);
-            EditorGUILayout.EndVertical();
+            EndCard();
 
             using (new EditorGUI.DisabledScope(!valid))
             {
@@ -173,9 +281,7 @@ namespace FISHHWB.VROptimizer
 
         void TextureCard(GameObject root, string title, string scope, string folder = "Assets")
         {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
-            EditorGUILayout.LabelField(scope, EditorStyles.wordWrappedMiniLabel);
+            BeginCard(title, scope);
 
             EditorGUI.BeginChangeCheck();
             settings.pc = SizeField("PC / Standalone", settings.pc);
@@ -188,10 +294,10 @@ namespace FISHHWB.VROptimizer
                 settings.Save();
             }
 
-            if (GUILayout.Button("COMPRESS & SIZE TEXTURES", GUILayout.Height(36)))
+            if (ActionButton("COMPRESS & SIZE TEXTURES"))
                 OptimizeTextures(root, folder);
 
-            EditorGUILayout.EndVertical();
+            EndCard();
         }
 
         static int SizeField(string label, int value)
@@ -289,11 +395,9 @@ namespace FISHHWB.VROptimizer
 
         void ParticleCard(GameObject root)
         {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("PARTICLES", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField(
-                root ? "Optimize particle systems under this character hierarchy." : "Optimize particle systems in loaded scenes.",
-                EditorStyles.wordWrappedMiniLabel);
+            BeginCard(
+                "PARTICLES",
+                root ? "Apply the selected limits to particle systems under this character hierarchy." : "Apply the selected limits to particle systems in loaded scenes.");
 
             EditorGUI.BeginChangeCheck();
             settings.capParticles = EditorGUILayout.Toggle("Cap particle count", settings.capParticles);
@@ -322,10 +426,10 @@ namespace FISHHWB.VROptimizer
                 settings.Save();
             }
 
-            if (GUILayout.Button("OPTIMIZE PARTICLES", GUILayout.Height(36)))
+            if (ActionButton("OPTIMIZE PARTICLES"))
                 OptimizeParticles(root);
 
-            EditorGUILayout.EndVertical();
+            EndCard();
         }
 
         void OptimizeParticles(GameObject root)
@@ -375,15 +479,13 @@ namespace FISHHWB.VROptimizer
 
         void MeshCard(GameObject root)
         {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("MESH IMPORTS", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField(
-                root ? "Compress imported model assets referenced by this character hierarchy." : "Compress imported model assets used by loaded scenes.",
-                EditorStyles.wordWrappedMiniLabel);
+            BeginCard(
+                "MESH IMPORTS",
+                root ? "Apply Unity mesh compression to imported models referenced by this character hierarchy." : "Apply Unity mesh compression to imported models used by loaded scenes.");
 
             meshLevel = (ModelImporterMeshCompression)EditorGUILayout.EnumPopup("Compression", meshLevel);
 
-            if (GUILayout.Button("COMPRESS IMPORTED MESHES", GUILayout.Height(36)))
+            if (ActionButton("COMPRESS IMPORTED MESHES"))
             {
                 var meshes = VRMeshCompression.Collect(root);
                 int pending = 0;
@@ -442,18 +544,16 @@ namespace FISHHWB.VROptimizer
                 }
             }
 
-            EditorGUILayout.EndVertical();
+            EndCard();
         }
 
         void LightCard(GameObject root)
         {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("REALTIME LIGHT SHADOWS", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField(
-                root ? "Disable realtime shadows under this character hierarchy." : "Disable realtime shadows in loaded scenes.",
-                EditorStyles.wordWrappedMiniLabel);
+            BeginCard(
+                "REALTIME LIGHT SHADOWS",
+                root ? "Quickly disable realtime shadows under this character hierarchy." : "Quickly disable realtime shadows in loaded scenes.");
 
-            if (GUILayout.Button("DISABLE REALTIME SHADOWS", GUILayout.Height(36)))
+            if (ActionButton("DISABLE REALTIME SHADOWS"))
             {
                 var lights = root
                     ? (IEnumerable<Light>)root.GetComponentsInChildren<Light>(true)
@@ -490,7 +590,7 @@ namespace FISHHWB.VROptimizer
                 }
             }
 
-            EditorGUILayout.EndVertical();
+            EndCard();
         }
 
         void DrawIssues()
@@ -509,8 +609,15 @@ namespace FISHHWB.VROptimizer
                     continue;
 
                 count++;
-                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                EditorGUILayout.LabelField(issue.Severity + "  •  " + issue.Message, EditorStyles.wordWrappedLabel);
+                EditorGUILayout.BeginVertical(cardStyle);
+                EditorGUILayout.BeginHorizontal();
+                var severityDot = new GUIStyle(EditorStyles.boldLabel) { fontSize = 13 };
+                severityDot.normal.textColor = issue.Severity == VRSeverity.Critical
+                    ? new Color(.92f, .24f, .22f)
+                    : new Color(1f, .58f, .12f);
+                GUILayout.Label("●", severityDot, GUILayout.Width(17));
+                EditorGUILayout.LabelField(issue.Message, EditorStyles.wordWrappedLabel);
+                EditorGUILayout.EndHorizontal();
 
                 if (!string.IsNullOrEmpty(issue.AssetPath))
                     EditorGUILayout.LabelField(issue.AssetPath, EditorStyles.miniLabel);
@@ -531,10 +638,38 @@ namespace FISHHWB.VROptimizer
                 EditorGUILayout.LabelField("No findings in this filter.", EditorStyles.miniLabel);
         }
 
+        void DrawResultCard()
+        {
+            BeginCard("LAST RESULT", "A short summary of the most recent action.");
+            EditorGUILayout.LabelField(summary, EditorStyles.wordWrappedLabel);
+            EndCard();
+        }
+
+        void DrawSupportPanel()
+        {
+            BeginCard(
+                "FREE FOR DEVELOPERS",
+                "Optimize Your Project is free to use. It exists to remove repetitive work, make development easier, and help newer creators learn without a paywall.");
+
+            EditorGUILayout.LabelField(
+                "If the tool saves you time and you want to help it grow, optional Patreon support helps fund testing, documentation, new one-click tools, and future engine support. The project stays free either way.",
+                EditorStyles.wordWrappedMiniLabel);
+
+            var previous = GUI.backgroundColor;
+            GUI.backgroundColor = EditorGUIUtility.isProSkin
+                ? new Color(.74f, .48f, .82f)
+                : new Color(.72f, .50f, .78f);
+
+            if (GUILayout.Button("SUPPORT DEVELOPMENT ON PATREON", primaryButtonStyle))
+                Application.OpenURL("https://www.patreon.com/cw/DedZed");
+
+            GUI.backgroundColor = previous;
+            EndCard();
+        }
+
         void DrawUpdateFooter()
         {
-            GUILayout.Space(12);
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            BeginCard("VERSION", "Keep the tool current without leaving this window.");
             EditorGUILayout.BeginHorizontal();
 
             var health = VRUpdateChecker.Health;
@@ -588,7 +723,7 @@ namespace FISHHWB.VROptimizer
                 (health == VRUpdateHealth.Unknown || VRUpdateChecker.Installing))
                 EditorGUILayout.LabelField(VRUpdateChecker.Message, EditorStyles.wordWrappedMiniLabel);
 
-            EditorGUILayout.EndVertical();
+            EndCard();
         }
 
         static Color StatusColor(VRUpdateHealth health)
@@ -608,18 +743,17 @@ namespace FISHHWB.VROptimizer
 
         void DrawLinksFooter()
         {
-            EditorGUILayout.LabelField("FISHHWB | DED ZED", EditorStyles.centeredGreyMiniLabel);
+            GUILayout.Space(2);
+            EditorGUILayout.LabelField("FISHHWB | DED ZED  •  BUILT TO HELP DEVELOPERS CREATE WITH LESS BUSYWORK", EditorStyles.centeredGreyMiniLabel);
+            GUILayout.Space(3);
+
             EditorGUILayout.BeginHorizontal();
-
-            if (GUILayout.Button("GITHUB"))
+            if (GUILayout.Button("GITHUB", compactButtonStyle))
                 Application.OpenURL("https://github.com/dedzedofficial/Optimize-Your-Project");
-
-            if (GUILayout.Button("WEBSITE"))
+            if (GUILayout.Button("WEBSITE", compactButtonStyle))
                 Application.OpenURL("https://fishhwb.github.io/");
-
-            if (GUILayout.Button("DISCORD"))
+            if (GUILayout.Button("DISCORD", compactButtonStyle))
                 Application.OpenURL("https://discord.gg/wZGxxkk4Jg");
-
             EditorGUILayout.EndHorizontal();
         }
     }
