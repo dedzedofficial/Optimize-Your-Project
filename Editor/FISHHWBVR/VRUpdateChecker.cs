@@ -10,8 +10,8 @@ namespace FISHHWB.VROptimizer
 {
     internal static class VRUpdateChecker
     {
-        const string Api = "https://api.github.com/repos/dedzedofficial/VR-Optimizer/releases/latest";
-        const string Repository = "https://github.com/dedzedofficial/VR-Optimizer.git";
+        const string Api = "https://api.github.com/repos/dedzedofficial/Optimize-Your-Project/releases/latest";
+        const string Repository = "https://github.com/dedzedofficial/Optimize-Your-Project.git";
         const string CacheKey = "FISHHWB.VROptimizer.UpdateCheck.v0673";
         const string TagKey = CacheKey + ".Tag";
         const string UrlKey = CacheKey + ".Url";
@@ -118,7 +118,7 @@ namespace FISHHWB.VROptimizer
             foreach (var window in Resources.FindObjectsOfTypeAll<FISHHWBVROptimizerWindow>()) window.Repaint();
         }
         internal static void ViewRelease()
-        { if (!string.IsNullOrEmpty(releaseUrl) && releaseUrl.StartsWith("https://github.com/dedzedofficial/VR-Optimizer/releases/tag/", StringComparison.Ordinal)) Application.OpenURL(releaseUrl); }
+        { if (!string.IsNullOrEmpty(releaseUrl) && releaseUrl.StartsWith("https://github.com/dedzedofficial/Optimize-Your-Project/releases/tag/", StringComparison.Ordinal)) Application.OpenURL(releaseUrl); }
         internal static void Update()
         {
             if (!HasUpdate || installing) return;
@@ -134,7 +134,7 @@ namespace FISHHWB.VROptimizer
                 return;
             }
             string target = Repository + "#" + latestTag;
-            if (!EditorUtility.DisplayDialog("Update VR Optimizer", "Installed: " + CurrentVersion + "\nNew: " + latestTag +
+            if (!EditorUtility.DisplayDialog("Update Optimize Your Project", "Installed: " + CurrentVersion + "\nNew: " + latestTag +
                 "\nSource: Unity Git package\n\nSave your project first. Unity may reload scripts during the update. Install " + target + "?", "Update", "Cancel")) return;
             installing = true;
             message = "Updating through Unity Package Manager...";

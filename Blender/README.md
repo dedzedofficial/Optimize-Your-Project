@@ -1,6 +1,6 @@
-# VR Optimizer for Blender — 0.7.5 preview
+# Optimize Your Project for Blender — 0.7.5 preview
 
-Publisher: FISHHWB | Ded Zed. Blender 3.6+ add-on, developed alongside the Unity package in [VR-Optimizer](https://github.com/dedzedofficial/VR-Optimizer). The Unity package has its own version and installation path.
+Publisher: FISHHWB | Ded Zed. See the [unified roadmap](../Documentation/Roadmap.md#blender-track-075-preview-and-later-work). Blender 3.6+ add-on, developed alongside the Unity package in [Optimize Your Project](https://github.com/dedzedofficial/Optimize-Your-Project). The Unity package has its own version and installation path.
 
 ## Install
 
@@ -9,6 +9,7 @@ Install this add-on ZIP in Blender's **Edit > Preferences > Add-ons > Install...
 ## Actions
 
 - **Create Reduced Copy:** select one mesh in Object Mode, enter a triangle limit, then create a decimated duplicate at or below that count. Original remains intact.
+- **Create LOD0 / LOD1 / LOD2:** select one static mesh in Object Mode. Make a new collection containing full-detail LOD0, LOD1 capped at 66% of LOD0 triangles, and LOD2 capped at 33%. Existing modifiers are applied to copies when enabled. The original stays intact. Lower LODs are hidden in the viewport for easier inspection. These are mesh variants, not an automatic Blender runtime distance switch or a Unity LODGroup. Shape keys, vertex groups, and armature modifiers are rejected.
 - **Join Selected and Merge Vertices:** select two or more mesh objects, set a Merge Distance and create a single joined copy. The copy preserves world transforms and material slots. Nearby vertices are welded. Original objects remain intact.
 - **Merge Base Color Textures + UVs:** enable this option before joining. The action gathers direct image Base Color links from supported Principled materials, makes one square atlas image and material, joins the copies, and remaps the joined mesh's active UVs to the atlas. Set Atlas Size and Padding. The generated image is stored in the Blend file; save or export it separately when preparing assets for another engine. For a triangle budget, run Create Reduced Copy on the joined result afterward.
 

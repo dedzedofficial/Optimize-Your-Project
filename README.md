@@ -1,8 +1,18 @@
-# FISHHWB VR Optimizer
+# Optimize Your Project
 
 **Version 0.6.73 · Free Unity Editor package · FISHHWB | Ded Zed**
 
-FISHHWB VR Optimizer speeds up recurring VR and VRChat project work: texture import overrides, particle settings, light audits and mesh diagnostics. It does not require the VRChat SDK or any third-party package.
+Optimize Your Project speeds up recurring VR and VRChat project work: texture import overrides, particle settings, light audits and mesh diagnostics. It does not require the VRChat SDK or any third-party package.
+
+## Install by platform
+
+| Platform | Start here | What happens |
+| --- | --- | --- |
+| VRChat Creator Companion | [Add repository to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json) | Opens VCC to add the package listing. Select your project and add the package there after the VPM listing is published. |
+| Unity without VCC | Copy `https://github.com/dedzedofficial/Optimize-Your-Project.git` into Package Manager → Add package from git URL | Unity installs into the project you have open. |
+| Blender | Follow the [Blender install guide](Blender/README.md) | Install the add-on ZIP from Blender Preferences, then enable it. The 0.7.5 build is a preview. |
+
+A browser link cannot silently select a Unity project or install files into Blender. The [unified roadmap](Documentation/Roadmap.md#installation-experience) describes a dedicated Blender extension repository and optional project-aware installer to reduce the remaining steps.
 
 ## One click workflow
 
@@ -26,9 +36,9 @@ Importer edits change metadata, not source files. Keep a project backup or versi
 
 ## Add to VRChat Creator Companion
 
-[**ADD TO VCC**](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FVR-Optimizer%2Findex.json)
+[**ADD TO VCC**](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json)
 
-This button adds the package repository to Creator Companion, where you can then add **FISHHWB VR Optimizer** to a project. It requires a published VPM release and GitHub Pages configured to deploy from **GitHub Actions**. Until the v0.6.73 tag is published and `https://dedzedofficial.github.io/VR-Optimizer/index.json` loads, use the Git installation below. A Git URL cannot be added directly as a VCC package repository.
+This button adds the package repository to Creator Companion, where you can then add **Optimize Your Project** to a project. It requires a published VPM release and GitHub Pages configured to deploy from **GitHub Actions**. Until the v0.6.73 tag is published and `https://dedzedofficial.github.io/Optimize-Your-Project/index.json` loads, use the Git installation below. A Git URL cannot be added directly as a VCC package repository.
 
 ## Install from GitHub
 
@@ -38,13 +48,13 @@ This button adds the package repository to Creator Companion, where you can then
 4. Paste:
 
    ```text
-   https://github.com/dedzedofficial/VR-Optimizer.git
+   https://github.com/dedzedofficial/Optimize-Your-Project.git
    ```
 
 5. Click **Add** and allow Unity to import the package.
-6. Open **FISHHWB → VR Optimizer** from the top menu.
+6. Open **FISHHWB → Optimize Your Project** from the top menu.
 
-This repository has `package.json` at its root, so no `?path=` suffix is needed. For a reproducible installation, append a released tag after publishing one, for example `https://github.com/dedzedofficial/VR-Optimizer.git#v0.6.73` (once tagged). A private repository requires Git credentials on the developer's machine; public users cannot install a private repository by URL. GitHub's **Download ZIP** is source distribution, not the Git URL install method. If Git installation is unavailable, extract the repository into `Packages/com.fishhwb.vr-optimizer` inside your Unity project and add it as an embedded package.
+This repository has `package.json` at its root, so no `?path=` suffix is needed. For a reproducible installation, append a released tag after publishing one, for example `https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.6.73` (once tagged). A private repository requires Git credentials on the developer's machine; public users cannot install a private repository by URL. GitHub's **Download ZIP** is source distribution, not the Git URL install method. If Git installation is unavailable, extract the repository into `Packages/com.fishhwb.vr-optimizer` inside your Unity project and add it as an embedded package.
 
 ## Replacing an older embedded copy
 
@@ -52,7 +62,7 @@ If the window still says **v0.6.6** or **v0.6.7**, or only shows World and Avata
 
 ## Quick start
 
-1. Open **FISHHWB → VR Optimizer**.
+1. Open **FISHHWB → Optimize Your Project**.
 2. Choose **World** for loaded scenes, **Avatar** for a selected root, or **Project** for an Assets folder.
 3. Enter sizes or settings and press an action button. A confirmation appears before importer or light batches.
 4. Use **Project → Scan Entire Project** only when you want individual warnings and issue details.
@@ -76,7 +86,8 @@ Texture source dimensions do not equal GPU memory usage. Particle overdraw depen
 ```text
 package.json
 Editor/FISHHWBVR/             Editor-only assembly, window, optimizers, scanners, settings
-Documentation/                Architecture notes and planned updates
+Blender/                      Separate Blender add-on and usage guide
+Documentation/                Architecture notes and unified roadmap
 README.md                     Install, use, safety and troubleshooting
 CHANGELOG.md                  Release history
 LICENSE                       MIT
@@ -86,11 +97,11 @@ LICENSE                       MIT
 
 [Website](https://fishhwb.github.io/) · [Discord](https://discord.gg/wZGxxkk4Jg) · [Patreon](https://www.patreon.com/cw/DedZed)
 
-FISHHWB VR Optimizer is free and licensed under MIT. Contributions and bug reports are welcome through GitHub issues and pull requests. Please include your Unity version, target platform, reproduction steps and relevant Console errors.
+Optimize Your Project is free and licensed under MIT. Contributions and bug reports are welcome through GitHub issues and pull requests. Please include your Unity version, target platform, reproduction steps and relevant Console errors.
 
 ## Blender add-on (0.7.5 preview)
 
-The [Blender add-on](Blender/README.md) is a separate native install under `Blender/vr_optimizer_blender/`. It creates reduced mesh copies, joins selected mesh copies with adjustable vertex welding, and can build a Base Color image atlas with remapped UVs for supported materials. Install the `Blender/vr_optimizer_blender` folder as a ZIP through Blender preferences; the repository root Git URL remains the Unity package at v0.6.73. The Blender 0.7.5 source is a preview pending tests in Blender and export round trips. See the [Blender 0.7.5 plan](Documentation/Blender-0.7.5.md).
+The [Blender add-on](Blender/README.md) is a separate native install under `Blender/vr_optimizer_blender/`. It creates reduced mesh and LOD copies, joins selected mesh copies with adjustable vertex welding, and can build a Base Color image atlas with remapped UVs for supported materials. Install the `Blender/vr_optimizer_blender` folder as a ZIP through Blender preferences; the repository root Git URL remains the Unity package at v0.6.73. The Blender 0.7.5 source is a preview pending tests in Blender and export round trips. See the [unified roadmap](Documentation/Roadmap.md#blender-track-075-preview-and-later-work).
 
 ## Future updates
 

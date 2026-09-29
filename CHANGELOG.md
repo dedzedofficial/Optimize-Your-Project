@@ -1,4 +1,6 @@
-# Changelog
+# Optimize Your Project changelog
+
+The Unity package retains its historical `com.fishhwb.vr-optimizer` ID. Blender add-on previews are tracked in the [unified roadmap](Documentation/Roadmap.md); they are not Unity package releases.
 
 ## 0.6.73
 

@@ -23,18 +23,18 @@ namespace FISHHWB.VROptimizer
         string summary = "Choose a job and press its action button.";
         bool showParticleControls;
 
-        [MenuItem("FISHHWB/VR Optimizer")]
+        [MenuItem("FISHHWB/Optimize Your Project")]
         static void Open()
         {
             var window = GetWindow<FISHHWBVROptimizerWindow>();
             window.minSize = new Vector2(350, 520);
-            window.titleContent = new GUIContent("VR Optimizer", window.icon);
+            window.titleContent = new GUIContent("Optimize Your Project", window.icon);
         }
         void OnEnable()
         {
             settings = VRSettings.Load();
             icon = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.fishhwb.vr-optimizer/Editor/FISHHWBVR/Icons/VR-Optimizer.png");
-            titleContent = new GUIContent("VR Optimizer", icon);
+            titleContent = new GUIContent("Optimize Your Project", icon);
             VRUpdateChecker.CheckIfDue();
         }
 
@@ -63,7 +63,7 @@ namespace FISHHWB.VROptimizer
             var title = new GUIStyle(EditorStyles.boldLabel) { fontSize = 15 };
             var detail = new GUIStyle(EditorStyles.miniLabel);
             if (EditorGUIUtility.isProSkin) { title.normal.textColor = Color.white; detail.normal.textColor = new Color(.65f, .88f, .85f); }
-            GUI.Label(new Rect(rect.x + 72, rect.y + 11, rect.width - 80, 25), "FISHHWB VR OPTIMIZER", title);
+            GUI.Label(new Rect(rect.x + 72, rect.y + 11, rect.width - 80, 25), "OPTIMIZE YOUR PROJECT", title);
             GUI.Label(new Rect(rect.x + 72, rect.y + 39, rect.width - 80, 20), "v" + VRUpdateChecker.CurrentVersion + (VRUpdateChecker.HasUpdate ? "  •  UPDATE AVAILABLE" : "  •  ONE CLICK JOBS"), detail);
         }
 
@@ -300,7 +300,7 @@ namespace FISHHWB.VROptimizer
                 if (GUILayout.Button("VIEW RELEASE NOTES")) VRUpdateChecker.ViewRelease();
                 if (GUILayout.Button(VRUpdateChecker.CanUpdateDirectly ? "UPDATE IN UNITY" : "HOW TO UPDATE", GUILayout.Height(36))) VRUpdateChecker.Update();
             }
-            else if (GUILayout.Button("VIEW GITHUB RELEASES")) Application.OpenURL("https://github.com/dedzedofficial/VR-Optimizer/releases");
+            else if (GUILayout.Button("VIEW GITHUB RELEASES")) Application.OpenURL("https://github.com/dedzedofficial/Optimize-Your-Project/releases");
             EditorGUILayout.EndVertical();
         }
 

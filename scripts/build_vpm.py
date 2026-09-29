@@ -14,15 +14,15 @@ if tag != 'v' + version:
     raise SystemExit(f'Tag {tag} does not match package version {version}')
 name = manifest['name']
 archive = f'{name}-{version}.zip'
-url = f'https://github.com/dedzedofficial/VR-Optimizer/releases/download/{tag}/{archive}'
+url = f'https://github.com/dedzedofficial/Optimize-Your-Project/releases/download/{tag}/{archive}'
 with zipfile.ZipFile(out / archive, 'w', zipfile.ZIP_DEFLATED) as zip_file:
     for path in [root / 'package.json', *sorted((root / 'Editor').rglob('*'))]:
         if path.is_file():
             zip_file.write(path, path.relative_to(root))
 listing = {
-    'name': 'FISHHWB VR Optimizer',
+    'name': 'Optimize Your Project',
     'id': 'com.fishhwb.vr-optimizer.repo',
-    'url': 'https://dedzedofficial.github.io/VR-Optimizer/index.json',
+    'url': 'https://dedzedofficial.github.io/Optimize-Your-Project/index.json',
     'author': 'FISHHWB | Ded Zed',
     'packages': {name: {'versions': {version: {**manifest, 'url': url}}}},
 }
