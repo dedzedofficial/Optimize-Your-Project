@@ -1,6 +1,6 @@
 # Optimize Your Project
 
-**Version 0.6.73 · Free Unity Editor package · FISHHWB | Ded Zed**
+**Unity 0.6.73 · Blender 0.7.5 preview · FISHHWB | Ded Zed**
 
 Optimize Your Project speeds up recurring VR and VRChat project work: texture import overrides, particle settings, light audits and mesh diagnostics. It does not require the VRChat SDK or any third-party package.
 
