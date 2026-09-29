@@ -1,8 +1,8 @@
 {
   "name": "com.fishhwb.vr-optimizer",
-  "version": "0.6.73",
+  "version": "0.7.0",
   "displayName": "Optimize Your Project",
-  "description": "Unity Editor tools for texture compression, VR scene and avatar optimization, and project diagnostics.",
+  "description": "One-click Unity project and avatar optimization with early Blender mesh cleanup tools.",
   "unity": "2021.3",
   "author": {
     "name": "FISHHWB | Ded Zed",
