@@ -2,17 +2,17 @@
 
 <img src="Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="150">
 
-**v0.7.0 · Unity + early Blender tools · FISHHWB | Ded Zed**
+**v0.7.0 · General developer optimization tools · Unity + Blender · FISHHWB | Ded Zed**
 
-Optimize Your Project turns repetitive optimization work into clear, focused buttons. v0.7 keeps Unity simple, adds early Blender mesh cleanup, and removes UI pages that duplicated the same jobs.
+Optimize Your Project is for developers building **any kind of real-time project**. Its priority is removing repetitive optimization work through clear one-click actions, whether you are making a PC game, mobile project, VR title, social experience, prototype, or reusable asset pack. Unity is the first full integration and Blender is the first external creation-tool integration.
 
 ## Quick install
 
 | Platform | Fastest install |
 | --- | --- |
 | **Unity** | Package Manager → **+** → **Add package from git URL** → paste `https://github.com/dedzedofficial/Optimize-Your-Project.git` |
-| **VRChat Creator Companion** | [Add the VPM repository](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the project |
 | **Blender** | Download `optimize-your-project-blender-0.7.0.zip` from Releases → Blender Preferences / Get Extensions → **Install from Disk** |
+| **VRChat / VCC (optional)** | [Add the VPM repository](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the chosen project |
 
 For a fixed Unity release after the v0.7.0 tag is published, use:
 
@@ -24,10 +24,10 @@ https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.0
 
 Open **FISHHWB → Optimize Your Project**.
 
-The Unity window now has only two work pages:
+The Unity window now has only two work pages. Neither page requires a VR SDK:
 
 - **PROJECT** — replaces the old World + Project split. Texture work uses the chosen Assets folder; particle, imported-mesh and realtime-light jobs operate on loaded scenes.
-- **AVATAR** — runs the same focused jobs against one selected avatar hierarchy.
+- **AVATAR** — runs the same focused jobs against one selected character/avatar hierarchy. This can be used for ordinary game characters as well as social-VR avatars.
 
 Each job is a direct action. Detailed findings stay hidden unless you explicitly press **Scan Entire Project**.
 
@@ -51,6 +51,8 @@ Updates no longer take a full page. The bottom footer shows the installed versio
 Git-installed Unity packages can use the footer update button directly. Embedded/VCC installs show the correct update route instead.
 
 ## Blender v0.7
+
+Blender support is also project-general: these tools are intended for game assets, environment props, characters without topology-sensitive rigs, prototypes, VR content, and other real-time workflows.
 
 The Blender add-on is under `Blender/vr_optimizer_blender/`.
 
