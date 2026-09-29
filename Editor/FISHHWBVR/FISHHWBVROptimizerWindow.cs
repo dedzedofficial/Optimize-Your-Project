@@ -33,7 +33,7 @@ namespace FISHHWB.VROptimizer
         void OnEnable()
         {
             settings = VRSettings.Load();
-            icon = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.fishhwb.vr-optimizer/Editor/FISHHWBVR/Icons/VR-Optimizer.png");
+            icon = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.fishhwb.vr-optimizer/Editor/FISHHWBVR/Icons/Optimize-Your-Project.png");
             titleContent = new GUIContent("Optimize Your Project", icon);
             VRUpdateChecker.CheckIfDue();
         }
