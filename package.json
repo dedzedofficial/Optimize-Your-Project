@@ -9,13 +9,14 @@
     "url": "https://fishhwb.github.io/"
   },
   "keywords": [
-    "vr",
-    "vrchat",
-    "quest",
-    "optimization",
-    "textures",
-    "particles",
     "unity",
-    "compression"
+    "unity-editor",
+    "vrchat",
+    "vrchat-avatar",
+    "quest",
+    "texture-compression",
+    "mesh-compression",
+    "particles",
+    "optimization"
   ]
 }
