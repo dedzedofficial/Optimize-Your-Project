@@ -11,7 +11,7 @@ manifest = json.loads((root / "package.json").read_text(encoding="utf-8"))
 assert manifest["displayName"] == "Optimize Your Project"
 assert manifest["name"] == "com.fishhwb.vr-optimizer"
 icon = root / "Editor/FISHHWBVR/Icons/Optimize-Your-Project.png"
-assert icon.read_bytes()[:8] == b"\\x89PNG\\r\\n\\x1a\\n"
+assert icon.read_bytes()[:8] == bytes.fromhex("89504e470d0a1a0a")
 assert icon.with_suffix(".png.meta").is_file()
 window = (root / "Editor/FISHHWBVR/FISHHWBVROptimizerWindow.cs").read_text(encoding="utf-8")
 assert "Icons/Optimize-Your-Project.png" in window
@@ -31,6 +31,6 @@ with ZipFile(root / "dist" / f"{manifest['name']}-{manifest['version']}.zip") as
     assert "Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" in package.namelist()
 listing = json.loads((root / "dist/index.json").read_text(encoding="utf-8"))
 assert "Optimize-Your-Project/index.json" in listing["url"]
-env["GITHUB_REF_NAME"] = "blender-v0.7.5"
+env.pop("GITHUB_REF_NAME", None)
 subprocess.run([sys.executable, "scripts/build_blender.py"], cwd=root, env=env, check=True)
 print("Static release checks passed; Blender and Unity runtime tests still required.")
