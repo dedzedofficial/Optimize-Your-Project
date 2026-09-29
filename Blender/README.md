@@ -1,6 +1,6 @@
-# VR Optimizer for Blender — 0.7.5 preview
+# Optimize Your Project for Blender — 0.7.5 preview
 
-Publisher: FISHHWB | Ded Zed. Blender 3.6+ add-on, developed alongside the Unity package in [VR-Optimizer](https://github.com/dedzedofficial/VR-Optimizer). The Unity package has its own version and installation path.
+Publisher: FISHHWB | Ded Zed. See the [unified roadmap](../Documentation/Roadmap.md#blender-track-075-preview-and-later-work). Blender 3.6+ add-on, developed alongside the Unity package in [Optimize Your Project](https://github.com/dedzedofficial/Optimize-Your-Project). The Unity package has its own version and installation path.
 
 ## Install
 
