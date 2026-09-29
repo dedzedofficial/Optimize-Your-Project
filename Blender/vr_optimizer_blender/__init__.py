@@ -1,10 +1,10 @@
 bl_info = {
-    "name": "FISHHWB Tri Limit Remesher",
+    "name": "Optimize Your Project for Blender",
     "author": "FISHHWB | Ded Zed",
     "version": (0, 7, 5),
     "blender": (3, 6, 0),
     "location": "View3D > Sidebar > FISHHWB",
-    "description": "Create a reduced copy of a mesh at or below a triangle limit",
+    "description": "Mesh reduction, joining, Base Color atlases and static LOD copies",
     "category": "Mesh",
 }
 
