@@ -19,4 +19,4 @@ Install this add-on ZIP in Blender's **Edit > Preferences > Add-ons > Install...
 
 This first pass supports loaded single-file images directly linked to Principled BSDF Base Color, UV coordinates in the 0–1 range, and up to 64 distinct source images. It rejects UDIMs, mapped texture vectors, additional linked shader maps, missing UVs and shape keys on joined objects. The atlas copies Base Color image pixels and alpha; it does not bake procedural nodes, normal/metallic/roughness maps, shader values, animated UVs or custom shader behavior. It creates a fresh atlas material, so inspect shading before exporting. All images are fitted into equal square tiles, which can reduce detail or distort non-square source images. A large Merge Distance can damage UV seams and hard edges. Inspect the output and retain the originals.
 
-The ZIP is source-checked but has not yet been run in a Blender installation. Test on a copy of an actual asset before release.
+The ZIP is source-checked. Runtime verification in Blender is required before publishing the release. Test on a copy of an actual asset before release.
