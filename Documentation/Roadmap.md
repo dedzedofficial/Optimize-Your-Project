@@ -1,290 +1,214 @@
-# Optimize Your Project: unified roadmap
+# Optimize Your Project: roadmap
 
 <img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="96">
 
-**Unity package: v0.6.73. Blender add-on: v0.7.5 preview.** Later milestones below are proposed future work. Version numbers are planning targets, not release dates. The existing Git URL package is **Unity Editor only**.
+**Current target: v0.7.0.**
 
-## Installation experience
+Optimize Your Project is a **general developer optimization toolkit**. It should remove repetitive optimization chores from ordinary game, app, simulation, VR, social, prototype and asset-production workflows. Platform-specific helpers are optional layers on top of the general tools.
 
-Aim for one clear **Install** choice per platform, while keeping the final project selection in the platform's own UI.
+The product rule is simple:
 
-| Platform | Planned install entry point | Gate before calling it one-click |
+> If a developer repeatedly opens inspectors, modifiers, import tabs, or menus to perform the same safe optimization task, turn that work into one clear button.
+
+## Product priorities
+
+1. **General projects first.** A normal Unity or Blender user should never feel that the tool expects a VRChat project.
+2. **One-click actions before dashboards.** Keep common jobs direct and obvious.
+3. **Small scope by default.** Work on the selected folder, loaded scenes, selected hierarchy or selected mesh; do not surprise users with whole-project changes.
+4. **Safe outputs.** Use Undo, importer before/after data, or output copies when topology/appearance may change.
+5. **Detailed scans only on request.** Do not flood the main UI with warnings before the user asks for diagnostics.
+6. **Platform support is additive.** PC, mobile, VR, VRChat/VCC and future engine integrations can provide target-specific guidance without redefining the core tool.
+
+## v0.7.0 — unified one-click foundation
+
+### Unity
+
+The main Unity surface is reduced to two pages:
+
+| Page | Scope | Main purpose |
 | --- | --- | --- |
-| VCC | `vcc://vpm/addRepo?url=...` button for the published VPM listing | Publish and verify the renamed Pages `index.json` and release ZIP; users still choose a VCC project and add the package. |
-| Unity | Copyable Git URL now; a small project-aware installer can later ask for a Unity project folder and add the package dependency to its manifest after backing it up | Validate manifest editing, locked files and existing installations in clean supported Unity projects. No silent edits to an unknown project. |
-| Blender 4.2+ | Package as a native Blender extension and host a static extension repository with an install URL/drag target | Add extension manifest, build and test in Blender, verify updates and image assets. The current legacy add-on ZIP still uses Install from Disk. |
-| Blender 3.6–4.1 | Versioned legacy add-on ZIP with an optional local installer launched by the user | Detect installed Blender profile and version, preserve prior copy, enable add-on on next start, and test on Windows/macOS/Linux. |
+| **PROJECT** | Assets folder + loaded scenes | General game/project optimization |
+| **AVATAR** | Selected character/avatar hierarchy | Focused character asset/effect optimization |
 
-An installation landing page can present these buttons and show OS-specific instructions. Browser scripts cannot inspect local Blender/Unity installations or bypass their install confirmation. Keep versioned release assets and checksums, and do not advertise a preview branch as a stable release.
+The old **World** page is merged into **Project** because loaded-scene optimization is useful to every developer, not only world creators.
 
-## Product goal
+Current direct jobs:
 
-Turn repeated Unity Editor optimization chores into focused buttons: identify the relevant assets or scene objects, preview material changes when necessary, update only changed settings, and show exactly what happened. Prioritize **textures and particles**, then recurring avatar, world and indie-game tasks around them. Do not promise a frame-rate improvement from a static scan; verify results in the target platform build.
+- Compress & size textures.
+- Optimize particle systems.
+- Compress imported meshes.
+- Disable realtime shadows.
+- Scan the entire project only when a detailed report is wanted.
 
-The window should eventually offer three **workflow choices**, not three separate packages or a wall of options:
+The full **Updates** page is removed. Update status becomes a small footer:
 
-| Workflow | Default scope | Useful actions |
+- Green: current.
+- Orange: one patch release behind.
+- Red: two or more patches behind, or a newer minor/major version exists.
+- Grey: status unknown.
+
+The version feed keeps Unity and Blender versions separate so releases for one integration do not incorrectly trigger updates for the other.
+
+### Blender
+
+Blender v0.7 introduces a quick **One-Click Cleanup** section:
+
+- **One-Click Remesh** — create a remeshed copy using automatically selected detail.
+- **Merge Duplicate Vertices** — create a copy and weld nearby duplicate vertices.
+
+Existing triangle-limit, join/atlas and LOD tools remain under **Advanced Mesh Tools**.
+
+The first priority is static asset preparation for any real-time project. Rigged/shape-key assets are guarded where topology-changing actions could damage them.
+
+## v0.7.x — dependable batch cleanup
+
+### Unity
+
+- Selected-folder / selected-hierarchy scope picker shared across suitable actions.
+- Restore the last texture-import batch when current settings still match the optimizer's previous result.
+- Review Read/Write Enabled model and texture imports before changing them.
+- Missing-reference navigator for loaded scenes and prefabs.
+- Better completion summaries: changed, unchanged, skipped, unsupported and failed.
+
+### Blender
+
+- **Clean Selected Mesh**: remove loose geometry, exact duplicate geometry and safe near-duplicates on a copy.
+- Batch merge-duplicate-vertices across selected static meshes.
+- Batch remesh static prop selections with clear output naming.
+- Export generated atlas images to durable files.
+- Idempotence checks so running the same cleanup twice does not keep damaging the result.
+
+## v0.8 — scene and asset workflow
+
+### Unity
+
+- Selected hierarchy branch particle optimization.
+- Reviewed realtime-light shadow batches.
+- Large-texture review by selected folder.
+- Duplicate/redundant material usage report.
+- Static batching candidate report without automatically changing batching.
+- Build-size inventory using measured project/build information where available.
+
+### Blender
+
+- Batch LOD generation for selected static props.
+- UV and missing-texture checks.
+- Better atlas packing and padding.
+- Before/after triangle, vertex and material-slot summaries.
+
+## v0.9 — project preparation
+
+### Unity
+
+- PC/mobile texture override review.
+- Model importer review for Read/Write and compression.
+- Optional project profiles for common import targets.
+- Safer batch restoration history.
+- Exportable optimization report for teams.
+
+### Blender
+
+- Export-preparation checks for FBX/GLB.
+- Missing image and unsupported material diagnostics.
+- Optional UV repair on copies.
+- Collection-level cleanup actions.
+
+## v1.0 — general creator workflow
+
+v1.0 should allow a developer to choose a scope and complete a routine optimization pass without navigating dozens of individual inspectors.
+
+A guided run may include:
+
+1. Select **project assets**, **scene hierarchy**, **character/avatar**, or **Blender selection**.
+2. Show only relevant one-click actions for that scope.
+3. Preview actions that can materially affect visuals or importer behavior.
+4. Apply selected changes.
+5. Produce a concise completion report and restoration path.
+
+The core workflow must remain useful without any VR or social-platform SDK installed.
+
+## Optional platform helpers
+
+Platform helpers can be added when they remove real repetitive work and have been tested against the target platform.
+
+### Unity targets
+
+- PC / standalone.
+- Android / general mobile.
+- iOS.
+- Console workflows where public tooling and testing make a safe integration possible.
+- XR/VR projects.
+
+### Social platforms
+
+- VRChat / VCC.
+- ChilloutVR.
+- Resonite preparation.
+- Other creator platforms where verified workflows exist.
+
+These integrations should add platform-specific guidance or actions while leaving the same Project tools available to ordinary developers.
+
+## Other engines
+
+The goal is not to turn v0.7 into an unfocused multi-engine suite. New engine integrations should arrive after the Unity/Blender one-click patterns are proven.
+
+### Godot
+
+Good early candidates:
+
+- Imported texture-size/compression review.
+- Mesh import review.
+- Scene resource cleanup/navigation.
+- One-click project diagnostics for common oversized assets.
+
+### Unreal Engine
+
+Potential editor-plugin candidates:
+
+- Texture LOD-group / maximum-size review.
+- Static mesh LOD and Nanite eligibility review.
+- Collision complexity checks.
+- Repeated material-instance cleanup/navigation.
+
+Any Unreal implementation should use Unreal's own editor APIs rather than trying to reuse Unity code.
+
+### Other DCC tools
+
+Future integrations may include tools such as Maya or 3ds Max if there are repeatable asset-cleanup jobs that can be implemented safely and maintained.
+
+## One-click candidate backlog
+
+| Area | Button / workflow | Repetitive work removed |
 | --- | --- | --- |
-| **VR Avatar** | Selected avatar root | Texture preview, avatar check, particle controls; optional platform-specific guidance after platform validation |
-| **VR World** | Selected scene branch or loaded scenes | Texture preview, particle changes, reviewed light shadows; optional platform-specific guidance after platform validation |
-| **Unity Game** | Selected folder or scene branch | Texture and Sprite import caps, particle and light changes, reviewed model imports |
-
-Every action still shows its actual scope. A game developer should be able to use the same texture button without adopting VRChat conventions. VRChat-specific checks remain optional.
-
-The [VRChat avatar performance ranking reference](https://creators.vrchat.com/avatars/avatar-performance-ranking-system/) counts factors including material slots, meshes, particles and lights, but its rank is a static assessment rather than a measurement of runtime frame time. The [avatar optimization guidance](https://creators.vrchat.com/avatars/avatar-optimizing-tips/) highlights material slots, particle rendering and realtime lights as practical areas to examine. For Quest worlds, use the [Android optimization guidance](https://creators.vrchat.com/platforms/android/quest-content-optimization/) alongside measured profiling.
-
-## Release progression
-
-Use **0.6.6** for the World/Avatar UI and reviewed mesh compression. Each subsequent **minor release** delivers a complete workflow, not one isolated checkbox. Use patch numbers after those milestones for fixes and polish; do not reserve a separate release for every small action.
-
-| Milestone | Theme and headline | Creator benefit |
-| --- | --- | --- |
-| **0.6.4 — Foundation** | Texture and particle actions, scene light and mesh diagnostics | First useful set of repeatable Editor buttons |
-| **0.6.5 — Avatar starter** | Preview texture edits; check one avatar; optimize its particles | Try the tool on an avatar and know what will change |
-| **0.6.6 — World and avatar pages** | World / Avatar pages, area issue buttons, severity filters, direct controls, reviewed mesh compression | Find one issue type and selectively apply a model compression level |
-| **0.6.7 — Current implementation** | Editor icon, update status/action, first general Unity asset workflow | Keep the package current and help non-VR projects with one useful batch action |
-| **0.6.73 — Direct actions** | World, Avatar and Project actions; full project issues only on request; size and compression in one texture pass | Remove per-area issue clutter and repeated import clicks |
-| **0.7.0 — Controlled batches** | Expand folder/selection scopes and add texture batch restoration to the Project page | Safely handle game and VR textures without repeating Inspector work |
-| **0.8.0 — Scene effects** | Selected-branch particle batches and reviewed light-shadow batches; validate a ChilloutVR choice | Tackle effects and lighting in VR worlds and indie-game levels |
-| **0.9.0 — Platform imports** | PC/mobile texture override fixes, reviewed model importer actions and Resonite preparation guidance | Prepare assets for more destinations without visiting every import tab |
-| **1.0.0 — Unity creator workflow** | One guided preview and run for an avatar, scene branch or game asset folder, with validated platform choices | Finish a routine VR or indie-game optimization pass from one place |
-| **After 1.0 — Other engines** | Prove a Godot editor add-on, then investigate an Unreal Editor plugin | Bring proven repetitive actions to other engines using their native tools |
-
-These are proposed scopes, not dates or guarantees. New features move into release notes only when implemented and tested. Each milestone must work on its own; fixes to a released milestone can ship as 0.7.1, 0.8.1 and so on.
-
-## Blender track: 0.7.5 preview and later work
-
-The repository root remains the Unity Package Manager package. Blender lives in `Blender/vr_optimizer_blender/` as a separate native add-on. **0.7.5 names the Blender add-on milestone, not the Unity package version.** Keep Unity's package ID and 0.6.73 version stable; the display name may follow the shared product identity without changing Unity features.
-
-### 0.7.5 scope
-
-1. Provide four direct actions in the FISHHWB sidebar: reduce a selected mesh to a triangle cap, join selected meshes with an adjustable vertex weld distance, optionally make one Base Color image atlas with remapped UVs while joining, and create three static mesh LOD variants at 100%, 66%, and 33% triangle targets.
-2. Always create copies; select the result and leave source objects and image files alone. Show triangle and merged-vertex counts in operator reports.
-3. Gate the atlas on simple image-based materials and 0–1 UVs. Report why an unsupported material was skipped before creating an output. Support distinct materials sharing one image without duplicating atlas tiles.
-4. Package one installable ZIP and document installation, workflow and texture limitations. Keep Blender scripts separate from Unity Editor assemblies.
-5. Test LOD0/1/2 on static meshes with modifiers, UVs and materials. Confirm each measured result is at or below its target and that the original remains intact. These objects are authoring variants, not an automatic distance switch; Unity LODGroup setup remains manual.
-6. Test in supported Blender versions before announcing 0.7.5 as released: two cubes with different transforms and materials, adjacent seam vertices, shared images, non-square images, alpha, modifiers, missing UV, tiled UV, UDIM, shape keys, multiple material slots, undo and save/reopen. Verify atlas appearance and triangle count in an exported GLB/FBX where applicable.
-
-### Follow-on work
-
-| Stage | One-button work | Release condition |
-| --- | --- | --- |
-| 0.7.5 stabilization | Real Blender regression scenes; atlas export PNG and size report; clear errors and progress on large images | Generated atlas survives save/reopen and exports with the mesh |
-| 0.7.6 | Atlas packing that respects image aspect ratio, pixel padding and mip bleeding; separate image atlases for Base Color, normal and mask channels when mappings align | No visible seams in a tested target build |
-| 0.8 | Preview selected mesh/texture memory and triangle counts; batch reduce static props with per-object targets and naming | Original files recoverable; measured counts match output |
-| 0.9 | UV overlap and missing-texture checks; optional unwrap on copies; reviewed LOD export | Detect unsupported rigs, shape keys and texture dependencies |
-| 1.0 | Guided select → preview → run → report for Blender asset preparation, with export checks for Unity and VR social platforms | Real asset round trip and platform-specific validation |
-
-Keep the interface short: choose the mesh operation, enter only the size or distance it needs, press one button. Place detailed warnings in a deliberate scan/report action later. Do not claim a VRChat rank or frame-rate increase from triangle counts alone.
-
-### Camera visibility separation idea (research, after 0.7.5)
-
-Provide a **Camera Visibility Preview** action for a chosen room or area. Place a camera at its center (or use selected cameras), sample all requested directions, test face visibility with frustum and occlusion checks, and report visible/uncertain/hidden faces. On confirmation, separate a **copy** into visible and candidate hidden geometry so the creator can reduce or inspect the latter. Keep source topology, UVs and materials unchanged. Never delete faces automatically. One central camera cannot describe every player viewpoint, mirrors, portals, moving props or the outside of the room; offer multiple camera positions and a conservative uncertainty class before any optimization.
-
-The initial release gate is a test scene with doorways, occluders, two floors and several viewpoint positions. Confirm that faces visible from any selected camera remain in the visible set, compare counts before and after separation, and verify material/UV continuity. This is a proposed feature, not implemented in 0.7.5.
-
-## New one-button optimization ideas
-
-These candidates build on the current mesh, texture and scene actions. Each button should target the selected asset or hierarchy, show a small before/after report, and create a copy or restoration record when appearance may change. They are **plans**, not shipped features.
-
-| Stage | Button | Repetitive work it removes | Guard and acceptance test |
-| --- | --- | --- | --- |
-| **Blender 0.7.6** | **Clean Selected Mesh** | Find loose vertices, degenerate faces, exact duplicate triangles and near-duplicate vertices, then clean a copy | Show counts for each problem before applying. Preserve UV seams and sharp edges; reject rigged or shape-keyed meshes until tested. A second run should change nothing. |
-| **Blender 0.7.6** | **Export Atlas PNG** | Save the generated atlas and point the new material at a durable image file | Require an output folder, avoid overwriting without confirmation, save/reopen a Blend file and export GLB to confirm the image travels with the model. Add pixel gutters that hold up under mipmaps. |
-| **Blender 0.8** | **Make LODs for Selection** | Repeat LOD0/1/2 generation across many static props | Show per-object original and target triangles, skip unsupported objects with reasons, keep naming stable and place each set in its own collection. Confirm UVs and materials in exported models. |
-| **Blender 0.8** | **Visible Face Preview** | Manually select surfaces possibly unseen from a room or play area | Sample a center camera and optional extra positions, classify visible/uncertain/hidden, highlight results, and separate on a copy only after confirmation. Doorways, upper floors, mirrors and exterior viewpoints must be included in test scenes. |
-| **Blender 0.9** | **UV and Texture Check** | Find missing UVs, UV islands outside 0–1, overlap where an atlas is requested, missing image files and unusually large textures | Select the responsible object/material; offer unwrap or repack only on a copy. Report pixel dimensions separately from measured GPU memory. |
-| **Unity 0.8+** | **Review Duplicate Materials** | Locate repeated material assets and redundant slots used by a selected avatar or scene branch | Compare shader, properties and referenced textures, then preview references before any remap. Animation, prefab overrides and shader keywords must be checked. No automatic deletion. |
-| **Unity 0.9+** | **Review Read/Write Imports** | Visit model and texture import tabs asset by asset | List CPU-readable assets in the chosen scope, select exact importers to change, record before-values, reimport changed files once, and restore only when the current settings still match the recorded result. |
-| **Cross-platform 1.0** | **Prepare Export Package** | Recheck LOD names, atlas files, missing references and target import settings before moving a Blender asset into Unity | Produce a manifest with exact mesh triangle counts, textures, UV channels and unresolved findings. Do not claim VRChat rank or frame rate without a real target build. |
-
-### How the actions fit together
-
-1. **Inspect:** select one mesh, a Blender collection, a Unity hierarchy branch or an Assets folder. Show the exact scope and counts. Running a local action must never trigger a whole-project scan.
-2. **Create or apply:** mesh cleanup, LODs, atlas work and camera face separation produce new Blender objects. Unity importer actions record before/after values; scene object edits use Undo.
-3. **Verify:** compare measured triangle counts and image dimensions; check normals, material slots, UV seams and exports. Report changed, unchanged, unsupported and failed items, with a way to select each failure.
-4. **Repeat safely:** unchanged inputs should produce no additional import changes. Name generated objects and files predictably so creators can replace an earlier output instead of accumulating hidden duplicates.
-
-### Camera visibility design details
-
-A central camera is a useful first sample for a room but cannot prove that a face is never visible. The preview should cast rays toward sample points on each face from each chosen camera position, account for the camera field of view and occluders, and treat uncertain faces as retained. A creator can inspect colored visible, uncertain and candidate hidden groups, then press **Separate Candidate Faces** to create two new mesh objects with the original materials and UV loops. Only the candidate group is offered for later decimation. The source object stays intact, and no face is removed automatically. Performance on large scenes needs bounded sampling, progress and cancellation.
-
-### Release priorities
-
-The next Blender work should first make the existing 0.7.5 buttons dependable: test real meshes, fix atlas seam quality, export the generated texture, and confirm LOD counts after modifiers. Then add the mesh cleanup and batch actions. Camera visibility becomes a release feature only after the multi-view preview avoids false hidden classifications in the test scene. Unity continues its separate controlled-batch and restoration milestones; shared branding and installation do not imply that a Blender action can run in Unity.
-
-## VR social platform expansion
-
-**Platform selection changes recommendations, not the meaning of Unity importer settings.** The main optimizer remains useful without choosing a social platform. Add a platform choice only after testing against that platform's current creator tooling; unsupported or unavailable integrations must say so in the UI.
-
-| Platform | Practical automation path | Release gate |
-| --- | --- | --- |
-| **VRChat** | Keep optional avatar/world guidance on top of the Unity texture, particle and light buttons; do not require the SDK for the core package. | Verify any SDK-specific check and current performance guidance in a VRChat project. |
-| **ChilloutVR** | Its [Content Creation Kit uses Unity](https://docs.chilloutvr.net/cck/setup/), so reuse proven Unity actions. In 0.8.0, investigate an optional CCK-aware avatar/world choice that detects the installed kit and reports only verified platform-specific issues. | Test in a supported CCK project; do not change CCK components, rigs or upload settings automatically. |
-| **Resonite** | Offer a **preparation report** for meshes, textures and effects when a creator is preparing source assets. Resonite also documents a [UnitySDK import route](https://wiki.resonite.com/UnitySDK), but Unity import settings cannot be assumed to describe final in-game behavior. | Test the real Resonite import path and consult its [optimization guidance](https://wiki.resonite.com/Optimization_guidelines/) before suggesting any platform-specific automatic fix. |
-| **Meta Horizon Worlds** | Investigate a separate asset-preparation or editor workflow for its [Desktop Editor model import](https://developers.meta.com/horizon-worlds/learn/videos/importing-custom-models/). The Unity package must not claim it can edit a Horizon world. | Prove a supported interchange format and an authorized workflow in the native creator tools; no platform claims based on Unity scene scans. |
-
-**Sequence:** general Unity actions first; verified ChilloutVR support as a Unity-based pilot; Resonite preparation reporting; Horizon Worlds investigation after the core Unity workflow is stable. Additional social VR platforms can be evaluated using the same criteria instead of being added as empty dropdown entries. A platform-specific button should remove an actual repetitive creator task, such as applying reviewed asset caps to a selected avatar, rather than only displaying a score.
-
-## 0.6.5: Texture Change Preview and first avatar buttons
-
-### Texture Change Preview
-
-1. Collect supported 2D textures once and compare current PC / Android / iOS importer maximums with proposed values. Clearly show when a source texture is already smaller than the proposed cap.
-2. Show **path, current size, proposed size, changed/unchanged/unsupported**, with an **Include** checkbox per proposed change. Offer *Include all* and *Exclude all* for a manageable batch.
-3. Reimport only included textures with actual changes. A cancel stops between assets; report changed, unchanged, excluded, unsupported and failed counts with paths for failures.
-4. Fix the current cap-only behavior deliberately: if the user picks a larger maximum than an existing platform override, show that increase in the preview and apply it only if included. Never change source image pixels, format, compression, mipmaps or filters.
-
-**Helps:** safely applying Quest caps to hundreds of textures while excluding a face, UI or decal that needs detail. The preview replaces opening every texture Inspector.
-
-### Avatar Check
-
-Select one avatar root in the Hierarchy. Show a concise inventory of used textures, skinned mesh triangle and vertex counts, material slot totals, and particle systems, with **SELECT** for the responsible object or asset. Reuse existing scanners where sensible. No required VRChat SDK dependency and no automatic geometry changes.
-
-**Helps:** finding the expensive pieces of one avatar without filtering a whole-project report.
-
-### OPTIMIZE AVATAR PARTICLES
-
-Apply the selected particle controls to particle systems under the selected avatar root only. Show found, changed, unchanged and skipped totals. Record scene changes through Unity Undo. If the selected root is a prefab asset instead of an editable scene object, make the editing behavior explicit before changes.
-
-**Helps:** applying one sensible cap across an avatar's effect hierarchy without modifying world effects elsewhere in the scene.
-
-## 0.6.7 proposal: recognizable tool, reliable updates, broader Unity utility
-
-**Implemented in code, pending Unity Editor verification and a published release.** The package manifest is now 0.6.7. The one or two button goal remains: open an area, preview changes, apply selected changes.
-
-### Icon and package identity
-
-- Add a simple, readable square icon in the Editor assembly. Show it in the docked tab through `EditorWindow.titleContent`, the window header, and the package documentation. Include a high-resolution source asset and Unity-friendly small sizes; check it in light and dark themes.
-- Remove the discarded illustrative UI image from the README. Use a real Unity Editor capture only when the layout has been tested in Unity.
-
-### Version notice and Update action
-
-1. Read the installed version from the package metadata. On a user-initiated check, fetch the newest stable GitHub Release tag, compare numeric versions, and show a small **Update available: vX.Y.Z** notice. Check at most once per day while the window is open, cache the result locally, offer **Check now**, and show a quiet error only after a manual check. Ignore prereleases unless explicitly chosen later.
-2. **View release notes** opens the exact GitHub release. **Update** first displays source, installed version, target version and whether project changes must be saved. No silent installs or forced domain reloads.
-3. If installed from a Git URL in Unity Package Manager, update using Unity's Package Manager API with a URL pinned to the verified release tag. Track request completion and show the real result. If installed from VCC/VPM, link to the package in Creator Companion and let VCC resolve it. If embedded/local, show instructions to update that source rather than overwriting files. Do not attempt to update an unknown source.
-4. A GitHub Release and VPM listing must be published and reachable before enabling update notices for that version. The first v0.6.7 acceptance test covers no release, offline/network failure, already-current, newer stable release, and each supported install source.
-
-### General texture workflow to choose
-
-The Sprite-only proposal was declined. The PROJECT page now includes **Texture Compression Cleanup**: list uncompressed platform imports by source asset and target platform, preview what Unity's automatic GPU compression choice would become, and selectively fix them without touching maximum size, alpha, normal map type, filter mode or source pixels. Explicit format choices are skipped. The preview describes the importer setting change and logs the resolved format after reimport; it does not promise a frame-rate percentage.
-
-Other candidate buttons: review **Read/Write Enabled** textures and disable it only after explicit selection; enable **mipmap streaming** on checked large 3D textures when project streaming is configured; review textures using a format unsuitable for the chosen platform. These need separate previews because scripts may require CPU pixel data, UI textures may need full-resolution mip levels, and format support differs by device. None should silently rewrite every texture.
-
-**Release gate once chosen:** icon legible at tab size; updater tested against supported install sources; texture batch verified in Unity on opaque, alpha, normal map, UI and mask assets across relevant build targets. A second identical run must reimport nothing.
-
-### Other general Unity candidates (choose after testing 0.6.7)
-
-| Candidate | Repetitive job it could remove | Why it needs review |
-| --- | --- | --- |
-| Texture compression cleanup | Selectively fix uncompressed platform imports | Preserve texture type, alpha and intentional format overrides |
-| Read/Write import cleanup | Find models and textures holding CPU-side data unnecessarily | Scripts, colliders and runtime mesh edits may depend on access |
-| Missing references | Collect broken scene/prefab references into one navigable list | Deleting or replacing references needs context |
-| Static batching candidates | Find repeated static props with compatible materials | Profile draw calls and memory before changing batching |
-| Light shadow batch | Review and disable selected costly shadows in game scenes | Affects visual intent and baked/realtime behavior |
-| Build size inventory | Group large assets and packages by measured build contribution | Editor asset size alone does not equal build size |
-
-## Additional update options after 0.6.6
-
-| Candidate | Repetitive job removed | Sensible stage |
-| --- | --- | --- |
-| Material usage map | Locate duplicate and unused material slots across an avatar | 0.7.x |
-| Texture restore batches | Restore importer overrides after a rejected Quest test | 0.7.0 |
-| Scene branch controls | Apply saved particle controls to an effects hierarchy | 0.8.0 |
-| Shadow review batch | Turn off selected realtime shadows with one Undo group | 0.8.0 |
-| Model importer review | Find and selectively disable Read/Write on safe assets | 0.9.0 |
-| Broken reference navigation | Jump directly to missing scene or prefab references | 0.8.x |
-| Reusable team profiles | Run a named project profile for repeat imports | 1.0.0 |
-| Other social VR preparation | Generate platform-specific asset preparation where verified | After 1.0 |
-
-Each candidate needs an exact before/after preview where importer or visual behavior changes, and a verified way back. Keep VRChat, ChilloutVR, Resonite and Horizon Worlds integrations separate where their creator pipelines differ.
-
-## Mesh and avatar work to evaluate
-
-| Stage | Mesh or avatar task | Safe release boundary |
-| --- | --- | --- |
-| 0.7.x | Record model importer changes for batch restoration | Restore only importers whose current settings still match the tool's last edit |
-| 0.7.x | Find unused or duplicate material slots in a selected avatar | Preview references; report only until animation and shader behavior can be checked |
-| 0.8.x | Selected branch mesh audit with large bounds and redundant hidden meshes | Never remove components without a dependency and animation review |
-| 0.8.x | Avatar effect inventory and per-system particle selections | Apply only checked scene objects with a single Undo group |
-| 0.9.x | Reviewed model Read/Write changes and mesh optimization import flags | Require per-model opt-in and verify scripts that need CPU mesh access |
-| 0.9.x | Optional LOD authoring guidance for world props | Avoid automatic LOD generation that alters silhouettes or collision |
-| 1.x | Mesh merge candidates for repeated static props | Check occlusion, lightmaps, materials, colliders and draw calls first; no blind joining |
-| 1.x | Avatar material and skinned mesh workflows | Require animation/rig/shader compatibility validation and a reversible result |
-
-Mesh compression reduces stored mesh data but is not a reliable way to improve frame rate. Prioritize profiling, visibility and draw-call investigations where those are the bottlenecks. Performance estimates must be measured in the target build.
-
-## 0.7.0: Controlled batches and recovery for Unity games
-
-**Headline:** choose exactly what the texture button touches, then be able to restore a batch.
-
-- **Scope picker:** Whole project, selected asset folder, or textures referenced under a selected scene root. Show scope and item count before preview. Never silently widen a selected scope.
-- **Restore last texture batch:** Save exact before-values for touched platform overrides in a project-local history record. Preview restoration; restore only importers that still match recorded after-values, and flag subsequent user edits as conflicts.
-- **Completion report:** Changed, unchanged, excluded, unsupported and failed counts, with paths and a copyable failure list. A second identical run should reimport nothing.
-- **Unity Game workflow choice:** use a selected asset folder or scene root without an avatar or VRChat SDK. Extend the Sprite workflow to mixed texture folders and restore history; a 2D developer should be able to review and restore an entire art batch.
-
-**Helps:** creators iterating on Quest textures or PC/mobile game art across hundreds of assets without manually editing or restoring importer tabs.
-
-## 0.8.0: Scene effects workflow
-
-**Headline:** optimize particles and light shadows within a chosen scene branch, using a review list.
-
-- **PARTICLES IN SELECTION:** apply the selected controls to a selected Hierarchy branch, not the entire scene. Rank effects for review using observable settings such as maximum count, constant emission, trails, collision, mesh rendering, lights, shadows and transparent material. Label the ranking a heuristic, not measured GPU cost.
-- **REVIEW SCENE LIGHTS:** list realtime shadow-casting lights in the selected branch with type, range and owning object. **DISABLE SELECTED SHADOWS** changes only checked lights after confirmation. One Undo group restores the batch; leave bake mode, intensity and light objects intact.
-- **Shared particle settings:** optionally save a project configuration for repeat actions; the interface retains direct controls and visual modules remain explicit opt-ins.
-- **ChilloutVR validation pilot:** test the same selected avatar/world actions in a supported Unity + CCK project. Show a platform choice only for checks and actions that have been validated there; keep the core actions usable without CCK.
-
-**Helps:** effects-heavy VR worlds and indie-game levels where dozens of particle and light components need the same limited set of settings changed. VRChat notes that large transparent particles can cost more than raw counts suggest, so the review list does not equate particle count with actual frame time.
-
-## 0.9.0: Platform preparation and importer chores
-
-**Headline:** automate PC/mobile importer checks after avatar and scene actions are under control.
-
-- **PC / MOBILE TEXTURE VIEW:** compare platform caps for textures in the chosen scope; flag missing Android and iOS overrides and show which files the entered Quest or general mobile cap would change. **FIX MISSING OVERRIDES** adds only selected missing size overrides, preserving format, compression and source images.
-- **MODEL READ/WRITE REVIEW:** list models used by a selected root that are imported as readable. Offer a previewed, checked batch action; warn that scripts, mesh baking and other runtime operations may depend on Read/Write. Reimport changed models only and provide a restore path.
-- **Platform readiness summary:** report work still needed using actual observed settings. Do not claim a VRChat rating or device frame-rate result based on this static summary.
-- **Resonite preparation report:** list source meshes, textures and effects from a selected hierarchy and link each finding to the source asset. Label the output as pre-import guidance, not a measured Resonite performance result or an automatic in-game optimizer.
-
-**Helps:** creators preparing Quest avatars or Android/iOS indie games who would otherwise work through platform, model importer tabs asset by asset. No automatic decimation, mesh merging or material deletion.
-
-## 1.0.0: Complete Unity creator workflow
-
-**Headline:** one guided run that brings the proven actions together without hiding their effects.
-
-1. Choose **VR Avatar**, **VR World** or **Unity Game**, then select an avatar root, loaded scene branch or asset folder and a PC/mobile target. An optional social-platform choice appears only for validated integrations.
-2. Show a single prioritized preview of applicable texture import changes, particle settings, eligible light-shadow changes and any explicitly selected importer action. Leave mesh geometry diagnostic only.
-3. Include or exclude items, run the selected actions, and produce a concise completion report with restoration options for importers and Undo for scene changes.
-4. Ship a sample avatar/scene, a clean Git URL installation check, compatibility tests for supported Unity versions, a clear changelog and regression coverage for cancellation and second-run no-op behavior.
-
-**Helps:** an experienced VR or indie-game creator finish a routine pass in minutes while still seeing exactly which assets or components will be edited. This integrates tested 0.6–0.9 actions; it is not a hidden "optimize everything" button.
-
-## Other native tool options after the Blender pilot
-
-The Unity Package Manager package cannot run in another engine. Blender 0.7.5 is the first separate native pilot. Treat further engines as **separate native editor add-ons** with its own installation instructions, versioning and tests. Reuse the product approach—scope, preview, compare, apply, restore and report—rather than copying Unity importer code or assuming equal engine settings.
-
-1. **Godot pilot after Blender validation:** build a small `EditorPlugin` add-on with one complete workflow: select a project folder, preview texture import settings, apply checked changes, then restore a batch. Validate against a supported Godot version and a real 2D/3D sample project before adding particle or light actions. Godot exposes editor extension points through [`EditorPlugin`](https://docs.godotengine.org/en/stable/classes/class_editorplugin.html).
-2. **Unreal investigation and pilot:** use editor-only tooling such as Editor Utility Widgets or Python to trial a selected-folder texture import review. First confirm the appropriate asset API, transaction/undo behavior and packaging path in the targeted Unreal version. Epic documents editor scripting and utility widgets for asset workflows: [Scripting and Automating the Unreal Editor](https://dev.epicgames.com/documentation/unreal-engine/scripting-and-automating-the-unreal-editor).
-3. **Shared roadmap, engine-specific behavior:** use common terms for what a batch proposes and records, but maintain separate rules for each engine's texture, particle and light systems. A feature ships for an engine only after native preview, cancellation, restoration and test coverage exist there.
-
-**Release approach:** decide the first non-Unity engine from actual creator demand and a working prototype. A Godot or Unreal add-on starts at its own pre-1.0 version; do not label an untested port as part of the Unity 1.0.0 release.
-
-## Engineering rules for every release
-
-1. **Explicit scope:** show whether an action touches the project, a folder, loaded scenes, a selected Hierarchy branch or one avatar. Scan unopened scenes only if a future feature explicitly supports it.
-2. **Compare first:** skip assets with matching settings. Report unsupported texture types instead of forcing overrides.
-3. **Preview when appearance or runtime behavior may change:** exact per-item old/new values; explicit confirmation for large importer batches and light/model actions.
-4. **Recovery:** Unity Undo for scene-object changes; before-state journal plus conflict detection for importer changes. Cancel between items without claiming rollback of completed work.
-5. **Large-project behavior:** process in chunks, show progress and cancellation, avoid scans every editor frame and avoid full AssetDatabase refreshes unless required.
-6. **Modular scanners and actions:** add new modules without rewriting `VRProjectScanner`; separate analysis from mutation.
-7. **Honest metrics:** label importer dimensions, estimated costs and static VRChat limits correctly. Use Unity Profiler and on-device testing for frame-rate claims.
-8. **Compatibility:** keep the core editor package free of external dependencies; optional VRChat or ChilloutVR checks must be guarded by presence of the relevant SDK/CCK and supported Unity version. Do not transfer one platform's limits to another.
-
-## Release acceptance checklist
-
-- Git URL install works with `package.json` at the repository root in a clean supported Unity project; Editor assembly compiles without the VRChat SDK.
-- Previewed changes match the saved importer/object settings exactly; a second run without user edits makes zero changes.
-- Cancellation clears progress UI and reports partial results without corrupting project state.
-- Undo restores scene-object edits; importer batch restoration either restores recorded settings or reports a conflict.
-- Tests include default/normal textures, intentional platform overrides, large particle systems, nested avatar roots, prefab instances, inactive children and multiple loaded scenes.
-- README and changelog state what shipped; planned items stay in this roadmap until implemented and verified.
-
+| Unity textures | Compress & Size | Opening platform importer tabs asset by asset |
+| Unity models | Review Read/Write | Checking model importers one at a time |
+| Unity scenes | Optimize Particles | Repeating the same limits across effects |
+| Unity scenes | Disable Selected Realtime Shadows | Editing lights individually |
+| Unity project | Missing References | Hunting broken references manually |
+| Unity project | Build Size Inventory | Searching for oversized content manually |
+| Blender mesh | One-Click Remesh | Adding/configuring/applying remesh manually |
+| Blender mesh | Merge Duplicate Vertices | Entering Edit Mode and running Merge by Distance repeatedly |
+| Blender mesh | Clean Selected Mesh | Repeated loose/duplicate geometry cleanup |
+| Blender mesh | Make LODs | Creating and naming decimated copies by hand |
+| Blender export | Prepare Export | Rechecking names, textures, UVs and output files before engine import |
+
+## Release quality gates
+
+Every release should pass the following before being tagged:
+
+- Package/add-on version matches the intended release tag.
+- Static package checks pass.
+- Unity compiles in the minimum supported editor version.
+- Blender add-on enables without Python errors in supported versions.
+- Destructive-looking Blender actions actually create copies unless clearly documented otherwise.
+- Unity scene edits use Undo where practical.
+- Importer changes avoid unnecessary reimports on a second identical run.
+- Install instructions work from a clean project/profile.
+- General project usage is documented before optional VR/platform-specific instructions.
+- No release claims a guaranteed FPS gain from a static scan.
+
+## Compatibility note
+
+The Unity package ID `com.fishhwb.vr-optimizer` and several `VR*` internal type/folder names are historical. They remain during the v0.7 line to avoid breaking existing Unity package installations and references.
+
+Public branding, UI text and future architecture use **Optimize Your Project** and are not limited to VR.
