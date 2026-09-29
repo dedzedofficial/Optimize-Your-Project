@@ -29,7 +29,7 @@ The Unity window now has only two work pages. Neither page requires a VR SDK:
 - **PROJECT** — replaces the old World + Project split. Texture work uses the chosen Assets folder; particle, imported-mesh and realtime-light jobs operate on loaded scenes.
 - **AVATAR** — runs the same focused jobs against one selected character/avatar hierarchy. This can be used for ordinary game characters as well as social-VR avatars.
 
-Each job is a direct action. Detailed findings stay hidden unless you explicitly press **Scan Entire Project**.
+Each job is a direct action. Detailed findings stay hidden unless you explicitly press **Scan Entire Project**. v0.7 also uses a cleaner card-based interface with clearer action hierarchy, larger primary buttons, compact version status, and a small optional support panel.
 
 ### Project buttons
 
@@ -58,7 +58,7 @@ The Blender add-on is under `Blender/vr_optimizer_blender/`.
 
 After installation, open the 3D Viewport sidebar (**N**) → **FISHHWB**.
 
-The first section is **ONE-CLICK CLEANUP**:
+The Blender sidebar mirrors the same cleaner product layout: selection summary, **ONE-CLICK CLEANUP**, collapsible advanced tools, and the optional free/support note. The first action section is **ONE-CLICK CLEANUP**:
 
 - **One-Click Remesh** — makes a new static-mesh copy and remeshes it with an automatically selected detail size.
 - **Merge Duplicate Vertices** — makes a new copy and merges nearby duplicate vertices using **Merge Distance**.
@@ -66,6 +66,14 @@ The first section is **ONE-CLICK CLEANUP**:
 The original mesh is kept untouched. Rigged meshes, shape-key meshes, or cases where topology changes are unsafe are rejected rather than silently damaged.
 
 Existing triangle-limit, join/atlas, and static LOD tools remain under **Advanced Mesh Tools**.
+
+## Free for developers
+
+**Optimize Your Project is free to use.** The goal is to make development easier, remove repetitive optimization work, and give newer creators useful tools without putting the basics behind a paywall.
+
+If the project saves you time and you would like to help it keep growing, you can support development on [Patreon](https://www.patreon.com/cw/DedZed). Optional support helps fund testing, documentation, new one-click optimization tools, maintenance, and future integrations with more engines and creator workflows.
+
+**Supporting is always optional — the project stays free either way.**
 
 ## Safety
 
