@@ -105,6 +105,16 @@ Optimize Your Project is free and licensed under MIT. Contributions and bug repo
 
 The [Blender add-on](Blender/README.md) is a separate native install under `Blender/vr_optimizer_blender/`. It creates reduced mesh and LOD copies, joins selected mesh copies with adjustable vertex welding, and can build a Base Color image atlas with remapped UVs for supported materials. Install the `Blender/vr_optimizer_blender` folder as a ZIP through Blender preferences; the repository root Git URL remains the Unity package at v0.6.73. The Blender 0.7.5 source is a preview pending tests in Blender and export round trips. See the [unified roadmap](Documentation/Roadmap.md#blender-track-075-preview-and-later-work).
 
+## Release preparation
+
+The GitHub Actions **Check release packages** workflow validates the Unity package manifest, branding paths, VPM archive and Blender ZIP on each PR. It is a packaging check; creators should still test inside both editors.
+
+- **Unity package:** keep the package ID `com.fishhwb.vr-optimizer`. After a clean Unity 2021.3+ Editor test and a verified VPM listing URL, tag the matching manifest version as `v0.6.73`. The `Publish VPM package` workflow creates the ZIP and Pages listing.
+- **Blender add-on:** test installation, join/atlas/LOD actions, Undo, save/reopen and GLB export in supported Blender versions. Then tag `blender-v0.7.5`; the separate `Publish Blender add-on` workflow attaches an installable ZIP to its GitHub release.
+- The new logo comes from the supplied artwork. Its transparent 256-pixel UI copy is included in the Unity package and Blender add-on; the repository Markdown pages use the same mark.
+
+Release tags are separate because the Unity package is 0.6.73 and Blender is 0.7.5. Do not publish either tag until its editor checks pass. See the [unified roadmap](Documentation/Roadmap.md) for later optimization buttons.
+
 ## Future updates
 
 See the [automation roadmap](Documentation/Roadmap.md) for planned batch restoration, scene branch actions, reviewed model imports, avatar material checks and options for other creator platforms. These are plans, not shipped features.
