@@ -12,7 +12,7 @@ namespace FISHHWB.VROptimizer
     {
         const string Api = "https://api.github.com/repos/dedzedofficial/VR-Optimizer/releases/latest";
         const string Repository = "https://github.com/dedzedofficial/VR-Optimizer.git";
-        const string CacheKey = "FISHHWB.VROptimizer.UpdateCheck.v067";
+        const string CacheKey = "FISHHWB.VROptimizer.UpdateCheck.v0673";
         const string TagKey = CacheKey + ".Tag";
         const string UrlKey = CacheKey + ".Url";
         [Serializable] sealed class Release { public string tag_name; public string html_url; }
@@ -29,7 +29,7 @@ namespace FISHHWB.VROptimizer
             get
             {
                 var info = PackageInfo.FindForAssetPath("Packages/com.fishhwb.vr-optimizer/package.json");
-                return info != null ? info.version : "0.6.7";
+                return info != null ? info.version : "0.6.73";
             }
         }
         static PackageInfo Installed => PackageInfo.FindForAssetPath("Packages/com.fishhwb.vr-optimizer/package.json");

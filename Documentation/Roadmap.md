@@ -1,6 +1,6 @@
 # FISHHWB VR Optimizer: automation roadmap
 
-**Current package target: v0.6.7.** Later milestones below are proposed future work. Version numbers are planning targets, not release dates. The existing Git URL package is **Unity Editor only**.
+**Current package target: v0.6.73.** Later milestones below are proposed future work. Version numbers are planning targets, not release dates. The existing Git URL package is **Unity Editor only**.
 
 ## Product goal
 
@@ -28,6 +28,7 @@ Use **0.6.6** for the World/Avatar UI and reviewed mesh compression. Each subseq
 | **0.6.5 — Avatar starter** | Preview texture edits; check one avatar; optimize its particles | Try the tool on an avatar and know what will change |
 | **0.6.6 — World and avatar pages** | World / Avatar pages, area issue buttons, severity filters, direct controls, reviewed mesh compression | Find one issue type and selectively apply a model compression level |
 | **0.6.7 — Current implementation** | Editor icon, update status/action, first general Unity asset workflow | Keep the package current and help non-VR projects with one useful batch action |
+| **0.6.73 — Direct actions** | World, Avatar and Project actions; full project issues only on request; size and compression in one texture pass | Remove per-area issue clutter and repeated import clicks |
 | **0.7.0 — Controlled batches** | Expand folder/selection scopes and add texture batch restoration to the Project page | Safely handle game and VR textures without repeating Inspector work |
 | **0.8.0 — Scene effects** | Selected-branch particle batches and reviewed light-shadow batches; validate a ChilloutVR choice | Tackle effects and lighting in VR worlds and indie-game levels |
 | **0.9.0 — Platform imports** | PC/mobile texture override fixes, reviewed model importer actions and Resonite preparation guidance | Prepare assets for more destinations without visiting every import tab |

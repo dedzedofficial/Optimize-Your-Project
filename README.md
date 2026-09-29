@@ -1,26 +1,22 @@
 # FISHHWB VR Optimizer
 
-**Version 0.6.7 · Free Unity Editor package · FISHHWB | Ded Zed**
+**Version 0.6.73 · Free Unity Editor package · FISHHWB | Ded Zed**
 
 FISHHWB VR Optimizer speeds up recurring VR and VRChat project work: texture import overrides, particle settings, light audits and mesh diagnostics. It does not require the VRChat SDK or any third-party package.
 
-## What this helps with
+## One click workflow
 
-Choose **WORLD**, **AVATAR** or **PROJECT**, then press **TEXTURES**, **PARTICLES**, **LIGHTS**, **MESHES** or (for avatars) **MATERIALS** to show only that area's findings. Results can display **ALL**, **CRITICAL** or **WARNING**; All also includes informational findings. World texture checks cover project assets; World particle, light and mesh actions target loaded scenes. Project texture compression scans the entered Assets folder. Avatar actions target a selected scene hierarchy. A selected avatar is required on the Avatar page.
+Choose **World**, **Avatar**, or **Project** and press the action you want. The work pages do not display individual warnings. Open **Project → Scan Entire Project** to see findings with All, Critical, and Warning filters.
 
-Texture import sizes are entered directly for PC, Android and iOS. **PREVIEW TEXTURE CHANGES** shows effective caps and individual include controls before **APPLY SELECTED TEXTURES**. Existing stricter overrides remain stricter. Particle controls are direct switches and limits, and particle changes use Unity Undo.
+- **Compress & Size Textures:** enter maximum PC, Android/Quest and iOS sizes, then press one button. Eligible uncompressed automatic platform imports use Unity's automatic compressed format. Existing explicitly chosen formats and stricter size limits are preserved. Each changed texture is reimported once. World covers textures under Assets, Avatar covers textures referenced by the selected hierarchy, and Project covers the chosen Assets folder.
+- **Optimize Particles:** apply your entered particle count and selected module controls to loaded scenes or the avatar hierarchy. Unity Undo is supported.
+- **Compress Imported Meshes:** apply a chosen Unity model compression level to imported meshes used by loaded scenes or the selected avatar. Confirm the batch before it reimports.
+- **Disable Realtime Shadows:** turn off shadows on realtime lights in the selected scene scope after confirmation. Unity Undo is supported.
+- **Scan Entire Project:** show individual asset and loaded-scene findings only when you request a full scan. Select an item to locate it in Unity.
 
-**PREVIEW MESH COMPRESSION** lists imported model assets used in the current scene or avatar, their current compression, proposed level and renderer usage. Select specific models before applying. Reimporting a model can affect its appearance; inspect results in Unity and your target build. Mesh compression is primarily an asset-size option, not a guaranteed frame-rate improvement. Restore importer changes with version control if necessary. Models under immutable packages and meshes without a model importer are skipped.
+The **Updates** page displays your installed version, checks GitHub releases, and offers a direct Unity update for Git installations. Embedded and VCC packages show source-specific update instructions.
 
-### Project texture compression cleanup
-
-Open **PROJECT → TEXTURE COMPRESSION**, enter an Assets folder, and press **SCAN UNCOMPRESSED TEXTURES**. The paged review lists Default and Normal Map 2D importers whose effective PC, Android or iOS setting is uncompressed and automatic. Untick exceptions, then press **APPLY SELECTED COMPRESSION**. The tool adds a platform override when needed and chooses Unity's automatic compressed format; source pixels, dimensions, filtering and existing explicit format choices are preserved. It reports the resolved format for each changed texture in Console after reimport. Check gradients, masks, transparency and normal maps in the target build. Importer edits are restored through version control, not Unity Undo.
-
-### Package icon and updates
-
-The Editor window includes a custom icon and a dedicated **UPDATES** page. **CHECK FOR UPDATES** reads the latest stable GitHub Release, with automatic checks limited to once per day. When a newer numbered release exists, the page shows release notes and **UPDATE IN UNITY** for Git packages or **HOW TO UPDATE** for other sources. Git URL installs can update through Unity Package Manager after confirmation. For VCC/registry and embedded installs, the window gives source-specific instructions instead of replacing files itself. Network failures do not block optimization.
-
-This is an Editor workflow tool. It does not measure device frame rate or guarantee a VRChat performance rank.
+Importer edits change metadata, not source files. Keep a project backup or version control commit and inspect results in the target build. This tool does not promise a frame-rate improvement or VRChat rank.
 
 ## Requirements
 
@@ -32,7 +28,7 @@ This is an Editor workflow tool. It does not measure device frame rate or guaran
 
 [**ADD TO VCC**](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FVR-Optimizer%2Findex.json)
 
-This button adds the package repository to Creator Companion, where you can then add **FISHHWB VR Optimizer** to a project. It requires a published VPM release and GitHub Pages configured to deploy from **GitHub Actions**. Until the v0.6.7 tag is published and `https://dedzedofficial.github.io/VR-Optimizer/index.json` loads, use the Git installation below. A Git URL cannot be added directly as a VCC package repository.
+This button adds the package repository to Creator Companion, where you can then add **FISHHWB VR Optimizer** to a project. It requires a published VPM release and GitHub Pages configured to deploy from **GitHub Actions**. Until the v0.6.73 tag is published and `https://dedzedofficial.github.io/VR-Optimizer/index.json` loads, use the Git installation below. A Git URL cannot be added directly as a VCC package repository.
 
 ## Install from GitHub
 
@@ -48,43 +44,24 @@ This button adds the package repository to Creator Companion, where you can then
 5. Click **Add** and allow Unity to import the package.
 6. Open **FISHHWB → VR Optimizer** from the top menu.
 
-This repository has `package.json` at its root, so no `?path=` suffix is needed. For a reproducible installation, append a released tag after publishing one, for example `https://github.com/dedzedofficial/VR-Optimizer.git#v0.6.7` (once tagged). A private repository requires Git credentials on the developer's machine; public users cannot install a private repository by URL. GitHub's **Download ZIP** is source distribution, not the Git URL install method. If Git installation is unavailable, extract the repository into `Packages/com.fishhwb.vr-optimizer` inside your Unity project and add it as an embedded package.
+This repository has `package.json` at its root, so no `?path=` suffix is needed. For a reproducible installation, append a released tag after publishing one, for example `https://github.com/dedzedofficial/VR-Optimizer.git#v0.6.73` (once tagged). A private repository requires Git credentials on the developer's machine; public users cannot install a private repository by URL. GitHub's **Download ZIP** is source distribution, not the Git URL install method. If Git installation is unavailable, extract the repository into `Packages/com.fishhwb.vr-optimizer` inside your Unity project and add it as an embedded package.
 
 ## Replacing an older embedded copy
 
-If the window still says **v0.6.6** or only shows World and Avatar, Unity is loading the older package. Close Unity, replace the **entire** `Packages/com.fishhwb.vr-optimizer` folder with the contents of this v0.6.7 ZIP (the folder should directly contain `package.json`), then reopen the project. Do not keep a second copy under `Assets` or install a Git copy alongside an embedded copy. The new window shows **WORLD / AVATAR / PROJECT / UPDATES** across the top. If you installed by Git URL instead, GitHub must contain the new release before Package Manager can update it; a downloaded ZIP does not update a Git dependency automatically.
+If the window still says **v0.6.6** or **v0.6.7**, or only shows World and Avatar, Unity is loading the older package. Close Unity, replace the **entire** `Packages/com.fishhwb.vr-optimizer` folder with the contents of this v0.6.73 ZIP (the folder should directly contain `package.json`), then reopen the project. Do not keep a second copy under `Assets` or install a Git copy alongside an embedded copy. The new window shows **WORLD / AVATAR / PROJECT / UPDATES** across the top. If you installed by Git URL instead, GitHub must contain the new release before Package Manager can update it; a downloaded ZIP does not update a Git dependency automatically.
 
 ## Quick start
 
 1. Open **FISHHWB → VR Optimizer**.
-2. Pick **WORLD**, **AVATAR** or **PROJECT**. On Avatar, select a root in a loaded scene; on Project, enter an Assets folder.
-3. Press an area button to see that area's issues. Use **ALL**, **CRITICAL** or **WARNING** to filter the list and **SELECT** to locate the source.
-4. Set texture caps or particle controls directly; preview changes and review selections before applying. Mesh compression also requires a review and confirmation.
-
-## Actions and scope
-
-| Area | World | Avatar |
-| --- | --- | --- |
-| Textures | Project assets under `Assets` | Textures referenced by materials on the selected hierarchy |
-| Particles | Loaded scenes | Selected hierarchy |
-| Lights | Loaded scenes | Selected hierarchy |
-| Meshes | Loaded scenes | Selected hierarchy; imported model compression preview |
-| Materials | — | Repeated and empty material slots, plus renderers with many slots |
-| Texture compression | Project textures | Textures referenced by the avatar |
-
-The Project page offers texture compression for a chosen Assets folder.
-
-Issue reports are diagnostic. Light shadow changes require per-light confirmation; particle scene changes use Undo. Texture and model importer changes should be reviewed in version control before batch editing.
-
-## Particle controls
-
-Set the maximum particle count and optional constant lifetime cap directly. Toggle trails, collision, noise, lights, shadows and sub emitters individually. A cap affects only higher values. Lifetime capping applies only to a constant start lifetime. Emission, sorting, simulation space, 3D size/rotation, mesh rendering and potential overdraw are reported for review.
+2. Choose **World** for loaded scenes, **Avatar** for a selected root, or **Project** for an Assets folder.
+3. Enter sizes or settings and press an action button. A confirmation appears before importer or light batches.
+4. Use **Project → Scan Entire Project** only when you want individual warnings and issue details.
 
 ## Safety and scope
 
 Texture optimization changes **Unity importer metadata**, never source image bytes. Importer changes are not guaranteed to be undoable through Unity Undo; commit your project first. The progress bar can cancel between assets, preserving completed changes. Particles and individual scene lights use Undo. Nothing deletes assets or decimates meshes. No automatic AssetPostprocessor runs on import in this version.
 
-Texture source dimensions do not equal GPU memory usage. Particle overdraw depends on on-screen size and material; light cost depends on the render pipeline and quality settings. Scans report useful heuristics rather than measured frame times. Scanning occurs only when you press a button, shows cancellable progress, and keeps results in memory until the next scan or window close. Scene checks inspect only **loaded scenes**; Project texture scans inspect the selected Assets folder. Unopened scene files are not modified or audited.
+Texture source dimensions do not equal GPU memory usage. Particle overdraw depends on on-screen size and material; light cost depends on the render pipeline and quality settings. Scans report useful heuristics rather than measured frame times. A full diagnostic scan occurs only when you press **Scan Entire Project**. Scene checks inspect only **loaded scenes**; Project texture scans inspect the selected Assets folder. Unopened scene files are not modified or audited.
 
 ## Troubleshooting
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.73
+
+- Rebuilt World, Avatar and Project pages around direct action buttons; individual findings appear only after Scan Entire Project.
+- Combined texture size caps and eligible automatic compression into one action with a single reimport per changed texture.
+- Kept a dedicated Updates page and fixed the package compiler and meta-file errors.
+
 ## 0.6.7
 
 - Fixed ambiguous PackageInfo compiler reference in the update checker and completed Unity meta coverage for package files.

@@ -1,6 +1,6 @@
 {
   "name": "com.fishhwb.vr-optimizer",
-  "version": "0.6.7",
+  "version": "0.6.73",
   "displayName": "FISHHWB VR Optimizer",
   "description": "Editor tools for Unity texture compression, VR scene and avatar optimization, and project diagnostics.",
   "unity": "2021.3",
