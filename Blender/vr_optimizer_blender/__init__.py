@@ -584,38 +584,97 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+
+        brand = layout.box()
         if _brand_preview and "logo" in _brand_preview:
-            layout.template_icon(icon_value=_brand_preview["logo"].icon_id, scale=3)
+            brand.template_icon(icon_value=_brand_preview["logo"].icon_id, scale=3)
+        brand.label(text="OPTIMIZE YOUR PROJECT", icon='TOOL_SETTINGS')
+        brand.label(text="Free one-click tools for developers")
+        brand.label(text="v0.7.0 • Blender")
 
         obj = context.active_object
+        selected = layout.box()
+        selected.label(text="CURRENT SELECTION", icon='MESH_DATA')
         if obj and obj.type == 'MESH':
-            layout.label(text=f"Selected: {obj.name}", icon='MESH_DATA')
-            layout.label(text=f"Triangles: {triangle_count(obj.data):,}")
+            selected.label(text=obj.name)
+            stats = selected.row(align=True)
+            stats.label(text=f"Triangles: {triangle_count(obj.data):,}")
+            stats.label(text=f"Vertices: {len(obj.data.vertices):,}")
         else:
-            layout.label(text="Select one mesh object", icon='INFO')
+            selected.label(text="Select one mesh object to begin", icon='INFO')
 
         quick = layout.box()
-        quick.label(text="ONE-CLICK CLEANUP", icon='TOOL_SETTINGS')
-        quick.label(text="Creates copies so the source stays untouched.")
-        quick.operator('fishhwb.one_click_remesh', icon='MOD_REMESH')
-        quick.prop(context.scene, 'fishhwb_merge_distance')
-        quick.operator('fishhwb.merge_vertices', icon='AUTOMERGE_ON')
+        quick.label(text="ONE-CLICK CLEANUP", icon='MODIFIER')
+        quick.label(text="Fast, safe actions that create new copies.")
+        quick.separator()
 
-        advanced = layout.box()
-        advanced.label(text="ADVANCED MESH TOOLS")
-        advanced.prop(context.scene, 'fishhwb_tri_limit')
-        advanced.prop(context.scene, 'fishhwb_apply_modifiers')
-        advanced.operator('fishhwb.tri_limit', icon='MOD_DECIM')
-        advanced.separator()
-        advanced.label(text="Join selected mesh objects")
-        advanced.prop(context.scene, 'fishhwb_make_atlas')
-        if context.scene.fishhwb_make_atlas:
-            advanced.prop(context.scene, 'fishhwb_atlas_size')
-            advanced.prop(context.scene, 'fishhwb_atlas_padding')
-        advanced.operator('fishhwb.join_merge', icon='AUTOMERGE_ON')
-        advanced.separator()
-        advanced.label(text="Static Mesh LODs")
-        advanced.operator('fishhwb.create_lods', icon='MOD_DECIM')
+        remesh = quick.row()
+        remesh.scale_y = 1.45
+        remesh.operator('fishhwb.one_click_remesh', text="ONE-CLICK REMESH", icon='MOD_REMESH')
+
+        quick.separator()
+        quick.label(text="Merge nearby duplicate vertices")
+        quick.prop(context.scene, 'fishhwb_merge_distance')
+        merge = quick.row()
+        merge.scale_y = 1.45
+        merge.operator('fishhwb.merge_vertices', text="MERGE DUPLICATE VERTICES", icon='AUTOMERGE_ON')
+
+        tools = layout.box()
+        tools.label(text="MORE TOOLS", icon='PREFERENCES')
+        tools.prop(
+            context.scene,
+            'fishhwb_show_advanced',
+            text="Show Advanced Mesh Tools",
+            toggle=True)
+
+        if context.scene.fishhwb_show_advanced:
+            advanced = tools.column(align=False)
+            advanced.separator()
+            advanced.label(text="Triangle Reduction", icon='MOD_DECIM')
+            advanced.prop(context.scene, 'fishhwb_tri_limit')
+            advanced.prop(context.scene, 'fishhwb_apply_modifiers')
+            row = advanced.row()
+            row.scale_y = 1.2
+            row.operator('fishhwb.tri_limit', text="CREATE REDUCED COPY", icon='MOD_DECIM')
+
+            advanced.separator()
+            advanced.label(text="Join + Atlas", icon='AUTOMERGE_ON')
+            advanced.prop(context.scene, 'fishhwb_make_atlas')
+            if context.scene.fishhwb_make_atlas:
+                advanced.prop(context.scene, 'fishhwb_atlas_size')
+                advanced.prop(context.scene, 'fishhwb_atlas_padding')
+            row = advanced.row()
+            row.scale_y = 1.2
+            row.operator('fishhwb.join_merge', text="JOIN SELECTED MESHES", icon='AUTOMERGE_ON')
+
+            advanced.separator()
+            advanced.label(text="Static Mesh LODs", icon='MOD_DECIM')
+            row = advanced.row()
+            row.scale_y = 1.2
+            row.operator('fishhwb.create_lods', text="CREATE LOD0 / LOD1 / LOD2", icon='MOD_DECIM')
+
+        support = layout.box()
+        support.label(text="FREE FOR DEVELOPERS", icon='HEART')
+        support.label(text="Built to save time, reduce busywork,")
+        support.label(text="and help newer creators learn.")
+        support.separator()
+        support.label(text="If this tool helps you, optional Patreon")
+        support.label(text="support funds new tools, testing,")
+        support.label(text="documentation and future integrations.")
+        support.label(text="The project stays free either way.")
+
+        donate = support.row()
+        donate.scale_y = 1.35
+        donate.operator(
+            "wm.url_open",
+            text="SUPPORT DEVELOPMENT ON PATREON",
+            icon='URL').url = "https://www.patreon.com/cw/DedZed"
+
+        links = layout.row(align=True)
+        links.operator("wm.url_open", text="GitHub", icon='URL').url = "https://github.com/dedzedofficial/Optimize-Your-Project"
+        links.operator("wm.url_open", text="Website", icon='URL').url = "https://fishhwb.github.io/"
 
 
 classes = (FISHHWB_OT_tri_limit, FISHHWB_OT_join_merge, FISHHWB_OT_one_click_remesh,
@@ -641,6 +700,9 @@ def register():
     bpy.types.Scene.fishhwb_merge_distance = FloatProperty(
         name="Merge Distance", default=0.0001, min=0.0, precision=5, subtype='DISTANCE',
         description="World-space proximity used to merge vertices after joining")
+    bpy.types.Scene.fishhwb_show_advanced = BoolProperty(
+        name="Show Advanced Mesh Tools", default=False,
+        description="Reveal the optional triangle reduction, joining, atlas and LOD tools")
 
 
 def unregister():
@@ -654,6 +716,7 @@ def unregister():
     del bpy.types.Scene.fishhwb_make_atlas
     del bpy.types.Scene.fishhwb_atlas_size
     del bpy.types.Scene.fishhwb_atlas_padding
+    del bpy.types.Scene.fishhwb_show_advanced
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
 
