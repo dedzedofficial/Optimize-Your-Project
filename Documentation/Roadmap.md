@@ -1,5 +1,7 @@
 # Optimize Your Project: unified roadmap
 
+<img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="96">
+
 **Unity package: v0.6.73. Blender add-on: v0.7.5 preview.** Later milestones below are proposed future work. Version numbers are planning targets, not release dates. The existing Git URL package is **Unity Editor only**.
 
 ## Installation experience
