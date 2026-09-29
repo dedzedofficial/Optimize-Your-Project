@@ -83,6 +83,36 @@ Provide a **Camera Visibility Preview** action for a chosen room or area. Place 
 
 The initial release gate is a test scene with doorways, occluders, two floors and several viewpoint positions. Confirm that faces visible from any selected camera remain in the visible set, compare counts before and after separation, and verify material/UV continuity. This is a proposed feature, not implemented in 0.7.5.
 
+## New one-button optimization ideas
+
+These candidates build on the current mesh, texture and scene actions. Each button should target the selected asset or hierarchy, show a small before/after report, and create a copy or restoration record when appearance may change. They are **plans**, not shipped features.
+
+| Stage | Button | Repetitive work it removes | Guard and acceptance test |
+| --- | --- | --- | --- |
+| **Blender 0.7.6** | **Clean Selected Mesh** | Find loose vertices, degenerate faces, exact duplicate triangles and near-duplicate vertices, then clean a copy | Show counts for each problem before applying. Preserve UV seams and sharp edges; reject rigged or shape-keyed meshes until tested. A second run should change nothing. |
+| **Blender 0.7.6** | **Export Atlas PNG** | Save the generated atlas and point the new material at a durable image file | Require an output folder, avoid overwriting without confirmation, save/reopen a Blend file and export GLB to confirm the image travels with the model. Add pixel gutters that hold up under mipmaps. |
+| **Blender 0.8** | **Make LODs for Selection** | Repeat LOD0/1/2 generation across many static props | Show per-object original and target triangles, skip unsupported objects with reasons, keep naming stable and place each set in its own collection. Confirm UVs and materials in exported models. |
+| **Blender 0.8** | **Visible Face Preview** | Manually select surfaces possibly unseen from a room or play area | Sample a center camera and optional extra positions, classify visible/uncertain/hidden, highlight results, and separate on a copy only after confirmation. Doorways, upper floors, mirrors and exterior viewpoints must be included in test scenes. |
+| **Blender 0.9** | **UV and Texture Check** | Find missing UVs, UV islands outside 0–1, overlap where an atlas is requested, missing image files and unusually large textures | Select the responsible object/material; offer unwrap or repack only on a copy. Report pixel dimensions separately from measured GPU memory. |
+| **Unity 0.8+** | **Review Duplicate Materials** | Locate repeated material assets and redundant slots used by a selected avatar or scene branch | Compare shader, properties and referenced textures, then preview references before any remap. Animation, prefab overrides and shader keywords must be checked. No automatic deletion. |
+| **Unity 0.9+** | **Review Read/Write Imports** | Visit model and texture import tabs asset by asset | List CPU-readable assets in the chosen scope, select exact importers to change, record before-values, reimport changed files once, and restore only when the current settings still match the recorded result. |
+| **Cross-platform 1.0** | **Prepare Export Package** | Recheck LOD names, atlas files, missing references and target import settings before moving a Blender asset into Unity | Produce a manifest with exact mesh triangle counts, textures, UV channels and unresolved findings. Do not claim VRChat rank or frame rate without a real target build. |
+
+### How the actions fit together
+
+1. **Inspect:** select one mesh, a Blender collection, a Unity hierarchy branch or an Assets folder. Show the exact scope and counts. Running a local action must never trigger a whole-project scan.
+2. **Create or apply:** mesh cleanup, LODs, atlas work and camera face separation produce new Blender objects. Unity importer actions record before/after values; scene object edits use Undo.
+3. **Verify:** compare measured triangle counts and image dimensions; check normals, material slots, UV seams and exports. Report changed, unchanged, unsupported and failed items, with a way to select each failure.
+4. **Repeat safely:** unchanged inputs should produce no additional import changes. Name generated objects and files predictably so creators can replace an earlier output instead of accumulating hidden duplicates.
+
+### Camera visibility design details
+
+A central camera is a useful first sample for a room but cannot prove that a face is never visible. The preview should cast rays toward sample points on each face from each chosen camera position, account for the camera field of view and occluders, and treat uncertain faces as retained. A creator can inspect colored visible, uncertain and candidate hidden groups, then press **Separate Candidate Faces** to create two new mesh objects with the original materials and UV loops. Only the candidate group is offered for later decimation. The source object stays intact, and no face is removed automatically. Performance on large scenes needs bounded sampling, progress and cancellation.
+
+### Release priorities
+
+The next Blender work should first make the existing 0.7.5 buttons dependable: test real meshes, fix atlas seam quality, export the generated texture, and confirm LOD counts after modifiers. Then add the mesh cleanup and batch actions. Camera visibility becomes a release feature only after the multi-view preview avoids false hidden classifications in the test scene. Unity continues its separate controlled-batch and restoration milestones; shared branding and installation do not imply that a Blender action can run in Unity.
+
 ## VR social platform expansion
 
 **Platform selection changes recommendations, not the meaning of Unity importer settings.** The main optimizer remains useful without choosing a social platform. Add a platform choice only after testing against that platform's current creator tooling; unsupported or unavailable integrations must say so in the UI.
@@ -257,3 +287,4 @@ The Unity Package Manager package cannot run in another engine. Blender 0.7.5 is
 - Undo restores scene-object edits; importer batch restoration either restores recorded settings or reports a conflict.
 - Tests include default/normal textures, intentional platform overrides, large particle systems, nested avatar roots, prefab instances, inactive children and multiple loaded scenes.
 - README and changelog state what shipped; planned items stay in this roadmap until implemented and verified.
+
