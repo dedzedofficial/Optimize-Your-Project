@@ -1,6 +1,8 @@
 # Optimize Your Project
 
-**Version 0.6.73 · Free Unity Editor package · FISHHWB | Ded Zed**
+<img src="Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="160">
+
+**Unity 0.6.73 · Blender 0.7.5 preview · FISHHWB | Ded Zed**
 
 Optimize Your Project speeds up recurring VR and VRChat project work: texture import overrides, particle settings, light audits and mesh diagnostics. It does not require the VRChat SDK or any third-party package.
 
@@ -13,6 +15,16 @@ Optimize Your Project speeds up recurring VR and VRChat project work: texture im
 | Blender | Follow the [Blender install guide](Blender/README.md) | Install the add-on ZIP from Blender Preferences, then enable it. The 0.7.5 build is a preview. |
 
 A browser link cannot silently select a Unity project or install files into Blender. The [unified roadmap](Documentation/Roadmap.md#installation-experience) describes a dedicated Blender extension repository and optional project-aware installer to reduce the remaining steps.
+
+## Unity optimization: what this package helps with
+
+**How do I batch compress and resize textures in Unity for VRChat or Quest?** Choose World, Avatar or Project, enter PC, Android/Quest and iOS size caps, then use **Compress & Size Textures**. The tool updates eligible import settings and reimports changed textures once. It preserves explicitly selected formats and stricter existing limits.
+
+**How do I check a VRChat avatar or Unity scene for optimization issues?** Use the selected avatar or loaded World workflow for texture, particle, light and mesh checks. The full Project scan lists individual findings only when requested, with links back to the responsible assets.
+
+**Can this optimize imported meshes and particle systems?** The Unity package can apply model importer mesh compression, cap selected particle settings and disable selected realtime shadows. Mesh compression does not reduce triangle count. For actual triangle reduction, static LOD copies, mesh joining or Base Color atlases, use the [Blender mesh optimization add-on](Blender/README.md).
+
+These are Editor workflows for asset preparation. Profile a target build to measure performance; the tool does not calculate a guaranteed FPS gain or VRChat rank.
 
 ## One click workflow
 
@@ -102,6 +114,16 @@ Optimize Your Project is free and licensed under MIT. Contributions and bug repo
 ## Blender add-on (0.7.5 preview)
 
 The [Blender add-on](Blender/README.md) is a separate native install under `Blender/vr_optimizer_blender/`. It creates reduced mesh and LOD copies, joins selected mesh copies with adjustable vertex welding, and can build a Base Color image atlas with remapped UVs for supported materials. Install the `Blender/vr_optimizer_blender` folder as a ZIP through Blender preferences; the repository root Git URL remains the Unity package at v0.6.73. The Blender 0.7.5 source is a preview pending tests in Blender and export round trips. See the [unified roadmap](Documentation/Roadmap.md#blender-track-075-preview-and-later-work).
+
+## Release preparation
+
+The GitHub Actions **Check release packages** workflow validates the Unity package manifest, branding paths, VPM archive and Blender ZIP on each PR. It is a packaging check; creators should still test inside both editors.
+
+- **Unity package:** keep the package ID `com.fishhwb.vr-optimizer`. After a clean Unity 2021.3+ Editor test and a verified VPM listing URL, tag the matching manifest version as `v0.6.73`. The `Publish VPM package` workflow creates the ZIP and Pages listing.
+- **Blender add-on:** test installation, join/atlas/LOD actions, Undo, save/reopen and GLB export in supported Blender versions. Then tag `blender-v0.7.5`; the separate `Publish Blender add-on` workflow attaches an installable ZIP to its GitHub release.
+- The new logo comes from the supplied artwork. Its transparent 256-pixel UI copy is included in the Unity package and Blender add-on; the repository Markdown pages use the same mark.
+
+Release tags are separate because the Unity package is 0.6.73 and Blender is 0.7.5. Do not publish either tag until its editor checks pass. See the [unified roadmap](Documentation/Roadmap.md) for later optimization buttons.
 
 ## Future updates
 

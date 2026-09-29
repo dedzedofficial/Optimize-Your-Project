@@ -1,6 +1,15 @@
 # Optimize Your Project changelog
 
+<img src="Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="96">
+
 The Unity package retains its historical `com.fishhwb.vr-optimizer` ID. Blender add-on previews are tracked in the [unified roadmap](Documentation/Roadmap.md); they are not Unity package releases.
+
+## Unreleased — shared branding and release preparation
+
+- Applied the supplied Optimize Your Project mark to Markdown guides, the Unity window icon and the Blender add-on panel.
+- Added separate Blender release packaging and PR checks for both install archives.
+- Expanded the unified roadmap with specific mesh, texture, LOD and visibility actions and validation gates.
+- Release tags remain separate: Unity `v0.6.73`, Blender `blender-v0.7.5`. Runtime smoke tests are pending.
 
 ## 0.6.73
 
