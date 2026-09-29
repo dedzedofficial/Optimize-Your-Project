@@ -6,6 +6,11 @@ The product is now positioned as a **general developer optimization toolkit**. T
 
 ## 0.7.0
 
+- Polished the Unity and Blender interfaces with clearer cards, stronger section hierarchy, larger primary actions and cleaner footers.
+- Added a visible **Free for Developers** note explaining that the project is intended to help creators and newer developers without a paywall.
+- Added optional Patreon support buttons; donations help fund testing, documentation, new optimization tools and future integrations while the project remains free.
+- Collapsed Blender's advanced mesh controls behind an optional Advanced Tools section so one-click cleanup stays front and center.
+
 - Repositioned Optimize Your Project around general Unity, Blender and real-time development workflows rather than VR-only development.
 - Merged the old Unity World + Project split into one **PROJECT** page for ordinary Unity projects and loaded scenes.
 - Kept **AVATAR** as an optional character hierarchy workflow without requiring the VRChat SDK.
