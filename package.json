@@ -2,7 +2,7 @@
   "name": "com.fishhwb.vr-optimizer",
   "version": "0.7.0",
   "displayName": "Optimize Your Project",
-  "description": "One-click Unity project and avatar optimization with early Blender mesh cleanup tools.",
+  "description": "One-click project optimization tools for Unity developers, Blender artists, and broader real-time development workflows.",
   "unity": "2021.3",
   "author": {
     "name": "FISHHWB | Ded Zed",
@@ -11,12 +11,15 @@
   "keywords": [
     "unity",
     "unity-editor",
-    "vrchat",
-    "vrchat-avatar",
-    "quest",
+    "blender",
+    "game-development",
+    "asset-optimization",
     "texture-compression",
     "mesh-compression",
     "particles",
-    "optimization"
+    "mobile",
+    "pc",
+    "optimization",
+    "vrchat"
   ]
 }
