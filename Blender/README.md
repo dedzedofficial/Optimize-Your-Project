@@ -1,5 +1,7 @@
 # Optimize Your Project for Blender — 0.7.5 preview
 
+<img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="112">
+
 Publisher: FISHHWB | Ded Zed. See the [unified roadmap](../Documentation/Roadmap.md#blender-track-075-preview-and-later-work). Blender 3.6+ add-on, developed alongside the Unity package in [Optimize Your Project](https://github.com/dedzedofficial/Optimize-Your-Project). The Unity package has its own version and installation path.
 
 ## Install
