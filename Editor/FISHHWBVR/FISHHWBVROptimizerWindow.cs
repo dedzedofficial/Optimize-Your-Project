@@ -50,7 +50,7 @@ namespace FISHHWB.VROptimizer
             Header();
             GUILayout.Space(8);
 
-            var next = (Page)GUILayout.Toolbar((int)page, new[] { "PROJECT", "AVATAR" }, GUILayout.Height(34));
+            var next = (Page)GUILayout.Toolbar((int)page, new[] { "PROJECT", "CHARACTER / AVATAR" }, GUILayout.Height(34));
             if (next != page)
             {
                 page = next;
@@ -145,13 +145,13 @@ namespace FISHHWB.VROptimizer
 
         void DrawAvatar()
         {
-            EditorGUILayout.LabelField("AVATAR", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("CHARACTER / AVATAR", EditorStyles.boldLabel);
             EditorGUILayout.LabelField(
-                "Use the same simple jobs on one selected avatar hierarchy.",
+                "Use the same simple jobs on one selected character or avatar hierarchy.",
                 EditorStyles.wordWrappedMiniLabel);
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("AVATAR ROOT", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("CHARACTER / AVATAR ROOT", EditorStyles.boldLabel);
             avatar = (GameObject)EditorGUILayout.ObjectField(avatar, typeof(GameObject), true);
 
             if (GUILayout.Button("USE CURRENT SELECTION"))
@@ -159,12 +159,12 @@ namespace FISHHWB.VROptimizer
 
             bool valid = VRAvatarWorkflow.EditableRoot(avatar);
             if (!valid)
-                EditorGUILayout.HelpBox("Select an avatar root in a loaded scene.", MessageType.Info);
+                EditorGUILayout.HelpBox("Select a character or avatar root in a loaded scene.", MessageType.Info);
             EditorGUILayout.EndVertical();
 
             using (new EditorGUI.DisabledScope(!valid))
             {
-                TextureCard(avatar, "TEXTURES", "Resize and compress textures referenced by this avatar.");
+                TextureCard(avatar, "TEXTURES", "Resize and compress textures referenced by this character hierarchy.");
                 ParticleCard(avatar);
                 MeshCard(avatar);
                 LightCard(avatar);
@@ -179,7 +179,7 @@ namespace FISHHWB.VROptimizer
 
             EditorGUI.BeginChangeCheck();
             settings.pc = SizeField("PC / Standalone", settings.pc);
-            settings.android = SizeField("Android / Quest", settings.android);
+            settings.android = SizeField("Android / Mobile", settings.android);
             settings.ios = SizeField("iOS", settings.ios);
 
             if (EditorGUI.EndChangeCheck())
@@ -292,7 +292,7 @@ namespace FISHHWB.VROptimizer
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("PARTICLES", EditorStyles.boldLabel);
             EditorGUILayout.LabelField(
-                root ? "Optimize particle systems under this avatar." : "Optimize particle systems in loaded scenes.",
+                root ? "Optimize particle systems under this character hierarchy." : "Optimize particle systems in loaded scenes.",
                 EditorStyles.wordWrappedMiniLabel);
 
             EditorGUI.BeginChangeCheck();
@@ -378,7 +378,7 @@ namespace FISHHWB.VROptimizer
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("MESH IMPORTS", EditorStyles.boldLabel);
             EditorGUILayout.LabelField(
-                root ? "Compress imported model assets referenced by this avatar." : "Compress imported model assets used by loaded scenes.",
+                root ? "Compress imported model assets referenced by this character hierarchy." : "Compress imported model assets used by loaded scenes.",
                 EditorStyles.wordWrappedMiniLabel);
 
             meshLevel = (ModelImporterMeshCompression)EditorGUILayout.EnumPopup("Compression", meshLevel);
@@ -450,7 +450,7 @@ namespace FISHHWB.VROptimizer
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("REALTIME LIGHT SHADOWS", EditorStyles.boldLabel);
             EditorGUILayout.LabelField(
-                root ? "Disable realtime shadows under this avatar." : "Disable realtime shadows in loaded scenes.",
+                root ? "Disable realtime shadows under this character hierarchy." : "Disable realtime shadows in loaded scenes.",
                 EditorStyles.wordWrappedMiniLabel);
 
             if (GUILayout.Button("DISABLE REALTIME SHADOWS", GUILayout.Height(36)))
