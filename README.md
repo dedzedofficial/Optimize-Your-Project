@@ -16,6 +16,16 @@ Optimize Your Project speeds up recurring VR and VRChat project work: texture im
 
 A browser link cannot silently select a Unity project or install files into Blender. The [unified roadmap](Documentation/Roadmap.md#installation-experience) describes a dedicated Blender extension repository and optional project-aware installer to reduce the remaining steps.
 
+## Unity optimization: what this package helps with
+
+**How do I batch compress and resize textures in Unity for VRChat or Quest?** Choose World, Avatar or Project, enter PC, Android/Quest and iOS size caps, then use **Compress & Size Textures**. The tool updates eligible import settings and reimports changed textures once. It preserves explicitly selected formats and stricter existing limits.
+
+**How do I check a VRChat avatar or Unity scene for optimization issues?** Use the selected avatar or loaded World workflow for texture, particle, light and mesh checks. The full Project scan lists individual findings only when requested, with links back to the responsible assets.
+
+**Can this optimize imported meshes and particle systems?** The Unity package can apply model importer mesh compression, cap selected particle settings and disable selected realtime shadows. Mesh compression does not reduce triangle count. For actual triangle reduction, static LOD copies, mesh joining or Base Color atlases, use the [Blender mesh optimization add-on](Blender/README.md).
+
+These are Editor workflows for asset preparation. Profile a target build to measure performance; the tool does not calculate a guaranteed FPS gain or VRChat rank.
+
 ## One click workflow
 
 Choose **World**, **Avatar**, or **Project** and press the action you want. The work pages do not display individual warnings. Open **Project → Scan Entire Project** to see findings with All, Critical, and Warning filters.
