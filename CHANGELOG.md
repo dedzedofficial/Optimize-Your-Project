@@ -3,7 +3,7 @@
 ## 0.6.7
 
 - Added a Project page with folder-scoped texture compression cleanup, individual platform selections, batch reimports and resolved-format reporting.
-- Added an Editor window icon and reorganized the interface around World, Avatar and Project jobs.
+- Added an Editor window icon, a clearly separated Updates page, and more visible job and action sections.
 - Added GitHub stable-release checks, release notes and confirmed Git package updates through Unity Package Manager. Other install sources show update guidance.
 
 ## 0.6.6

@@ -7,7 +7,7 @@ namespace FISHHWB.VROptimizer
 {
     internal sealed class FISHHWBVROptimizerWindow : EditorWindow
     {
-        enum Page { World, Avatar, Project }
+        enum Page { World, Avatar, Project, Updates }
         enum Area { None, Textures, Particles, Lights, Meshes, Materials, Compression }
         enum Filter { All, Critical, Warning }
         static readonly int[] Sizes = { 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384 };
@@ -31,7 +31,12 @@ namespace FISHHWB.VROptimizer
         string summary = "Choose World, Avatar or Project, then select a job.";
 
         [MenuItem("FISHHWB/VR Optimizer")]
-        static void Open() { GetWindow<FISHHWBVROptimizerWindow>("VR Optimizer").minSize = new Vector2(480, 520); }
+        static void Open()
+        {
+            var window = GetWindow<FISHHWBVROptimizerWindow>();
+            window.minSize = new Vector2(350, 520);
+            window.titleContent = new GUIContent("VR Optimizer", window.icon);
+        }
         void OnEnable()
         {
             settings = VRSettings.Load();
@@ -46,9 +51,16 @@ namespace FISHHWB.VROptimizer
             scroll = EditorGUILayout.BeginScrollView(scroll);
             DrawHeader();
             GUILayout.Space(10);
-            var nextPage = (Page)GUILayout.Toolbar((int)page, new[] { "WORLD", "AVATAR", "PROJECT" }, GUILayout.Height(36));
+            var nextPage = (Page)GUILayout.Toolbar((int)page, new[] { "WORLD", "AVATAR", "PROJECT", "UPDATES" }, GUILayout.Height(36));
             if (nextPage != page) { page = nextPage; ResetView(); }
-            GUILayout.Space(6);
+            GUILayout.Space(9);
+            if (page == Page.Updates)
+            {
+                DrawUpdatesPage();
+                DrawFooter();
+                EditorGUILayout.EndScrollView();
+                return;
+            }
             if (page == Page.Avatar)
             {
                 var selected = (GameObject)EditorGUILayout.ObjectField("Scene avatar root", avatar, typeof(GameObject), true);
@@ -68,7 +80,8 @@ namespace FISHHWB.VROptimizer
                     EditorGUILayout.HelpBox("Enter an existing folder under Assets.", MessageType.Warning);
             }
 
-            EditorGUILayout.LabelField("CHOOSE A JOB", EditorStyles.boldLabel);
+            GUILayout.Space(6);
+            EditorGUILayout.LabelField("01  CHOOSE A JOB", EditorStyles.boldLabel);
             if (page == Page.Project)
                 AreaButton(Area.Compression, "TEXTURE COMPRESSION");
             else
@@ -88,21 +101,61 @@ namespace FISHHWB.VROptimizer
             if (area != Area.None)
             {
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                EditorGUILayout.LabelField(area.ToString().ToUpperInvariant(), EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("02  " + area.ToString().ToUpperInvariant(), EditorStyles.boldLabel);
                 DrawArea();
                 EditorGUILayout.EndVertical();
             }
             GUILayout.Space(8);
             EditorGUILayout.HelpBox(summary, MessageType.Info);
             DrawResults();
-            GUILayout.Space(10);
-            EditorGUILayout.LabelField("FISHHWB | DED ZED  •  This package is free", EditorStyles.centeredGreyMiniLabel);
+            DrawFooter();
+            EditorGUILayout.EndScrollView();
+        }
+
+        static bool JobButton(string label, bool active)
+        {
+            var previous = GUI.backgroundColor;
+            if (active) GUI.backgroundColor = new Color(.36f, .84f, .77f);
+            bool pressed = GUILayout.Button(label, GUILayout.Height(36));
+            GUI.backgroundColor = previous;
+            return pressed;
+        }
+
+        void DrawFooter()
+        {
+            GUILayout.Space(12);
+            EditorGUILayout.LabelField("FISHHWB | DED ZED  •  FREE UNITY EDITOR TOOL", EditorStyles.centeredGreyMiniLabel);
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("WEBSITE")) Application.OpenURL("https://fishhwb.github.io/");
             if (GUILayout.Button("DISCORD")) Application.OpenURL("https://discord.gg/wZGxxkk4Jg");
             if (GUILayout.Button("PATREON")) Application.OpenURL("https://www.patreon.com/cw/DedZed");
             EditorGUILayout.EndHorizontal();
-            EditorGUILayout.EndScrollView();
+        }
+
+        void DrawUpdatesPage()
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("PACKAGE UPDATES", new GUIStyle(EditorStyles.boldLabel) { fontSize = 16 });
+            EditorGUILayout.LabelField("Installed version", "v" + VRUpdateChecker.CurrentVersion);
+            EditorGUILayout.LabelField("Install source", VRUpdateChecker.SourceLabel);
+            GUILayout.Space(7);
+            if (VRUpdateChecker.HasUpdate)
+                EditorGUILayout.HelpBox("A newer release is available: " + VRUpdateChecker.LatestTag, MessageType.Info);
+            else
+                EditorGUILayout.HelpBox(VRUpdateChecker.Checking ? "Checking GitHub..." :
+                    string.IsNullOrEmpty(VRUpdateChecker.Message) ? "Check GitHub for the latest published release." : VRUpdateChecker.Message, MessageType.None);
+            using (new EditorGUI.DisabledScope(VRUpdateChecker.Checking || VRUpdateChecker.Installing))
+                if (GUILayout.Button("CHECK FOR UPDATES", GUILayout.Height(36))) VRUpdateChecker.Check(true);
+            if (VRUpdateChecker.HasUpdate)
+            {
+                if (GUILayout.Button("VIEW RELEASE NOTES", GUILayout.Height(30))) VRUpdateChecker.ViewRelease();
+                using (new EditorGUI.DisabledScope(VRUpdateChecker.Installing))
+                    if (GUILayout.Button(VRUpdateChecker.CanUpdateDirectly ? "UPDATE IN UNITY" : "HOW TO UPDATE", GUILayout.Height(36))) VRUpdateChecker.Update();
+            }
+            else if (GUILayout.Button("VIEW GITHUB RELEASES")) Application.OpenURL("https://github.com/dedzedofficial/VR-Optimizer/releases");
+            GUILayout.Space(6);
+            EditorGUILayout.LabelField("Git installations update through Unity Package Manager. VCC and embedded packages use their own installation source.", EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.EndVertical();
         }
 
         void ResetView()
@@ -121,7 +174,7 @@ namespace FISHHWB.VROptimizer
             using (new EditorGUI.DisabledScope(page == Page.Avatar && !VRAvatarWorkflow.EditableRoot(avatar) ||
                 page == Page.Project && (!AssetDatabase.IsValidFolder(projectFolder) ||
                     projectFolder != "Assets" && !projectFolder.StartsWith("Assets/", StringComparison.Ordinal))))
-                if (GUILayout.Button(label, GUILayout.Height(30)))
+                if (JobButton(label, target == area))
                 {
                     area = target;
                     texturePreview = null;
@@ -225,25 +278,18 @@ namespace FISHHWB.VROptimizer
 
         void DrawHeader()
         {
-            var rect = GUILayoutUtility.GetRect(1, 88, GUILayout.ExpandWidth(true));
-            EditorGUI.DrawRect(rect, EditorGUIUtility.isProSkin ? new Color(.09f, .19f, .23f) : new Color(.78f, .9f, .91f));
-            if (icon) GUI.DrawTexture(new Rect(rect.x + 16, rect.y + 12, 62, 62), icon, ScaleMode.ScaleToFit, true);
-            GUI.Label(new Rect(rect.x + 88, rect.y + 13, rect.width - 102, 28), "FISHHWB VR OPTIMIZER", new GUIStyle(EditorStyles.boldLabel) { fontSize = 18 });
-            GUI.Label(new Rect(rect.x + 88, rect.y + 44, rect.width - 102, 24), "v" + VRUpdateChecker.CurrentVersion + "  •  One job at a time", EditorStyles.label);
-            EditorGUILayout.BeginHorizontal();
-            if (VRUpdateChecker.HasUpdate) EditorGUILayout.HelpBox("Update available: " + VRUpdateChecker.LatestTag, MessageType.Info);
-            else if (!string.IsNullOrEmpty(VRUpdateChecker.Message)) EditorGUILayout.LabelField(VRUpdateChecker.Message, EditorStyles.wordWrappedMiniLabel);
-            using (new EditorGUI.DisabledScope(VRUpdateChecker.Checking || VRUpdateChecker.Installing))
-                if (GUILayout.Button("CHECK UPDATE", GUILayout.Width(112))) VRUpdateChecker.Check(true);
-            EditorGUILayout.EndHorizontal();
-            if (VRUpdateChecker.HasUpdate)
+            var rect = GUILayoutUtility.GetRect(1, 74, GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(rect, EditorGUIUtility.isProSkin ? new Color(.08f, .19f, .22f) : new Color(.72f, .88f, .87f));
+            if (icon) GUI.DrawTexture(new Rect(rect.x + 13, rect.y + 12, 50, 50), icon, ScaleMode.ScaleToFit, true);
+            var title = new GUIStyle(EditorStyles.boldLabel) { fontSize = 15 };
+            var subtitle = new GUIStyle(EditorStyles.miniLabel);
+            if (EditorGUIUtility.isProSkin)
             {
-                EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("RELEASE NOTES")) VRUpdateChecker.ViewRelease();
-                using (new EditorGUI.DisabledScope(VRUpdateChecker.Installing))
-                    if (GUILayout.Button("UPDATE PACKAGE")) VRUpdateChecker.Update();
-                EditorGUILayout.EndHorizontal();
+                title.normal.textColor = Color.white;
+                subtitle.normal.textColor = new Color(.65f, .88f, .85f);
             }
+            GUI.Label(new Rect(rect.x + 72, rect.y + 12, rect.width - 80, 23), "FISHHWB VR OPTIMIZER", title);
+            GUI.Label(new Rect(rect.x + 72, rect.y + 38, rect.width - 80, 22), "v" + VRUpdateChecker.CurrentVersion + "  •  " + (VRUpdateChecker.HasUpdate ? "UPDATE AVAILABLE" : "UNITY EDITOR TOOLS"), subtitle);
         }
 
         void DrawCompression()

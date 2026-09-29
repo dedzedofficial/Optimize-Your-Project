@@ -18,7 +18,7 @@ Open **PROJECT → TEXTURE COMPRESSION**, enter an Assets folder, and press **SC
 
 ### Package icon and updates
 
-The Editor window includes a custom icon. **CHECK UPDATE** reads the latest stable GitHub Release, with automatic checks limited to once per day. When a newer numbered release exists, the window shows release notes and **UPDATE PACKAGE**. Git URL installs can update through Unity Package Manager after confirmation. For VCC/registry and embedded installs, the window gives source-specific instructions instead of replacing files itself. Network failures do not block optimization.
+The Editor window includes a custom icon and a dedicated **UPDATES** page. **CHECK FOR UPDATES** reads the latest stable GitHub Release, with automatic checks limited to once per day. When a newer numbered release exists, the page shows release notes and **UPDATE IN UNITY** for Git packages or **HOW TO UPDATE** for other sources. Git URL installs can update through Unity Package Manager after confirmation. For VCC/registry and embedded installs, the window gives source-specific instructions instead of replacing files itself. Network failures do not block optimization.
 
 This is an Editor workflow tool. It does not measure device frame rate or guarantee a VRChat performance rank.
 
@@ -49,6 +49,10 @@ This button adds the package repository to Creator Companion, where you can then
 6. Open **FISHHWB → VR Optimizer** from the top menu.
 
 This repository has `package.json` at its root, so no `?path=` suffix is needed. For a reproducible installation, append a released tag after publishing one, for example `https://github.com/dedzedofficial/VR-Optimizer.git#v0.6.7` (once tagged). A private repository requires Git credentials on the developer's machine; public users cannot install a private repository by URL. GitHub's **Download ZIP** is source distribution, not the Git URL install method. If Git installation is unavailable, extract the repository into `Packages/com.fishhwb.vr-optimizer` inside your Unity project and add it as an embedded package.
+
+## Replacing an older embedded copy
+
+If the window still says **v0.6.6** or only shows World and Avatar, Unity is loading the older package. Close Unity, replace the **entire** `Packages/com.fishhwb.vr-optimizer` folder with the contents of this v0.6.7 ZIP (the folder should directly contain `package.json`), then reopen the project. Do not keep a second copy under `Assets` or install a Git copy alongside an embedded copy. The new window shows **WORLD / AVATAR / PROJECT / UPDATES** across the top. If you installed by Git URL instead, GitHub must contain the new release before Package Manager can update it; a downloaded ZIP does not update a Git dependency automatically.
 
 ## Quick start
 

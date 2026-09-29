@@ -42,6 +42,15 @@ namespace FISHHWB.VROptimizer
             }
         }
         internal static string LatestTag => latestTag;
+        internal static string SourceLabel
+        {
+            get
+            {
+                var info = Installed;
+                return info == null ? "Unknown / local copy" : info.source.ToString();
+            }
+        }
+        internal static bool CanUpdateDirectly => Installed != null && Installed.source == PackageSource.Git;
 
         internal static void CheckIfDue()
         {
@@ -89,7 +98,10 @@ namespace FISHHWB.VROptimizer
                         releaseUrl = release.html_url;
                         EditorPrefs.SetString(TagKey, latestTag);
                         EditorPrefs.SetString(UrlKey, releaseUrl ?? "");
-                        message = HasUpdate ? "Update available: " + latestTag : "Up to date (" + CurrentVersion + ").";
+                        message = HasUpdate ? "Update available: " + latestTag :
+                            Version.TryParse(CurrentVersion, out var installed) && Version.TryParse(latestTag.TrimStart('v', 'V'), out var published) && installed > published ?
+                            "Installed copy is newer than the latest published release (" + latestTag + ")." :
+                            "Up to date (" + CurrentVersion + ").";
                         EditorPrefs.SetString(CacheKey, DateTime.UtcNow.ToString("o"));
                     }
                 }
@@ -113,8 +125,11 @@ namespace FISHHWB.VROptimizer
             if (info == null) { message = "Package source unavailable. Open Package Manager to update."; return; }
             if (info.source != PackageSource.Git)
             {
-                message = info.source == PackageSource.Embedded ? "Embedded package: update its project files manually." :
-                    "Repository package: open Creator Companion or Package Manager to update it.";
+                message = info.source == PackageSource.Embedded ?
+                    "Embedded package: download the release ZIP and replace Packages/com.fishhwb.vr-optimizer." :
+                    "VCC/registry package: update through Creator Companion or Package Manager.";
+                EditorUtility.DisplayDialog("Update through your package source", message, "OK");
+                ViewRelease();
                 return;
             }
             string target = Repository + "#" + latestTag;
