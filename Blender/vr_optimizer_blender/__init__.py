@@ -119,6 +119,123 @@ class FISHHWB_OT_tri_limit(bpy.types.Operator):
         return {'FINISHED'}
 
 
+def reduce_copy_to_limit(obj, target, context):
+    """Replace only this object's mesh with an evaluated Decimate result."""
+    if triangle_count(obj.data) <= target:
+        return triangle_count(obj.data)
+    modifier = obj.modifiers.new("LOD Triangle Limit", 'DECIMATE')
+    modifier.decimate_type = 'COLLAPSE'
+    modifier.use_collapse_triangulate = True
+    depsgraph = context.evaluated_depsgraph_get()
+    low, high = 0.0, 1.0
+    best_ratio, best_count = None, -1
+    for _ in range(24):
+        ratio = (low + high) * 0.5
+        modifier.ratio = ratio
+        context.view_layer.update()
+        count = evaluated_count(obj, depsgraph)
+        if count <= target:
+            if count > best_count:
+                best_ratio, best_count = ratio, count
+            low = ratio
+        else:
+            high = ratio
+    if best_ratio is None or best_count < 1:
+        raise ValueError("Unable to preserve a triangle within this LOD limit")
+    modifier.ratio = best_ratio
+    context.view_layer.update()
+    evaluated = obj.evaluated_get(depsgraph)
+    mesh = bpy.data.meshes.new_from_object(
+        evaluated, preserve_all_data_layers=True, depsgraph=depsgraph)
+    count = triangle_count(mesh)
+    if count < 1 or count > target:
+        bpy.data.meshes.remove(mesh)
+        raise ValueError("The evaluated LOD did not meet its triangle target")
+    old_mesh = obj.data
+    obj.modifiers.remove(modifier)
+    obj.data = mesh
+    if old_mesh.users == 0:
+        bpy.data.meshes.remove(old_mesh)
+    return count
+
+
+class FISHHWB_OT_create_lods(bpy.types.Operator):
+    bl_idname = "fishhwb.create_lods"
+    bl_label = "Create LOD0 / LOD1 / LOD2"
+    bl_description = "Create static mesh copies at 100%, up to 66%, and up to 33% of the original triangle count"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT' and context.active_object is not None and context.active_object.type == 'MESH'
+
+    def execute(self, context):
+        source = context.active_object
+        if source.data.shape_keys or source.vertex_groups or any(m.type == 'ARMATURE' for m in source.modifiers):
+            self.report({'ERROR'}, "LOD copies currently support static meshes without shape keys, vertex groups or armature modifiers")
+            return {'CANCELLED'}
+        original_selection = list(context.selected_objects)
+        made = []
+        collection = bpy.data.collections.new(source.name + "_LODs")
+        context.scene.collection.children.link(collection)
+        try:
+            base = source.copy()
+            base.data = source.data.copy()
+            collection.objects.link(base)
+            made.append(base)
+            base.matrix_world = source.matrix_world.copy()
+            base.name = source.name + "_LOD0"
+            if context.scene.fishhwb_apply_modifiers:
+                depsgraph = context.evaluated_depsgraph_get()
+                evaluated = base.evaluated_get(depsgraph)
+                mesh = bpy.data.meshes.new_from_object(
+                    evaluated, preserve_all_data_layers=True, depsgraph=depsgraph)
+                old_mesh = base.data
+                base.modifiers.clear()
+                base.data = mesh
+                if old_mesh.users == 0:
+                    bpy.data.meshes.remove(old_mesh)
+            elif base.modifiers:
+                raise ValueError("Enable Apply Existing Modifiers to make measurable LOD meshes")
+            count = triangle_count(base.data)
+            if count < 1:
+                raise ValueError("The selected object has no triangles")
+            base['fishhwb_lod_level'] = 0
+            for level, fraction in ((1, 0.66), (2, 0.33)):
+                copy = base.copy()
+                copy.data = base.data.copy()
+                collection.objects.link(copy)
+                made.append(copy)
+                copy.matrix_world = source.matrix_world.copy()
+                copy.name = source.name + f"_LOD{level}"
+                target = max(1, int(count * fraction))
+                actual = reduce_copy_to_limit(copy, target, context)
+                copy['fishhwb_lod_level'] = level
+                copy['fishhwb_triangle_target'] = target
+                copy.hide_set(True)
+            for obj in context.selected_objects:
+                obj.select_set(False)
+            base.select_set(True)
+            context.view_layer.objects.active = base
+            self.report({'INFO'},
+                f"LODs created from {count:,} triangles: LOD1 {triangle_count(made[1].data):,}, LOD2 {triangle_count(made[2].data):,}")
+            return {'FINISHED'}
+        except Exception as exc:
+            for copy in made:
+                mesh = copy.data
+                bpy.data.objects.remove(copy, do_unlink=True)
+                if mesh and mesh.users == 0:
+                    bpy.data.meshes.remove(mesh)
+            bpy.data.collections.remove(collection)
+            for obj in context.selected_objects:
+                obj.select_set(False)
+            for obj in original_selection:
+                obj.select_set(True)
+            context.view_layer.objects.active = source
+            self.report({'ERROR'}, "LOD generation failed: " + str(exc))
+            return {'CANCELLED'}
+
+
 def base_color_image(material):
     if not material or not material.use_nodes:
         raise ValueError("Atlas requires node-based materials with direct image Base Color")
@@ -342,9 +459,14 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
             layout.prop(context.scene, 'fishhwb_atlas_size')
             layout.prop(context.scene, 'fishhwb_atlas_padding')
         layout.operator('fishhwb.join_merge', icon='AUTOMERGE_ON')
+        layout.separator()
+        layout.label(text="Static Mesh LODs")
+        layout.label(text="LOD0 100%  /  LOD1 66%  /  LOD2 33%")
+        layout.operator('fishhwb.create_lods', icon='MOD_DECIM')
 
 
-classes = (FISHHWB_OT_tri_limit, FISHHWB_OT_join_merge, FISHHWB_PT_tri_limit)
+classes = (FISHHWB_OT_tri_limit, FISHHWB_OT_join_merge,
+           FISHHWB_OT_create_lods, FISHHWB_PT_tri_limit)
 
 
 def register():
