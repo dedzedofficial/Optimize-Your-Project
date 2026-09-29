@@ -11,8 +11,12 @@ bl_info = {
 import bpy
 import bmesh
 import math
+from pathlib import Path
+import bpy.utils.previews
 from array import array
 from bpy.props import BoolProperty, FloatProperty, IntProperty
+
+_brand_preview = None
 
 
 def triangle_count(mesh):
@@ -434,7 +438,7 @@ class FISHHWB_OT_join_merge(bpy.types.Operator):
 
 
 class FISHHWB_PT_tri_limit(bpy.types.Panel):
-    bl_label = "Tri Limit Remesher"
+    bl_label = "Optimize Your Project"
     bl_idname = "FISHHWB_PT_tri_limit"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -442,6 +446,8 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        if _brand_preview and "logo" in _brand_preview:
+            layout.template_icon(icon_value=_brand_preview["logo"].icon_id, scale=4)
         obj = context.active_object
         if obj and obj.type == 'MESH':
             layout.label(text=f"Source: {obj.name}")
@@ -470,6 +476,9 @@ classes = (FISHHWB_OT_tri_limit, FISHHWB_OT_join_merge,
 
 
 def register():
+    global _brand_preview
+    _brand_preview = bpy.utils.previews.new()
+    _brand_preview.load("logo", str(Path(__file__).with_name("optimize-your-project-logo.png")), 'IMAGE')
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.Scene.fishhwb_tri_limit = IntProperty(name="Triangle Limit", default=1000, min=1)
@@ -488,6 +497,10 @@ def register():
 
 
 def unregister():
+    global _brand_preview
+    if _brand_preview is not None:
+        bpy.utils.previews.remove(_brand_preview)
+        _brand_preview = None
     del bpy.types.Scene.fishhwb_tri_limit
     del bpy.types.Scene.fishhwb_apply_modifiers
     del bpy.types.Scene.fishhwb_merge_distance
