@@ -1,5 +1,7 @@
 # Optimize Your Project
 
+<img src="Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="160">
+
 **Unity 0.6.73 · Blender 0.7.5 preview · FISHHWB | Ded Zed**
 
 Optimize Your Project speeds up recurring VR and VRChat project work: texture import overrides, particle settings, light audits and mesh diagnostics. It does not require the VRChat SDK or any third-party package.
