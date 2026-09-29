@@ -6,7 +6,7 @@ Publisher: FISHHWB | Ded Zed. See the [unified roadmap](../Documentation/Roadmap
 
 ## Install
 
-Install this add-on ZIP in Blender's **Edit > Preferences > Add-ons > Install...** (or **Get Extensions > Install from Disk** in newer versions), then enable it. In the 3D Viewport press **N** and open the **FISHHWB** tab.
+After the `blender-v0.7.5` release is published, download `optimize-your-project-blender-0.7.5.zip` from [Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases). Install this add-on ZIP in Blender's **Edit > Preferences > Add-ons > Install...** (or **Get Extensions > Install from Disk** in newer versions), then enable it. In the 3D Viewport press **N** and open the **FISHHWB** tab.
 
 ## Actions
 
