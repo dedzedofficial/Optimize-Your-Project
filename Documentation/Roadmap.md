@@ -2,6 +2,19 @@
 
 **Unity package: v0.6.73. Blender add-on: v0.7.5 preview.** Later milestones below are proposed future work. Version numbers are planning targets, not release dates. The existing Git URL package is **Unity Editor only**.
 
+## Installation experience
+
+Aim for one clear **Install** choice per platform, while keeping the final project selection in the platform's own UI.
+
+| Platform | Planned install entry point | Gate before calling it one-click |
+| --- | --- | --- |
+| VCC | `vcc://vpm/addRepo?url=...` button for the published VPM listing | Publish and verify the renamed Pages `index.json` and release ZIP; users still choose a VCC project and add the package. |
+| Unity | Copyable Git URL now; a small project-aware installer can later ask for a Unity project folder and add the package dependency to its manifest after backing it up | Validate manifest editing, locked files and existing installations in clean supported Unity projects. No silent edits to an unknown project. |
+| Blender 4.2+ | Package as a native Blender extension and host a static extension repository with an install URL/drag target | Add extension manifest, build and test in Blender, verify updates and image assets. The current legacy add-on ZIP still uses Install from Disk. |
+| Blender 3.6–4.1 | Versioned legacy add-on ZIP with an optional local installer launched by the user | Detect installed Blender profile and version, preserve prior copy, enable add-on on next start, and test on Windows/macOS/Linux. |
+
+An installation landing page can present these buttons and show OS-specific instructions. Browser scripts cannot inspect local Blender/Unity installations or bypass their install confirmation. Keep versioned release assets and checksums, and do not advertise a preview branch as a stable release.
+
 ## Product goal
 
 Turn repeated Unity Editor optimization chores into focused buttons: identify the relevant assets or scene objects, preview material changes when necessary, update only changed settings, and show exactly what happened. Prioritize **textures and particles**, then recurring avatar, world and indie-game tasks around them. Do not promise a frame-rate improvement from a static scan; verify results in the target platform build.
