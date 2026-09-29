@@ -4,4 +4,4 @@
 
 `VRTextureOptimizer` edits only platform maximum-size importer metadata and reimports changed assets. `VRParticleOptimizer` and `VRLightOptimizer` record Unity Undo on loaded scene objects before editing. Light and mesh scanners inspect loaded Hierarchy scenes only. `VRSettings` stores the window profile in per-user EditorPrefs. Automatic import optimization is deliberately deferred; no AssetPostprocessor runs on every import.
 
-See [Roadmap.md](Roadmap.md) for future mesh and avatar workflows. The v0.6.6 window separates World and Avatar issue areas and previews importer changes.
+See [Roadmap.md](Roadmap.md) for future mesh and avatar workflows. The v0.6.7 window separates World and Avatar issue areas and previews importer changes.

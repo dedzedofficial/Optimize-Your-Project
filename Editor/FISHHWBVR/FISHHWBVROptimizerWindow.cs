@@ -7,8 +7,8 @@ namespace FISHHWB.VROptimizer
 {
     internal sealed class FISHHWBVROptimizerWindow : EditorWindow
     {
-        enum Page { World, Avatar }
-        enum Area { None, Textures, Particles, Lights, Meshes, Materials }
+        enum Page { World, Avatar, Project }
+        enum Area { None, Textures, Particles, Lights, Meshes, Materials, Compression }
         enum Filter { All, Critical, Warning }
         static readonly int[] Sizes = { 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384 };
         static readonly string[] SizeNames = { "32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "Custom..." };
@@ -22,22 +22,31 @@ namespace FISHHWB.VROptimizer
         List<VRMeshCompressionEntry> meshPreview;
         ModelImporterMeshCompression meshLevel = ModelImporterMeshCompression.Medium;
         Vector2 scroll;
+        List<VRCompressionChange> compressionPreview;
+        string projectFolder = "Assets";
+        bool showIssues = true;
+        int compressionPage;
+        Texture2D icon;
         bool showParticleControls;
-        string summary = "Choose World or Avatar, then select an area to inspect.";
+        string summary = "Choose World, Avatar or Project, then select a job.";
 
         [MenuItem("FISHHWB/VR Optimizer")]
         static void Open() { GetWindow<FISHHWBVROptimizerWindow>("VR Optimizer").minSize = new Vector2(480, 520); }
-        void OnEnable() { settings = VRSettings.Load(); }
+        void OnEnable()
+        {
+            settings = VRSettings.Load();
+            icon = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.fishhwb.vr-optimizer/Editor/FISHHWBVR/Icons/VR-Optimizer.png");
+            titleContent = new GUIContent("VR Optimizer", icon);
+            VRUpdateChecker.CheckIfDue();
+        }
 
         void OnGUI()
         {
             if (settings == null) settings = VRSettings.Load();
             scroll = EditorGUILayout.BeginScrollView(scroll);
-            GUILayout.Space(8);
-            EditorGUILayout.LabelField("FISHHWB VR OPTIMIZER", new GUIStyle(EditorStyles.boldLabel) { fontSize = 18, alignment = TextAnchor.MiddleCenter });
-            EditorGUILayout.LabelField("v0.6.6  •  Optimize one job at a time", EditorStyles.centeredGreyMiniLabel);
-            GUILayout.Space(8);
-            var nextPage = (Page)GUILayout.Toolbar((int)page, new[] { "WORLD", "AVATAR" }, GUILayout.Height(32));
+            DrawHeader();
+            GUILayout.Space(10);
+            var nextPage = (Page)GUILayout.Toolbar((int)page, new[] { "WORLD", "AVATAR", "PROJECT" }, GUILayout.Height(36));
             if (nextPage != page) { page = nextPage; ResetView(); }
             GUILayout.Space(6);
             if (page == Page.Avatar)
@@ -48,18 +57,33 @@ namespace FISHHWB.VROptimizer
                 if (!VRAvatarWorkflow.EditableRoot(avatar))
                     EditorGUILayout.HelpBox("Select an avatar root in a loaded scene. Prefab assets must be opened in a scene before editing.", MessageType.Info);
             }
-            else EditorGUILayout.HelpBox("World actions inspect loaded scenes. Texture changes can also target project assets.", MessageType.None);
+            else if (page == Page.World)
+                EditorGUILayout.HelpBox("World: loaded scenes. Texture caps cover project assets.", MessageType.None);
+            else
+            {
+                var nextFolder = EditorGUILayout.TextField("Assets folder", projectFolder);
+                if (nextFolder != projectFolder) { projectFolder = nextFolder; compressionPreview = null; }
+                if (!AssetDatabase.IsValidFolder(projectFolder) ||
+                    projectFolder != "Assets" && !projectFolder.StartsWith("Assets/", StringComparison.Ordinal))
+                    EditorGUILayout.HelpBox("Enter an existing folder under Assets.", MessageType.Warning);
+            }
 
-            EditorGUILayout.LabelField("SHOW ISSUES", EditorStyles.boldLabel);
-            EditorGUILayout.BeginHorizontal();
-            AreaButton(Area.Textures, "TEXTURES");
-            AreaButton(Area.Particles, "PARTICLES");
-            AreaButton(Area.Lights, "LIGHTS");
-            EditorGUILayout.EndHorizontal();
-            EditorGUILayout.BeginHorizontal();
-            AreaButton(Area.Meshes, "MESHES");
-            if (page == Page.Avatar) AreaButton(Area.Materials, "MATERIALS");
-            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.LabelField("CHOOSE A JOB", EditorStyles.boldLabel);
+            if (page == Page.Project)
+                AreaButton(Area.Compression, "TEXTURE COMPRESSION");
+            else
+            {
+                EditorGUILayout.BeginHorizontal();
+                AreaButton(Area.Textures, "TEXTURES");
+                AreaButton(Area.Particles, "PARTICLES");
+                AreaButton(Area.Lights, "LIGHTS");
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.BeginHorizontal();
+                AreaButton(Area.Meshes, "MESHES");
+                if (page == Page.Avatar) AreaButton(Area.Materials, "MATERIALS");
+                EditorGUILayout.EndHorizontal();
+                AreaButton(Area.Compression, "COMPRESSION CLEANUP");
+            }
             GUILayout.Space(6);
             if (area != Area.None)
             {
@@ -87,24 +111,32 @@ namespace FISHHWB.VROptimizer
             results.Clear();
             texturePreview = null;
             meshPreview = null;
-            summary = "Choose an area to inspect.";
+            compressionPreview = null;
+            compressionPage = 0;
+            summary = "Choose a job to inspect.";
         }
 
         void AreaButton(Area target, string label)
         {
-            using (new EditorGUI.DisabledScope(page == Page.Avatar && !VRAvatarWorkflow.EditableRoot(avatar)))
+            using (new EditorGUI.DisabledScope(page == Page.Avatar && !VRAvatarWorkflow.EditableRoot(avatar) ||
+                page == Page.Project && (!AssetDatabase.IsValidFolder(projectFolder) ||
+                    projectFolder != "Assets" && !projectFolder.StartsWith("Assets/", StringComparison.Ordinal))))
                 if (GUILayout.Button(label, GUILayout.Height(30)))
                 {
                     area = target;
                     texturePreview = null;
                     meshPreview = null;
-                    ScanArea();
+                    compressionPreview = null;
+                    compressionPage = 0;
+                    if (target == Area.Compression) summary = "Scan uncompressed texture imports in the selected scope.";
+                    else ScanArea();
                 }
         }
 
         void ScanArea()
         {
             results.Clear();
+            if (area == Area.Compression) return;
             if (page == Page.Avatar)
             {
                 if (!VRAvatarWorkflow.EditableRoot(avatar)) return;
@@ -141,7 +173,8 @@ namespace FISHHWB.VROptimizer
 
         void DrawArea()
         {
-            if (area == Area.Textures)
+            if (area == Area.Compression) DrawCompression();
+            else if (area == Area.Textures)
             {
                 EditorGUI.BeginChangeCheck();
                 settings.pc = SizeField("PC / Standalone", settings.pc);
@@ -187,7 +220,106 @@ namespace FISHHWB.VROptimizer
                 DrawMeshPreview();
             }
             else EditorGUILayout.LabelField("Review the issues below and select an object to inspect it.", EditorStyles.wordWrappedMiniLabel);
-            if (GUILayout.Button("REFRESH " + area.ToString().ToUpperInvariant() + " ISSUES")) ScanArea();
+            if (area != Area.Compression && GUILayout.Button("REFRESH " + area.ToString().ToUpperInvariant() + " ISSUES")) ScanArea();
+        }
+
+        void DrawHeader()
+        {
+            var rect = GUILayoutUtility.GetRect(1, 88, GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(rect, EditorGUIUtility.isProSkin ? new Color(.09f, .19f, .23f) : new Color(.78f, .9f, .91f));
+            if (icon) GUI.DrawTexture(new Rect(rect.x + 16, rect.y + 12, 62, 62), icon, ScaleMode.ScaleToFit, true);
+            GUI.Label(new Rect(rect.x + 88, rect.y + 13, rect.width - 102, 28), "FISHHWB VR OPTIMIZER", new GUIStyle(EditorStyles.boldLabel) { fontSize = 18 });
+            GUI.Label(new Rect(rect.x + 88, rect.y + 44, rect.width - 102, 24), "v" + VRUpdateChecker.CurrentVersion + "  •  One job at a time", EditorStyles.label);
+            EditorGUILayout.BeginHorizontal();
+            if (VRUpdateChecker.HasUpdate) EditorGUILayout.HelpBox("Update available: " + VRUpdateChecker.LatestTag, MessageType.Info);
+            else if (!string.IsNullOrEmpty(VRUpdateChecker.Message)) EditorGUILayout.LabelField(VRUpdateChecker.Message, EditorStyles.wordWrappedMiniLabel);
+            using (new EditorGUI.DisabledScope(VRUpdateChecker.Checking || VRUpdateChecker.Installing))
+                if (GUILayout.Button("CHECK UPDATE", GUILayout.Width(112))) VRUpdateChecker.Check(true);
+            EditorGUILayout.EndHorizontal();
+            if (VRUpdateChecker.HasUpdate)
+            {
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("RELEASE NOTES")) VRUpdateChecker.ViewRelease();
+                using (new EditorGUI.DisabledScope(VRUpdateChecker.Installing))
+                    if (GUILayout.Button("UPDATE PACKAGE")) VRUpdateChecker.Update();
+                EditorGUILayout.EndHorizontal();
+            }
+        }
+
+        void DrawCompression()
+        {
+            EditorGUILayout.HelpBox("Find uncompressed automatic texture imports. Preview each platform before changing it to Unity's automatic compressed format. Explicitly chosen formats are skipped.", MessageType.None);
+            if (GUILayout.Button("SCAN UNCOMPRESSED TEXTURES", GUILayout.Height(32)))
+            {
+                compressionPreview = VRTextureCompression.Collect(page == Page.Avatar ? avatar : null,
+                    page == Page.Project ? projectFolder : "Assets", out bool cancelled);
+                compressionPage = 0;
+                summary = (cancelled ? "Scan cancelled. Partial results: " : "Scan complete: ") + compressionPreview.Count + " platform settings to review.";
+            }
+            if (compressionPreview == null) return;
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("INCLUDE ALL")) foreach (var item in compressionPreview) item.Include = true;
+            if (GUILayout.Button("EXCLUDE ALL")) foreach (var item in compressionPreview) item.Include = false;
+            EditorGUILayout.EndHorizontal();
+            int selected = 0;
+            foreach (var item in compressionPreview) if (item.Include) selected++;
+            const int pageSize = 30;
+            int pages = Mathf.Max(1, (compressionPreview.Count + pageSize - 1) / pageSize);
+            compressionPage = Mathf.Clamp(compressionPage, 0, pages - 1);
+            EditorGUILayout.BeginHorizontal();
+            using (new EditorGUI.DisabledScope(compressionPage == 0))
+                if (GUILayout.Button("PREVIOUS", GUILayout.Width(100))) compressionPage--;
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.LabelField("Page " + (compressionPage + 1) + " / " + pages, GUILayout.Width(100));
+            using (new EditorGUI.DisabledScope(compressionPage >= pages - 1))
+                if (GUILayout.Button("NEXT", GUILayout.Width(100))) compressionPage++;
+            EditorGUILayout.EndHorizontal();
+            for (int i = compressionPage * pageSize; i < Mathf.Min(compressionPreview.Count, (compressionPage + 1) * pageSize); i++)
+            {
+                var item = compressionPreview[i];
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                item.Include = EditorGUILayout.ToggleLeft(item.Path, item.Include);
+                EditorGUILayout.LabelField(item.Platform + "  •  Uncompressed → Automatic compressed  •  max " + item.BeforeSize, EditorStyles.miniLabel);
+                EditorGUILayout.EndVertical();
+            }
+            selected = 0;
+            foreach (var item in compressionPreview) if (item.Include) selected++;
+            EditorGUILayout.LabelField(selected + " of " + compressionPreview.Count + " platform settings selected", EditorStyles.miniLabel);
+            if (selected == 0) return;
+            if (GUILayout.Button("APPLY SELECTED COMPRESSION", GUILayout.Height(34)) &&
+                EditorUtility.DisplayDialog("Apply texture compression?", "Reimport selected textures using automatic platform compression. Inspect alpha, masks, gradients and normal maps afterward. Restore importer settings through version control if needed.", "Apply", "Cancel"))
+                ApplyCompression();
+        }
+
+        void ApplyCompression()
+        {
+            var grouped = new SortedDictionary<string, List<VRCompressionChange>>(StringComparer.Ordinal);
+            foreach (var item in compressionPreview)
+            {
+                if (!item.Include) continue;
+                if (!grouped.TryGetValue(item.Path, out var items)) { items = new List<VRCompressionChange>(); grouped.Add(item.Path, items); }
+                items.Add(item);
+            }
+            int changed = 0, unchanged = 0, failed = 0, processed = 0;
+            bool cancelled = false;
+            try
+            {
+                foreach (var pair in grouped)
+                {
+                    if (EditorUtility.DisplayCancelableProgressBar("Compress Textures", pair.Key, grouped.Count == 0 ? 1 : (float)processed / grouped.Count)) { cancelled = true; break; }
+                    processed++;
+                    try
+                    {
+                        if (VRTextureCompression.Apply(pair.Key, pair.Value, out string formats))
+                        { changed++; Debug.Log("VR Optimizer: " + pair.Key + " → " + formats); }
+                        else unchanged++;
+                    }
+                    catch (Exception error) { failed++; Debug.LogError("VR Optimizer: " + pair.Key + " — " + error); }
+                }
+            }
+            finally { EditorUtility.ClearProgressBar(); }
+            summary = (cancelled ? "Cancelled. " : "Complete. ") + "Textures changed: " + changed + ", unchanged: " + unchanged + ", failed: " + failed + ". Rescan to verify; resolved formats are in Console.";
+            compressionPreview = null;
         }
 
         static int SizeField(string label, int value)
@@ -293,8 +425,9 @@ namespace FISHHWB.VROptimizer
 
         void DrawResults()
         {
-            if (area == Area.None) return;
-            EditorGUILayout.LabelField("ISSUES  •  " + results.Count + " found", EditorStyles.boldLabel);
+            if (area == Area.None || area == Area.Compression) return;
+            showIssues = EditorGUILayout.Foldout(showIssues, "ISSUES  •  " + results.Count + " found", true);
+            if (!showIssues) return;
             filter = (Filter)GUILayout.Toolbar((int)filter, new[] { "ALL", "CRITICAL", "WARNING" });
             int visible = 0;
             foreach (var issue in results)

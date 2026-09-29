@@ -1,9 +1,9 @@
 {
   "name": "com.fishhwb.vr-optimizer",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "displayName": "FISHHWB VR Optimizer",
-  "description": "Free editor tools for VR texture, particle and light optimization and project diagnostics.",
+  "description": "Editor tools for Unity texture compression, VR scene and avatar optimization, and project diagnostics.",
   "unity": "2021.3",
   "author": { "name": "FISHHWB | Ded Zed", "url": "https://fishhwb.github.io/" },
-  "keywords": ["vr", "vrchat", "quest", "optimization", "textures", "particles"]
+  "keywords": ["vr", "vrchat", "quest", "optimization", "textures", "particles", "unity", "compression"]
 }

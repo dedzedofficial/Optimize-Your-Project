@@ -21,6 +21,23 @@ namespace FISHHWB.VROptimizer
         internal static bool EditableRoot(GameObject root)
         { return root && root.scene.IsValid() && root.scene.isLoaded && !EditorUtility.IsPersistent(root); }
 
+        internal static HashSet<Texture> ReferencedTextures(GameObject root)
+        {
+            var textures = new HashSet<Texture>();
+            if (!root) return textures;
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+                foreach (var material in renderer.sharedMaterials)
+                {
+                    if (!material) continue;
+                    foreach (var property in material.GetTexturePropertyNames())
+                    {
+                        var texture = material.GetTexture(property);
+                        if (texture) textures.Add(texture);
+                    }
+                }
+            return textures;
+        }
+
         internal static List<VRTextureChange> CollectTextures(GameObject root, VRSettings settings)
         {
             var paths = new HashSet<string>(StringComparer.Ordinal);
