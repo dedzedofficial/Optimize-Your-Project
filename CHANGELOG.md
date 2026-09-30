@@ -4,6 +4,15 @@
 
 The product is now positioned as a **general developer optimization toolkit**. The historical Unity package ID `com.fishhwb.vr-optimizer` is retained for installation compatibility; it does not mean the tool is VR-only.
 
+## 0.7.1
+
+- Added Blender **Clean Selected Mesh** as the first one-click action, producing a separate cleaned copy with unique output naming.
+- Added conservative static-mesh checks, exact-coordinate vertex merging, loose geometry and zero-area face cleanup, unused material slot cleanup, and closed-surface normal repair.
+- Preserved original meshes and added rollback if cleanup fails.
+- Added consistent changed, unchanged, skipped, unsupported and failed summaries to Unity batches and Blender quick actions, with persistent Blender sidebar results.
+- Improved Unity batch cancellation and per-item failure handling.
+- Added Blender runtime regression checks and stronger release/version validation.
+
 ## 0.7.0
 
 - Polished the Unity and Blender interfaces with clearer cards, stronger section hierarchy, larger primary actions and cleaner footers.

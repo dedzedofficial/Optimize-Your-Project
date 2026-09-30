@@ -55,7 +55,7 @@ namespace FISHHWB.VROptimizer
             get
             {
                 var info = PackageInfo.FindForAssetPath("Packages/com.fishhwb.vr-optimizer/package.json");
-                return info != null ? info.version : "0.7.0";
+                return info != null ? info.version : "0.7.1";
             }
         }
 

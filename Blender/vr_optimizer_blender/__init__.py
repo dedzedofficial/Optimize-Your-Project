@@ -1,10 +1,10 @@
 bl_info = {
     "name": "Optimize Your Project for Blender",
     "author": "FISHHWB | Ded Zed",
-    "version": (0, 7, 0),
+    "version": (0, 7, 1),
     "blender": (3, 6, 0),
     "location": "View3D > Sidebar > FISHHWB",
-    "description": "One-click remesh and vertex cleanup with optional mesh reduction, joining and LOD tools",
+    "description": "One-click mesh cleanup, remesh and vertex merging with optional mesh reduction, joining and LOD tools",
     "category": "Mesh",
 }
 
@@ -14,7 +14,7 @@ import math
 from pathlib import Path
 import bpy.utils.previews
 from array import array
-from bpy.props import BoolProperty, FloatProperty, IntProperty
+from bpy.props import BoolProperty, FloatProperty, IntProperty, StringProperty
 
 _brand_preview = None
 
@@ -440,11 +440,165 @@ class FISHHWB_OT_join_merge(bpy.types.Operator):
 
 def _copy_mesh_object(source, context, suffix):
     copy = source.copy()
-    copy.data = source.data.copy()
-    copy.name = source.name + suffix
-    context.collection.objects.link(copy)
-    copy.matrix_world = source.matrix_world.copy()
-    return copy
+    mesh = None
+    try:
+        mesh = source.data.copy()
+        copy.data = mesh
+        base = source.name + suffix
+        name, number = base, 1
+        while name in bpy.data.objects:
+            name = f"{base}_{number:03d}"
+            number += 1
+        copy.name = name
+        mesh.name = name
+        context.collection.objects.link(copy)
+        copy.matrix_world = source.matrix_world.copy()
+        return copy
+    except Exception:
+        bpy.data.objects.remove(copy, do_unlink=True)
+        if mesh is not None and mesh.users == 0:
+            bpy.data.meshes.remove(mesh)
+        raise
+
+
+def _action_report(operator, context, detail, changed=0, unchanged=0,
+                   skipped=0, unsupported=0, failed=0):
+    counts = (f"Changed: {changed} | Unchanged: {unchanged} | Skipped: {skipped} | "
+              f"Unsupported: {unsupported} | Failed: {failed}")
+    context.scene.fishhwb_last_result = counts + "\n" + detail
+    operator.report({'WARNING'} if failed or unsupported else {'INFO'}, counts + ". " + detail)
+
+
+def _cleanup_unsupported(source):
+    if source.data.shape_keys:
+        return "Shape keys depend on the original topology."
+    if source.vertex_groups or source.find_armature():
+        return "Rigged meshes and vertex groups depend on the original topology."
+    if source.modifiers:
+        return "Apply modifiers to a separate static copy before cleanup."
+    if source.data.has_custom_normals:
+        return "Custom split normals need a dedicated shading workflow."
+    if source.library or source.data.library or source.override_library or source.data.override_library:
+        return "Linked or overridden meshes must be made local before cleanup."
+    if any(not math.isfinite(value) for vertex in source.data.vertices for value in vertex.co):
+        return "Mesh coordinates contain non-finite values."
+    if not source.data.vertices:
+        return "The mesh has no vertices."
+    return None
+
+
+def _clean_mesh(mesh):
+    """Clean only the caller-owned mesh. Keep open surfaces and their winding."""
+    stats = dict(vertices=0, loose_edges=0, duplicates=0, zero_faces=0,
+                 material_slots=0, normals=0)
+    before_vertices = len(mesh.vertices)
+    bm = bmesh.new()
+    try:
+        bm.from_mesh(mesh)
+        # Exact coordinates only: no proximity threshold can erase thin details.
+        targets, coordinates = {}, {}
+        for vertex in bm.verts:
+            key = tuple(vertex.co)
+            if key in coordinates:
+                targets[vertex] = coordinates[key]
+            else:
+                coordinates[key] = vertex
+        count = len(bm.verts)
+        if targets:
+            bmesh.ops.weld_verts(bm, targetmap=targets)
+        stats['duplicates'] = count - len(bm.verts)
+
+        zero_faces = [face for face in bm.faces if face.calc_area() == 0.0]
+        stats['zero_faces'] = len(zero_faces)
+        if zero_faces:
+            bmesh.ops.delete(bm, geom=zero_faces, context='FACES_ONLY')
+        loose_edges = [edge for edge in bm.edges if not edge.link_faces]
+        stats['loose_edges'] = len(loose_edges)
+        if loose_edges:
+            bmesh.ops.delete(bm, geom=loose_edges, context='EDGES')
+        loose_verts = [vertex for vertex in bm.verts if not vertex.link_edges]
+        if loose_verts:
+            bmesh.ops.delete(bm, geom=loose_verts, context='VERTS')
+
+        # Only closed manifold components have a meaningful outside direction.
+        bm.normal_update()
+        remaining = set(bm.faces)
+        while remaining:
+            seed = remaining.pop()
+            component, pending = [seed], [seed]
+            while pending:
+                face = pending.pop()
+                for edge in face.edges:
+                    for neighbor in edge.link_faces:
+                        if neighbor in remaining:
+                            remaining.remove(neighbor)
+                            pending.append(neighbor)
+                            component.append(neighbor)
+            if all(edge.is_manifold for face in component for edge in face.edges):
+                normals = [(face, face.normal.copy()) for face in component]
+                bmesh.ops.recalc_face_normals(bm, faces=component)
+                bm.normal_update()
+                stats['normals'] += sum(face.normal.dot(normal) < 0.0 for face, normal in normals)
+        bm.to_mesh(mesh)
+    finally:
+        bm.free()
+    mesh.update()
+    stats['vertices'] = before_vertices - len(mesh.vertices)
+    used = {face.material_index for face in mesh.polygons}
+    # Removing in descending order lets Blender remap face indices correctly.
+    for index in reversed(range(len(mesh.materials))):
+        if index not in used:
+            mesh.materials.pop(index=index)
+            stats['material_slots'] += 1
+    return stats
+
+
+class FISHHWB_OT_clean_selected_mesh(bpy.types.Operator):
+    bl_idname = "fishhwb.clean_selected_mesh"
+    bl_label = "Clean Selected Mesh"
+    bl_description = "Clean the active static mesh on a new copy; preserve the original"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return (context.mode == 'OBJECT' and context.active_object is not None
+                and context.active_object.type == 'MESH'
+                and context.active_object.select_get())
+
+    def execute(self, context):
+        source = context.active_object
+        reason = _cleanup_unsupported(source)
+        if reason:
+            _action_report(self, context, reason, unsupported=1)
+            return {'CANCELLED'}
+        selection = list(context.selected_objects)
+        copy = None
+        try:
+            copy = _copy_mesh_object(source, context, "_Clean")
+            stats = _clean_mesh(copy.data)
+            _select_only(context, copy)
+            changed = any(stats.values())
+            detail = (f"{copy.name}: Vertices removed: {stats['vertices']:,} "
+                      f"(exact duplicates merged: {stats['duplicates']:,}); "
+                      f"Loose edges removed: {stats['loose_edges']:,}; "
+                      f"Zero-area faces removed: {stats['zero_faces']:,}; "
+                      f"Unused material slots removed: {stats['material_slots']:,}; "
+                      f"Faces reoriented: {stats['normals']:,}. Original object preserved.")
+            _action_report(self, context, detail, changed=int(changed), unchanged=int(not changed))
+            return {'FINISHED'}
+        except Exception as exc:
+            if copy is not None:
+                mesh = copy.data
+                bpy.data.objects.remove(copy, do_unlink=True)
+                if mesh.users == 0:
+                    bpy.data.meshes.remove(mesh)
+            for item in context.selected_objects:
+                item.select_set(False)
+            for item in selection:
+                item.select_set(True)
+            context.view_layer.objects.active = source
+            _action_report(self, context, "Mesh cleanup failed: " + str(exc), failed=1)
+            return {'CANCELLED'}
 
 
 def _select_only(context, obj):
@@ -467,14 +621,15 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
     def execute(self, context):
         source = context.active_object
         if source.data.shape_keys or source.vertex_groups or any(m.type == 'ARMATURE' for m in source.modifiers):
-            self.report({'ERROR'}, "One-Click Remesh is for static meshes; rigged or shape-key meshes are skipped")
+            _action_report(self, context, "One-Click Remesh supports static meshes without rigs or shape keys.", unsupported=1)
             return {'CANCELLED'}
 
-        copy = _copy_mesh_object(source, context, "_Remesh")
+        copy = None
         original_selection = list(context.selected_objects)
         original_active = source
 
         try:
+            copy = _copy_mesh_object(source, context, "_Remesh")
             before = triangle_count(copy.data)
             if before < 1:
                 raise ValueError("The selected mesh has no triangles")
@@ -514,20 +669,21 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
                 bpy.data.meshes.remove(old_mesh)
 
             _select_only(context, copy)
-            self.report({'INFO'}, f"Remeshed copy created: {before:,} -> {after:,} triangles")
+            _action_report(self, context, f"Remeshed copy created: {before:,} -> {after:,} triangles. Original object preserved.", changed=1)
             return {'FINISHED'}
         except Exception as exc:
-            mesh = copy.data
-            bpy.data.objects.remove(copy, do_unlink=True)
-            if mesh and mesh.users == 0:
-                bpy.data.meshes.remove(mesh)
+            if copy is not None:
+                mesh = copy.data
+                bpy.data.objects.remove(copy, do_unlink=True)
+                if mesh.users == 0:
+                    bpy.data.meshes.remove(mesh)
             for item in context.selected_objects:
                 item.select_set(False)
             for item in original_selection:
                 if item and item.name in bpy.data.objects:
                     item.select_set(True)
             context.view_layer.objects.active = original_active
-            self.report({'ERROR'}, "Remesh failed: " + str(exc))
+            _action_report(self, context, "Remesh failed: " + str(exc), failed=1)
             return {'CANCELLED'}
 
 
@@ -544,11 +700,13 @@ class FISHHWB_OT_merge_vertices(bpy.types.Operator):
     def execute(self, context):
         source = context.active_object
         if source.data.shape_keys:
-            self.report({'ERROR'}, "Shape-key meshes are skipped because topology changes can break keys")
+            _action_report(self, context, "Shape keys depend on the original topology.", unsupported=1)
             return {'CANCELLED'}
 
-        copy = _copy_mesh_object(source, context, "_Merged")
+        copy = None
+        original_selection = list(context.selected_objects)
         try:
+            copy = _copy_mesh_object(source, context, "_Merged")
             before = len(copy.data.vertices)
             bm = bmesh.new()
             try:
@@ -564,14 +722,20 @@ class FISHHWB_OT_merge_vertices(bpy.types.Operator):
             copy.data.update()
             after = len(copy.data.vertices)
             _select_only(context, copy)
-            self.report({'INFO'}, f"Merged {before - after:,} vertices on {copy.name}")
+            _action_report(self, context, f"Merged {before - after:,} vertices on {copy.name}. Original object preserved.", changed=int(before != after), unchanged=int(before == after))
             return {'FINISHED'}
         except Exception as exc:
-            mesh = copy.data
-            bpy.data.objects.remove(copy, do_unlink=True)
-            if mesh and mesh.users == 0:
-                bpy.data.meshes.remove(mesh)
-            self.report({'ERROR'}, "Vertex merge failed: " + str(exc))
+            if copy is not None:
+                mesh = copy.data
+                bpy.data.objects.remove(copy, do_unlink=True)
+                if mesh.users == 0:
+                    bpy.data.meshes.remove(mesh)
+            for item in context.selected_objects:
+                item.select_set(False)
+            for item in original_selection:
+                item.select_set(True)
+            context.view_layer.objects.active = source
+            _action_report(self, context, "Vertex merge failed: " + str(exc), failed=1)
             return {'CANCELLED'}
 
 
@@ -592,7 +756,7 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
             brand.template_icon(icon_value=_brand_preview["logo"].icon_id, scale=3)
         brand.label(text="OPTIMIZE YOUR PROJECT", icon='TOOL_SETTINGS')
         brand.label(text="Free one-click tools for developers")
-        brand.label(text="v0.7.0 • Blender")
+        brand.label(text="v0.7.1 • Blender")
 
         obj = context.active_object
         selected = layout.box()
@@ -608,6 +772,12 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
         quick = layout.box()
         quick.label(text="ONE-CLICK CLEANUP", icon='MODIFIER')
         quick.label(text="Fast, safe actions that create new copies.")
+        quick.separator()
+
+        clean = quick.row()
+        clean.scale_y = 1.45
+        clean.operator('fishhwb.clean_selected_mesh', text="CLEAN SELECTED MESH", icon='BRUSH_DATA')
+        quick.label(text="Clean mesh clutter on a new static copy.")
         quick.separator()
 
         remesh = quick.row()
@@ -655,6 +825,16 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
             row.scale_y = 1.2
             row.operator('fishhwb.create_lods', text="CREATE LOD0 / LOD1 / LOD2", icon='MOD_DECIM')
 
+        if context.scene.fishhwb_last_result:
+            result = layout.box()
+            result.label(text="LAST RESULT", icon='INFO')
+            # Wrap long reports to fit narrow sidebar panels.
+            import textwrap
+            width = max(24, int(context.region.width / (7 * context.preferences.system.ui_scale)))
+            for line in context.scene.fishhwb_last_result.splitlines():
+                for wrapped in textwrap.wrap(line, width=width):
+                    result.label(text=wrapped)
+
         support = layout.box()
         support.label(text="FREE FOR DEVELOPERS", icon='HEART')
         support.label(text="Built to save time, reduce busywork,")
@@ -677,7 +857,7 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
         links.operator("wm.url_open", text="Website", icon='URL').url = "https://fishhwb.github.io/"
 
 
-classes = (FISHHWB_OT_tri_limit, FISHHWB_OT_join_merge, FISHHWB_OT_one_click_remesh,
+classes = (FISHHWB_OT_clean_selected_mesh, FISHHWB_OT_tri_limit, FISHHWB_OT_join_merge, FISHHWB_OT_one_click_remesh,
            FISHHWB_OT_merge_vertices, FISHHWB_OT_create_lods, FISHHWB_PT_tri_limit)
 
 
@@ -687,6 +867,7 @@ def register():
     _brand_preview.load("logo", str(Path(__file__).with_name("optimize-your-project-logo.png")), 'IMAGE')
     for cls in classes:
         bpy.utils.register_class(cls)
+    bpy.types.Scene.fishhwb_last_result = StringProperty(options={'SKIP_SAVE'})
     bpy.types.Scene.fishhwb_tri_limit = IntProperty(name="Triangle Limit", default=1000, min=1)
     bpy.types.Scene.fishhwb_apply_modifiers = BoolProperty(name="Apply Existing Modifiers", default=True,
         description="Include existing modifiers in the new copy before decimation")
@@ -710,6 +891,7 @@ def unregister():
     if _brand_preview is not None:
         bpy.utils.previews.remove(_brand_preview)
         _brand_preview = None
+    del bpy.types.Scene.fishhwb_last_result
     del bpy.types.Scene.fishhwb_tri_limit
     del bpy.types.Scene.fishhwb_apply_modifiers
     del bpy.types.Scene.fishhwb_merge_distance

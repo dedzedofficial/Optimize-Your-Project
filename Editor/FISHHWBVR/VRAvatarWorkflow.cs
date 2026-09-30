@@ -40,6 +40,12 @@ namespace FISHHWB.VROptimizer
 
         internal static List<VRTextureChange> CollectTextures(GameObject root, VRSettings settings)
         {
+            return CollectTextures(root, settings, "Assets", out _);
+        }
+
+        internal static List<VRTextureChange> CollectTextures(GameObject root, VRSettings settings, string folder, out int unsupported)
+        {
+            unsupported = 0;
             var paths = new HashSet<string>(StringComparer.Ordinal);
             if (root)
             {
@@ -54,15 +60,15 @@ namespace FISHHWB.VROptimizer
                         }
                     }
             }
-            else foreach (var guid in AssetDatabase.FindAssets("t:Texture", new[] { "Assets" }))
+            else foreach (var guid in AssetDatabase.FindAssets("t:Texture", new[] { folder }))
                 paths.Add(AssetDatabase.GUIDToAssetPath(guid));
             var changes = new List<VRTextureChange>();
             foreach (var path in paths)
             {
-                if (string.IsNullOrEmpty(path) || !path.StartsWith("Assets/", StringComparison.Ordinal)) continue;
+                if (string.IsNullOrEmpty(path) || !path.StartsWith("Assets/", StringComparison.Ordinal)) { unsupported++; continue; }
                 var importer = AssetImporter.GetAtPath(path) as TextureImporter;
                 if (!importer || importer.textureShape != TextureImporterShape.Texture2D ||
-                    (importer.textureType != TextureImporterType.Default && importer.textureType != TextureImporterType.NormalMap)) continue;
+                    (importer.textureType != TextureImporterType.Default && importer.textureType != TextureImporterType.NormalMap)) { unsupported++; continue; }
                 var entry = new VRTextureChange { Path = path, Texture = AssetDatabase.LoadAssetAtPath<Texture>(path) };
                 int[] caps = { settings.pc, settings.android, settings.ios };
                 for (int i = 0; i < 3; i++)
