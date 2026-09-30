@@ -1,221 +1,222 @@
-# Optimize Your Project: roadmap
+# Optimize Your Project: development roadmap
 
 <img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="96">
 
-**Current target: v0.7.1.**
+**Current implementation: v0.7.1. Future versions below are planned, not available features.**
+
+## The v1.0 goal
 
-Optimize Your Project is a **general developer optimization toolkit**. It should remove repetitive optimization chores from ordinary game, app, simulation, VR, social, prototype and asset-production workflows. Platform-specific helpers are optional layers on top of the general tools.
+- **Put at least 90% of identified, safely automatable optimization tasks one button away on every supported integration and target platform.**
+- Cover everyday game, app, simulation, asset-production, desktop, mobile, web and XR development.
+- Give beginners clear buttons that explain what they do and experienced developers quick access to the same jobs.
+- Make useful help immediately actionable: find the problem, select the affected item, apply a supported fix, or restore the previous result.
+- Keep the product free, focused on optimization, and useful without any VR or social-platform SDK.
+- Treat broad platform coverage as a development goal. The roadmap does not claim that every engine, device or optimization is already supported.
+
+## What one click should mean
 
-The product rule is simple:
+- Choose the object, folder, hierarchy, collection or project scope, then press one clearly named action.
+- Use sensible automatic settings without requiring presets, a configuration page or repeated inspector edits.
+- Offer a compact optional preview when quality or appearance may change. After approval, process the whole selected scope together.
+- Show only relevant tools for the detected integration and chosen build target.
+- Keep detailed diagnostics behind an explicit scan button.
+- Report **Changed**, **Unchanged**, **Skipped**, **Unsupported** and **Failed**, with reasons and direct links where useful.
+- Provide **Undo Last Optimization**, a checked settings restore, or an untouched source copy as appropriate.
+- Avoid claiming that one button can decide art direction, rewrite arbitrary gameplay code, or guarantee an FPS increase.
+
+## Platform coverage goal
+
+- **Editor integrations:** Unity and Blender first, followed by native Godot and Unreal tools.
+- **Build targets:** Windows, macOS, Linux, Android, iOS, web and standalone or PC-connected XR where the integration supports those targets.
+- **Creator workflows:** optional VRChat/VCC, ChilloutVR and Resonite preparation tools alongside ordinary project workflows.
+- **Console workflows:** investigate and document support where licensed SDK access, editor APIs and test hardware permit it. Do not advertise unverified support.
+- **Other engines and DCC tools:** maintain a public request list for additions such as Maya and 3ds Max. Publish an integration's supported tasks before counting it toward coverage.
+- **Support tracking:** distinguish implemented, tested, experimental, planned and unavailable combinations. One working desktop integration must not imply support everywhere.
+
+## v0.7: reliable everyday buttons
+
+### v0.7.0: one-click foundation | Implemented
+
+- Unity **Project** and **Character / Avatar** pages.
+- Direct texture compression/size, particle, model compression and realtime shadow actions.
+- Detailed findings shown only after a project scan.
+- Blender remesh and duplicate-vertex actions that create copies.
+- Advanced Blender triangle reduction, join/atlas and static LOD tools.
+- Compact update status and optional developer-support links.
+
+### v0.7.1: clean selected mesh | Implemented
 
-> If a developer repeatedly opens inspectors, modifiers, import tabs, or menus to perform the same safe optimization task, turn that work into one clear button.
+- Blender **Clean Selected Mesh**, with unique output names and an untouched original.
+- Exact-coordinate vertex merging, loose geometry and zero-area face cleanup, unused material slot cleanup and closed-surface normal repair.
+- Conservative checks for topology-sensitive inputs and rollback after cleanup failure.
+- Consistent Unity batch and Blender quick-action completion summaries.
+- Blender regression checks for source preservation, repeated cleanup, materials/UVs and existing quick actions.
+- Synchronized package and add-on versions. Unity editor validation remains required before release tagging.
+
+### v0.7.2: choose a scope, undo a batch | Planned
 
-## Product priorities
+- **Use My Selection:** select the relevant folder, hierarchy or collection in one action.
+- **Restore Last Import Settings:** restore a recorded texture/model batch when the current state still matches its saved result.
+- **Show Changed Items:** jump straight to the assets or objects changed by the last action.
+- Keep cancellation, progress and failed-item details consistent across existing buttons.
+- Publish the initial optimization-task inventory and platform support checklist.
+
+### v0.7.3: texture memory made simple | Planned
 
-1. **General projects first.** A normal Unity or Blender user should never feel that the tool expects a VRChat project.
-2. **One-click actions before dashboards.** Keep common jobs direct and obvious.
-3. **Small scope by default.** Work on the selected folder, loaded scenes, selected hierarchy or selected mesh; do not surprise users with whole-project changes.
-4. **Safe outputs.** Use Undo, importer before/after data, or output copies when topology/appearance may change.
-5. **Detailed scans only on request.** Do not flood the main UI with warnings before the user asks for diagnostics.
-6. **Platform support is additive.** PC, mobile, VR, VRChat/VCC and future engine integrations can provide target-specific guidance without redefining the core tool.
+- **Fit Textures to Target:** apply reviewed size caps and compatible compression in the selected scope.
+- **Review Texture Memory Copies:** find Read/Write settings that may be unnecessary, with explicit approval where runtime access cannot be verified.
+- **Fix Texture Import Mismatches:** handle reliably detected normal-map and color-data import mistakes.
+- **Show Largest Textures:** select the biggest candidates and explain their estimated memory cost.
+- Preserve explicit artistic choices and avoid reimporting unchanged assets.
+
+### v0.7.4: batch mesh preparation | Planned
 
-## v0.7.0: unified one-click foundation
+- **Clean Selected Meshes:** apply Blender cleanup across a selection or collection, keeping separate originals.
+- **Create LOD Copies:** generate named static-mesh LOD sets across supported selections.
+- **Review Mesh Memory Copies:** identify imported models whose CPU-access settings need review.
+- **Show Heavy Meshes:** select high-cost candidates with triangle, vertex and material-slot counts.
+- Keep topology-sensitive characters on a separate guarded path.
+
+### v0.7.5: helpful fixes within reach | Planned
 
-### Unity
+- **Find Missing References:** open the next broken asset, component or object reference.
+- **Find Missing Textures:** select materials with unresolved image inputs and offer verified replacement candidates.
+- **Show Optimization Help:** explain the selected action, affected scope and restoration route in plain language.
+- Add a searchable action panel so a developer can type a task and run its matching button.
+- Apply only unambiguous fixes automatically; show uncertain matches for review.
+
+## v0.8: broader optimization coverage
 
-The main Unity surface is reduced to two pages:
+### v0.8.0: scene effects and lighting | Planned
 
-| Page | Scope | Main purpose |
-| --- | --- | --- |
-| **PROJECT** | Assets folder + loaded scenes | General game/project optimization |
-| **AVATAR** | Selected character/avatar hierarchy | Focused character asset/effect optimization |
-
-The old **World** page is merged into **Project** because loaded-scene optimization is useful to every developer, not only world creators.
-
-Current direct jobs:
-
-- Compress & size textures.
-- Optimize particle systems.
-- Compress imported meshes.
-- Disable realtime shadows.
-- Scan the entire project only when a detailed report is wanted.
-
-The full **Updates** page is removed. Update status becomes a small footer:
-
-- Green: current.
-- Orange: one patch release behind.
-- Red: two or more patches behind, or a newer minor/major version exists.
-- Grey: status unknown.
-
-The version feed keeps Unity and Blender versions separate so releases for one integration do not incorrectly trigger updates for the other.
-
-### Blender
-
-Blender v0.7 introduces a quick **One-Click Cleanup** section:
-
-- **One-Click Remesh**: create a remeshed copy using automatically selected detail.
-- **Merge Duplicate Vertices**: create a copy and weld nearby duplicate vertices.
-
-Existing triangle-limit, join/atlas and LOD tools remain under **Advanced Mesh Tools**.
-
-The first priority is static asset preparation for any real-time project. Rigged/shape-key assets are guarded where topology-changing actions could damage them.
-
-## v0.7.1: focused mesh cleanup
-
-Implemented:
-
-- Blender **Clean Selected Mesh**, creating a separate copy with exact vertex merging, loose geometry cleanup, zero-area face cleanup, unused material slot cleanup and closed-surface normal repair.
-- Conservative refusal of topology-sensitive inputs and cleanup rollback on failure.
-- Consistent completion summaries for Unity batches and Blender quick actions.
-- Blender regression coverage for source preservation, repeated cleanup, naming, materials/UVs, unsupported inputs and existing quick actions.
-- Synchronized package, add-on and update-feed versions.
-
-## v0.7.x: dependable batch cleanup
-
-### Unity
-
-- Selected-folder / selected-hierarchy scope picker shared across suitable actions.
-- Restore the last texture-import batch when current settings still match the optimizer's previous result.
-- Review Read/Write Enabled model and texture imports before changing them.
-- Missing-reference navigator for loaded scenes and prefabs.
-
-### Blender
-
-- Batch merge-duplicate-vertices across selected static meshes.
-- Batch remesh static prop selections with clear output naming.
-- Export generated atlas images to durable files.
-
-## v0.8: scene and asset workflow
-
-### Unity
-
-- Selected hierarchy branch particle optimization.
-- Reviewed realtime-light shadow batches.
-- Large-texture review by selected folder.
-- Duplicate/redundant material usage report.
-- Static batching candidate report without automatically changing batching.
-- Build-size inventory using measured project/build information where available.
-
-### Blender
-
-- Batch LOD generation for selected static props.
-- UV and missing-texture checks.
-- Better atlas packing and padding.
-- Before/after triangle, vertex and material-slot summaries.
-
-## v0.9: project preparation
-
-### Unity
-
-- PC/mobile texture override review.
-- Model importer review for Read/Write and compression.
-- Optional project profiles for common import targets.
-- Safer batch restoration history.
-- Exportable optimization report for teams.
-
-### Blender
-
-- Export-preparation checks for FBX/GLB.
-- Missing image and unsupported material diagnostics.
-- Optional UV repair on copies.
-- Collection-level cleanup actions.
-
-## v1.0: general creator workflow
-
-v1.0 should allow a developer to choose a scope and complete a routine optimization pass without navigating dozens of individual inspectors.
-
-A guided run may include:
-
-1. Select **project assets**, **scene hierarchy**, **character/avatar**, or **Blender selection**.
-2. Show only relevant one-click actions for that scope.
-3. Preview actions that can materially affect visuals or importer behavior.
-4. Apply selected changes.
-5. Produce a concise completion report and restoration path.
-
-The core workflow must remain useful without any VR or social-platform SDK installed.
-
-## Optional platform helpers
-
-Platform helpers can be added when they remove real repetitive work and have been tested against the target platform.
-
-### Unity targets
-
-- PC / standalone.
-- Android / general mobile.
-- iOS.
-- Console workflows where public tooling and testing make a safe integration possible.
-- XR/VR projects.
-
-### Social platforms
-
-- VRChat / VCC.
-- ChilloutVR.
-- Resonite preparation.
-- Other creator platforms where verified workflows exist.
-
-These integrations should add platform-specific guidance or actions while leaving the same Project tools available to ordinary developers.
-
-## Other engines
-
-The goal is not to turn v0.7 into an unfocused multi-engine suite. New engine integrations should arrive after the Unity/Blender one-click patterns are proven.
-
-### Godot
-
-Good early candidates:
-
-- Imported texture-size/compression review.
-- Mesh import review.
-- Scene resource cleanup/navigation.
-- One-click project diagnostics for common oversized assets.
-
-### Unreal Engine
-
-Potential editor-plugin candidates:
-
-- Texture LOD-group / maximum-size review.
-- Static mesh LOD and Nanite eligibility review.
-- Collision complexity checks.
-- Repeated material-instance cleanup/navigation.
-
-Any Unreal implementation should use Unreal's own editor APIs rather than trying to reuse Unity code.
-
-### Other DCC tools
-
-Future integrations may include tools such as Maya or 3ds Max if there are repeatable asset-cleanup jobs that can be implemented safely and maintained.
-
-## One-click candidate backlog
-
-| Area | Button / workflow | Repetitive work removed |
-| --- | --- | --- |
-| Unity textures | Compress & Size | Opening platform importer tabs asset by asset |
-| Unity models | Review Read/Write | Checking model importers one at a time |
-| Unity scenes | Optimize Particles | Repeating the same limits across effects |
-| Unity scenes | Disable Selected Realtime Shadows | Editing lights individually |
-| Unity project | Missing References | Hunting broken references manually |
-| Unity project | Build Size Inventory | Searching for oversized content manually |
-| Blender mesh | One-Click Remesh | Adding/configuring/applying remesh manually |
-| Blender mesh | Merge Duplicate Vertices | Entering Edit Mode and running Merge by Distance repeatedly |
-| Blender mesh | Clean Selected Mesh | Repeated loose/duplicate geometry cleanup |
-| Blender mesh | Make LODs | Creating and naming decimated copies by hand |
-| Blender export | Prepare Export | Rechecking names, textures, UVs and output files before engine import |
-
-## Release quality gates
-
-Every release should pass the following before being tagged:
-
-- Package/add-on version matches the intended release tag.
-- Static package checks pass.
-- Unity compiles in the minimum supported editor version.
-- Blender add-on enables without Python errors in supported versions.
-- Destructive-looking Blender actions actually create copies unless clearly documented otherwise.
-- Unity scene edits use Undo where practical.
-- Importer changes avoid unnecessary reimports on a second identical run.
-- Install instructions work from a clean project/profile.
-- General project usage is documented before optional VR/platform-specific instructions.
-- No release claims a guaranteed FPS gain from a static scan.
-
-## Compatibility note
-
-The Unity package ID `com.fishhwb.vr-optimizer` and several `VR*` internal type/folder names are historical. They remain during the v0.7 line to avoid breaking existing Unity package installations and references.
-
-Public branding, UI text and future architecture use **Optimize Your Project** and are not limited to VR.
+- **Optimize Selected Effects:** batch supported particle limits and costly optional modules within a chosen hierarchy.
+- **Review Realtime Shadows:** group expensive shadow candidates and apply the approved change together.
+- **Find Expensive Lights:** select overlapping or high-cost candidates with an explanation.
+- **Prepare Lighting Checks:** navigate objects missing suitable lightmap setup without guessing the intended lighting design.
+- Keep scene changes reversible and preserve intentional effect quality.
+
+### v0.8.1: materials and draw calls | Planned
+
+- **Find Duplicate Materials:** identify equivalent material settings within the selected scope.
+- **Consolidate Approved Materials:** remap verified duplicates with a recorded restoration path.
+- **Clean Unused Material Slots:** batch supported cleanup without changing used assignments.
+- **Check Instancing and Batching:** find eligible candidates and apply only verified compatible changes.
+- **Show Material Cost:** highlight excessive slots and unsupported shader combinations for review.
+
+### v0.8.2: physics, animation and visibility | Planned
+
+- **Create Simple Collider Copies:** offer suitable primitive or simplified collider candidates for static props.
+- **Review Collision Cost:** find expensive collision meshes and unnecessary candidates without changing gameplay rules silently.
+- **Optimize Animation Imports:** batch reviewed keyframe/compression settings where visual checks are available.
+- **Set Up LOD Groups:** connect supported generated LODs and provide a quick preview.
+- **Prepare Visibility Optimization:** check culling bounds, occlusion candidates and relevant editor setup.
+
+### v0.8.3: Godot integration preview | Planned
+
+- Add a native Godot action panel using the same simple labels and outcome summaries.
+- Start with selected texture import/compression and supported mesh import jobs.
+- Add **Find Missing Resources** and **Show Heavy Assets** navigation helpers.
+- Record original import settings and provide a supported restore action.
+- Publish tested Godot versions and desktop/mobile/web target coverage before describing this integration as stable.
+
+### v0.8.4: Unreal integration preview | Planned
+
+- Add a native Unreal editor action panel with selection-based scopes.
+- Start with reviewed texture-size/compression and static-mesh LOD jobs.
+- Add **Review Collision Cost** and **Check Nanite Eligibility** for applicable assets and targets.
+- Add **Find Missing Assets** and **Show Heavy Assets** navigation helpers.
+- Publish tested Unreal versions and target restrictions; use Unreal's own asset and editor APIs.
+
+### v0.8.5: exports and platform preparation | Planned
+
+- **Prepare for Target:** apply the approved, supported actions for the selected desktop, mobile, web or XR target.
+- **Prepare FBX / GLB Export:** check Blender materials, textures, names and supported geometry before export.
+- **Save Atlas Files:** write generated atlas images and maintain valid material references.
+- **Check Platform Compatibility:** select incompatible formats or settings and explain supported fixes.
+- Publish the first measured coverage report for each integration and target, including remaining gaps.
+
+## v0.9: complete common workflows
+
+### v0.9.0: one-button optimization passes | Planned
+
+- **Optimize Selection:** run the relevant supported jobs in one pass after scope and quality-sensitive choices are approved.
+- **Optimize Project Assets:** batch the supported asset-import tasks with progress, cancellation and per-item recovery.
+- **Optimize Scene / Collection:** combine relevant mesh, material, effects and scene jobs for the selected scope.
+- Avoid duplicate processing, repeated reimports and hidden whole-project changes.
+- Expand Godot and Unreal beyond previews only as their integration tests and restoration paths pass.
+
+### v0.9.1: character and creator-platform helpers | Planned
+
+- **Check Character Cost:** collect mesh, material, texture, effects and supported platform-budget findings.
+- **Optimize Character Assets:** apply supported texture/material/import jobs while preserving rigs, shape keys and required components.
+- **Prepare for VRChat**, **Prepare for ChilloutVR** and **Prepare for Resonite:** expose tested preparation tasks through optional integration buttons.
+- **Open Creator Tools:** launch the correct installed setup or package-management route where supported.
+- Keep all social-platform dependencies optional and report unsupported cases explicitly.
+
+### v0.9.2: the help button becomes a toolbox | Planned
+
+- **Help Me Reduce Memory:** show measured or clearly labeled estimated memory candidates and run supported fixes.
+- **Help Me Reduce Draw Calls:** find material, instancing and mesh candidates with one-button access to approved actions.
+- **Help Me Find the Slow Part:** open the relevant profiler or analysis view and select supported findings.
+- **Help Me Prepare a Build:** check target settings, dependencies and known compatibility issues.
+- **Explain This Issue** and **Show Me Where:** give a short explanation and select the exact affected item.
+- Make common help tasks accessible from one search field or a small set of clear buttons.
+
+### v0.9.3: build size, loading and asset dependencies | Planned
+
+- **Show Build Size Contributors:** use actual build reports where available to rank included content.
+- **Review Unused Assets:** identify candidates while accounting for dynamic and indirect references.
+- **Apply Approved Asset Exclusions:** adjust supported packaging rules with a restore record; never delete assets merely because a scan found no reference.
+- **Review Loading Settings:** offer supported import, streaming and packaging changes with their trade-offs explained.
+- Close high-impact coverage gaps across Unity, Blender, Godot and Unreal before adding less common tasks.
+
+### v0.9.4: compare, restore and finish platform gaps | Planned
+
+- **Compare Before / After:** show measured asset/build changes and comparable runtime results where captured.
+- **Restore Selected Batch:** restore a chosen optimization run after checking for conflicting later edits.
+- **Retry Failed Items:** rerun only suitable failed candidates with clear failure reasons.
+- Validate the same workflows across supported editor host systems and build-target combinations.
+- Publish a task-by-task gap list for every integration below the 90% target.
+
+### v0.9.5: v1.0 release candidate | Planned
+
+- Reach at least 90% verified one-click coverage for each declared stable integration and target, not just a combined project-wide percentage.
+- Finish missing common tasks from the published inventory before treating the target as met.
+- Test clean installation, upgrades, large batches, cancellation, repeated runs and restoration.
+- Check beginner usability: common actions must be findable and understandable without reading a long manual.
+- Keep incomplete integrations marked experimental with their coverage visible. Do not hide them to make the overall goal look complete.
+
+## v1.0.0: everyday optimization, one button away | Target
+
+- **Optimize Selection**, **Optimize Project Assets** and **Prepare for Target** cover the verified routine jobs relevant to the chosen scope.
+- At least 90% of identified, safely automatable tasks are available through a single action in every declared stable integration and target.
+- Useful help is one button away: find, explain, select, fix supported issues, compare results and restore changes.
+- Unity, Blender, Godot and Unreal each have a documented capability list and native workflow; unavailable platform combinations remain clearly listed as gaps.
+- Quality-sensitive actions provide a compact review, while repeatable approved jobs run together without repeated manual setup.
+- Publish coverage, compatibility and test results alongside the release so developers can see what the toolkit can actually do.
+- Keep the package free and continue expanding platform support and task coverage after v1.0.
+
+## How the 90% goal will be measured
+
+- **Count tasks, not buttons:** putting ten existing buttons behind one menu does not create ten new optimizations.
+- **Publish the inventory:** give each distinct task a purpose, integration, target applicability, safety conditions, expected result and verification method.
+- **Measure per integration and target:** coverage is verified one-action tasks divided by all identified safely automatable tasks applicable to that combination.
+- **Count only working behavior:** a placeholder, diagnostic-only report or button that merely opens a manual workflow does not count as an automated optimization.
+- **Track helpers separately:** navigation and explanation buttons are valuable, but they do not inflate the optimization percentage.
+- **Keep unsupported tasks visible:** suitable tasks waiting on implementation or testing remain uncovered. Document genuinely inapplicable tasks and why they are excluded.
+- **Keep the inventory honest:** record additions and scope changes publicly. Do not split simple jobs into multiple entries or discard difficult tasks to improve the score.
+- **Require evidence:** verify the intended change, source preservation/restoration and safe repeated execution before marking a task complete.
+- **Publish the remaining 10%:** explain which jobs need specialist judgment, restricted tooling or further development.
+- **No performance-percentage promise:** 90% task coverage does not mean a 90% improvement in frame rate, memory or build size.
+
+## Release standards
+
+- Match package, add-on, update-feed and release-tag versions.
+- Compile and test in the declared supported editor versions.
+- Test each integration using its own APIs and representative projects.
+- Preserve originals, record recoverable settings or use Undo as appropriate.
+- Check cancellation, failure recovery and unchanged second runs.
+- Preserve unsupported or topology-sensitive content and explain skipped work.
+- Keep UI controls compact, button labels specific and detailed scans optional.
+- Label new capabilities as planned or experimental until their implementation is verified.
+- Keep historical Unity package and internal type names compatible while presenting **Optimize Your Project** consistently to users.

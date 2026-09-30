@@ -72,6 +72,13 @@ Existing triangle-limit, join/atlas, and static LOD tools remain under **Advance
 
 Unity batches and Blender quick actions report **Changed**, **Unchanged**, **Skipped**, **Unsupported**, and **Failed**. Counts refer to candidates in the chosen scope. Unity texture/model counts refer to unique assets; Blender quick actions process the active mesh only. Cancelled Unity batches show partial results and count unprocessed candidates as skipped. Blender keeps its latest report in the sidebar.
 
+## Future development
+
+- Follow the [version-by-version development roadmap](Documentation/Roadmap.md) for planned one-click tools and platform integrations.
+- The v1.0 goal is at least **90% of identified, safely automatable optimization tasks** in each supported integration and target, with progress measured against a public task inventory.
+- Planned work covers Unity, Blender, Godot and Unreal, plus target-specific preparation and simple **find, explain, fix and restore** helper buttons.
+- Roadmap entries are future plans. Only implemented and tested capabilities count toward coverage.
+
 ## Free for developers
 
 **Optimize Your Project is free to use.** The goal is to make development easier, remove repetitive optimization work, and give newer creators useful tools without putting the basics behind a paywall.
