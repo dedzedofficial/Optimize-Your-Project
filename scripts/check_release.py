@@ -2,6 +2,7 @@
 import ast
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -14,9 +15,11 @@ versions = json.loads((root / "version.json").read_text(encoding="utf-8"))
 
 assert manifest["displayName"] == "Optimize Your Project"
 assert manifest["name"] == "com.fishhwb.vr-optimizer"  # historical compatibility ID
-assert manifest["version"] == "0.7.0"
+assert manifest["version"] == "0.7.1"
 assert versions["unity"] == manifest["version"]
 assert versions["unity_tag"] == "v" + manifest["version"]
+assert versions["unity_url"].endswith("/releases/tag/" + versions["unity_tag"])
+assert (root / "Editor/FISHHWBVR/VRUpdateChecker.cs").read_text().find('"' + manifest["version"] + '"') >= 0
 
 icon = root / "Editor/FISHHWBVR/Icons/Optimize-Your-Project.png"
 assert icon.read_bytes()[:8] == bytes.fromhex("89504e470d0a1a0a")
@@ -55,8 +58,10 @@ info = next(
     and any(isinstance(target, ast.Name) and target.id == "bl_info" for target in node.targets)
 )
 blender_version = ".".join(map(str, info["version"]))
-assert blender_version == versions["blender"] == "0.7.0"
+assert blender_version == versions["blender"] == "0.7.1"
 assert versions["blender_tag"] == "blender-v" + blender_version
+assert 'bl_idname = "fishhwb.clean_selected_mesh"' in source_text
+assert "FISHHWB_OT_clean_selected_mesh" in source_text.split("classes =", 1)[1]
 assert 'bl_idname = "fishhwb.one_click_remesh"' in source_text
 assert 'bl_idname = "fishhwb.merge_vertices"' in source_text
 assert "ONE-CLICK CLEANUP" in source_text
@@ -78,6 +83,22 @@ for path in [
 readme = (root / "README.md").read_text(encoding="utf-8")
 assert "general developer optimization" in readme.lower()
 assert "VRChat / VCC (optional)" in readme
+assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
+
+assert "## " + manifest["version"] in (root / "CHANGELOG.md").read_text()
+assert "v" + manifest["version"] in readme
+assert "v" + blender_version in (root / "Blender/README.md").read_text()
+for relative in subprocess.check_output(["git", "ls-files", "--cached", "--others", "--exclude-standard"], cwd=root, text=True).splitlines():
+    path = root / relative
+    try:
+        content = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        continue
+    assert chr(0x2014) not in content, f"Unsupported punctuation in {relative}"
+
+assert "VRActionSummary.Run" in window
+for path in (root / "Editor").rglob("*.cs"):
+    assert path.with_suffix(".cs.meta").is_file(), path
 
 env = dict(os.environ)
 env["GITHUB_REF_NAME"] = "v" + manifest["version"]
@@ -105,4 +126,4 @@ with ZipFile(Path(built.stdout.strip())) as package:
     assert "vr_optimizer_blender/__init__.py" in package.namelist()
     assert "vr_optimizer_blender/optimize-your-project-logo.png" in package.namelist()
 
-print("v0.7 static release checks passed; Unity and Blender runtime editor tests remain required.")
+print("v0.7.1 static release checks passed; Unity and Blender runtime editor tests remain required.")

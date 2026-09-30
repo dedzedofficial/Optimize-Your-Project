@@ -316,14 +316,12 @@ namespace FISHHWB.VROptimizer
         {
             settings.Sanitize();
 
-            var textures = VRAvatarWorkflow.CollectTextures(root, settings);
-            if (!root && folder != "Assets")
-                textures.RemoveAll(item => !item.Path.StartsWith(folder + "/", StringComparison.Ordinal));
+            var textures = VRAvatarWorkflow.CollectTextures(root, settings, folder, out int unsupported);
 
             var compression = VRTextureCompression.Collect(root, folder, out bool scanCancelled);
             if (scanCancelled)
             {
-                summary = "Texture collection cancelled. No changes applied.";
+                summary = new VRActionSummary { Cancelled = true, Skipped = textures.Count, Unsupported = unsupported }.Format("Textures") + "\nNo changes applied.";
                 return;
             }
 
@@ -340,7 +338,7 @@ namespace FISHHWB.VROptimizer
 
             if (textures.Count == 0)
             {
-                summary = "No supported textures found in this scope.";
+                summary = new VRActionSummary { Unsupported = unsupported }.Format("Textures") + "\nNo supported textures found in this scope.";
                 return;
             }
 
@@ -349,48 +347,22 @@ namespace FISHHWB.VROptimizer
                 "Optimize " + textures.Count + " supported textures? Existing explicit formats and stricter size caps are preserved.",
                 "Optimize",
                 "Cancel"))
+            {
+                summary = new VRActionSummary { Cancelled = true, Skipped = textures.Count, Unsupported = unsupported }.Format("Textures");
                 return;
-
-            int changed = 0;
-            int unchanged = 0;
-            int failed = 0;
-            bool cancelled = false;
-
-            try
-            {
-                for (int i = 0; i < textures.Count; i++)
-                {
-                    string path = textures[i].Path;
-                    if (EditorUtility.DisplayCancelableProgressBar(
-                        "Optimize Textures",
-                        path,
-                        textures.Count == 0 ? 1 : (float)i / textures.Count))
-                    {
-                        cancelled = true;
-                        break;
-                    }
-
-                    try
-                    {
-                        byPath.TryGetValue(path, out var entries);
-                        bool didChange = VRTextureOptimizer.OptimizeWithCompression(path, settings, entries);
-                        if (didChange) changed++;
-                        else unchanged++;
-                    }
-                    catch (Exception error)
-                    {
-                        failed++;
-                        Debug.LogError("Optimize Your Project: " + path + " — " + error);
-                    }
-                }
-            }
-            finally
-            {
-                EditorUtility.ClearProgressBar();
             }
 
-            summary = (cancelled ? "Cancelled. Partial results: " : "Done. ") +
-                      changed + " textures changed, " + unchanged + " unchanged, " + failed + " failed.";
+            var result = VRActionSummary.Run("Textures", textures, item => item.Path, item =>
+            {
+                var importer = AssetImporter.GetAtPath(item.Path) as TextureImporter;
+                if (!importer || importer.textureShape != TextureImporterShape.Texture2D ||
+                    (importer.textureType != TextureImporterType.Default && importer.textureType != TextureImporterType.NormalMap))
+                    return VRActionOutcome.Unsupported;
+                byPath.TryGetValue(item.Path, out var entries);
+                return VRTextureOptimizer.OptimizeWithCompression(item.Path, settings, entries)
+                    ? VRActionOutcome.Changed : VRActionOutcome.Unchanged;
+            }, unsupported);
+            summary = result.Format("Textures");
         }
 
         void ParticleCard(GameObject root)
@@ -439,42 +411,21 @@ namespace FISHHWB.VROptimizer
                     ? (IEnumerable<ParticleSystem>)root.GetComponentsInChildren<ParticleSystem>(true)
                     : VRProjectScanner.SceneObjects<ParticleSystem>());
 
-            if (particles.Count == 0)
-            {
-                summary = "No particle systems found in this scope.";
-                return;
-            }
-
-            int changed = 0;
+            Undo.IncrementCurrentGroup();
             int group = Undo.GetCurrentGroup();
-            bool cancelled = false;
             Undo.SetCurrentGroupName("Optimize Particles");
-
             try
             {
-                for (int i = 0; i < particles.Count; i++)
-                {
-                    if (EditorUtility.DisplayCancelableProgressBar(
-                        "Optimize Particles",
-                        particles[i].name,
-                        (float)i / particles.Count))
+                var result = VRActionSummary.Run("Particles", particles,
+                    item => item ? item.name : "Missing particle system", item =>
                     {
-                        cancelled = true;
-                        break;
-                    }
-
-                    if (VRParticleOptimizer.Optimize(particles[i], settings))
-                        changed++;
-                }
+                        if (!item) return VRActionOutcome.Skipped;
+                        return VRParticleOptimizer.Optimize(item, settings)
+                            ? VRActionOutcome.Changed : VRActionOutcome.Unchanged;
+                    });
+                summary = result.Format("Particles") + "\nUse Undo if needed.";
             }
-            finally
-            {
-                EditorUtility.ClearProgressBar();
-                Undo.CollapseUndoOperations(group);
-            }
-
-            summary = (cancelled ? "Cancelled. " : "Done. ") +
-                      changed + " of " + particles.Count + " particle systems changed. Use Undo if needed.";
+            finally { Undo.CollapseUndoOperations(group); }
         }
 
         void MeshCard(GameObject root)
@@ -487,60 +438,28 @@ namespace FISHHWB.VROptimizer
 
             if (ActionButton("COMPRESS IMPORTED MESHES"))
             {
-                var meshes = VRMeshCompression.Collect(root);
+                var meshes = VRMeshCompression.Collect(root, out int unsupported);
                 int pending = 0;
-
                 foreach (var mesh in meshes)
                     if (mesh.Current != meshLevel) pending++;
 
                 if (pending == 0)
+                    summary = new VRActionSummary { Unchanged = meshes.Count, Unsupported = unsupported }.Format("Imported meshes");
+                else if (!EditorUtility.DisplayDialog("Compress meshes",
+                    "Reimport " + pending + " model assets using " + meshLevel + " compression?", "Compress", "Cancel"))
+                    summary = new VRActionSummary { Cancelled = true, Skipped = meshes.Count, Unsupported = unsupported }.Format("Imported meshes");
+                else
                 {
-                    summary = "Imported meshes already match this compression level.";
-                }
-                else if (EditorUtility.DisplayDialog(
-                    "Compress meshes",
-                    "Reimport " + pending + " model assets using " + meshLevel + " compression?",
-                    "Compress",
-                    "Cancel"))
-                {
-                    int changed = 0;
-                    int failed = 0;
-
-                    try
+                    var result = VRActionSummary.Run("Imported meshes", meshes, item => item.Path, item =>
                     {
-                        for (int i = 0; i < meshes.Count; i++)
-                        {
-                            var item = meshes[i];
-                            if (item.Current == meshLevel) continue;
-
-                            if (EditorUtility.DisplayCancelableProgressBar(
-                                "Compress Meshes",
-                                item.Path,
-                                meshes.Count == 0 ? 1 : (float)i / meshes.Count))
-                                break;
-
-                            try
-                            {
-                                var importer = AssetImporter.GetAtPath(item.Path) as ModelImporter;
-                                if (importer == null) continue;
-
-                                importer.meshCompression = meshLevel;
-                                importer.SaveAndReimport();
-                                changed++;
-                            }
-                            catch (Exception error)
-                            {
-                                failed++;
-                                Debug.LogError("Optimize Your Project: " + item.Path + " — " + error);
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        EditorUtility.ClearProgressBar();
-                    }
-
-                    summary = changed + " imported meshes changed; " + failed + " failed.";
+                        var importer = AssetImporter.GetAtPath(item.Path) as ModelImporter;
+                        if (!importer) return VRActionOutcome.Unsupported;
+                        if (importer.meshCompression == meshLevel) return VRActionOutcome.Unchanged;
+                        importer.meshCompression = meshLevel;
+                        importer.SaveAndReimport();
+                        return VRActionOutcome.Changed;
+                    }, unsupported);
+                    summary = result.Format("Imported meshes");
                 }
             }
 
@@ -555,38 +474,35 @@ namespace FISHHWB.VROptimizer
 
             if (ActionButton("DISABLE REALTIME SHADOWS"))
             {
-                var lights = root
+                var lights = new List<Light>(root
                     ? (IEnumerable<Light>)root.GetComponentsInChildren<Light>(true)
-                    : VRProjectScanner.SceneObjects<Light>();
-
-                var pending = new List<Light>();
+                    : VRProjectScanner.SceneObjects<Light>());
+                int pending = 0;
                 foreach (var light in lights)
-                {
-                    if (light &&
-                        light.enabled &&
-                        light.lightmapBakeType == LightmapBakeType.Realtime &&
-                        light.shadows != LightShadows.None)
-                        pending.Add(light);
-                }
+                    if (light && light.enabled && light.lightmapBakeType == LightmapBakeType.Realtime && light.shadows != LightShadows.None)
+                        pending++;
 
-                if (pending.Count == 0)
+                if (pending > 0 && !EditorUtility.DisplayDialog("Disable realtime shadows",
+                    "Disable shadows on " + pending + " realtime lights? You can use Unity Undo to revert.", "Disable", "Cancel"))
+                    summary = new VRActionSummary { Cancelled = true, Skipped = lights.Count }.Format("Realtime shadows");
+                else
                 {
-                    summary = "No enabled realtime shadows found in this scope.";
-                }
-                else if (EditorUtility.DisplayDialog(
-                    "Disable realtime shadows",
-                    "Disable shadows on " + pending.Count + " realtime lights? You can use Unity Undo to revert.",
-                    "Disable",
-                    "Cancel"))
-                {
+                    Undo.IncrementCurrentGroup();
                     int group = Undo.GetCurrentGroup();
                     Undo.SetCurrentGroupName("Disable Realtime Shadows");
-
-                    foreach (var light in pending)
-                        VRLightOptimizer.Optimize(light, settings);
-
-                    Undo.CollapseUndoOperations(group);
-                    summary = "Disabled shadows on " + pending.Count + " lights. Use Undo if needed.";
+                    try
+                    {
+                        var result = VRActionSummary.Run("Realtime shadows", lights,
+                            item => item ? item.name : "Missing light", item =>
+                            {
+                                if (!item || !item.enabled) return VRActionOutcome.Skipped;
+                                if (item.lightmapBakeType != LightmapBakeType.Realtime) return VRActionOutcome.Unsupported;
+                                return VRLightOptimizer.Optimize(item, settings)
+                                    ? VRActionOutcome.Changed : VRActionOutcome.Unchanged;
+                            });
+                        summary = result.Format("Realtime shadows") + "\nUse Undo if needed.";
+                    }
+                    finally { Undo.CollapseUndoOperations(group); }
                 }
             }
 

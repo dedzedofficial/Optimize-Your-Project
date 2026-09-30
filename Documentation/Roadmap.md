@@ -2,7 +2,7 @@
 
 <img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="96">
 
-**Current target: v0.7.0.**
+**Current target: v0.7.1.**
 
 Optimize Your Project is a **general developer optimization toolkit**. It should remove repetitive optimization chores from ordinary game, app, simulation, VR, social, prototype and asset-production workflows. Platform-specific helpers are optional layers on top of the general tools.
 
@@ -19,7 +19,7 @@ The product rule is simple:
 5. **Detailed scans only on request.** Do not flood the main UI with warnings before the user asks for diagnostics.
 6. **Platform support is additive.** PC, mobile, VR, VRChat/VCC and future engine integrations can provide target-specific guidance without redefining the core tool.
 
-## v0.7.0 — unified one-click foundation
+## v0.7.0: unified one-click foundation
 
 ### Unity
 
@@ -53,14 +53,24 @@ The version feed keeps Unity and Blender versions separate so releases for one i
 
 Blender v0.7 introduces a quick **One-Click Cleanup** section:
 
-- **One-Click Remesh** — create a remeshed copy using automatically selected detail.
-- **Merge Duplicate Vertices** — create a copy and weld nearby duplicate vertices.
+- **One-Click Remesh**: create a remeshed copy using automatically selected detail.
+- **Merge Duplicate Vertices**: create a copy and weld nearby duplicate vertices.
 
 Existing triangle-limit, join/atlas and LOD tools remain under **Advanced Mesh Tools**.
 
 The first priority is static asset preparation for any real-time project. Rigged/shape-key assets are guarded where topology-changing actions could damage them.
 
-## v0.7.x — dependable batch cleanup
+## v0.7.1: focused mesh cleanup
+
+Implemented:
+
+- Blender **Clean Selected Mesh**, creating a separate copy with exact vertex merging, loose geometry cleanup, zero-area face cleanup, unused material slot cleanup and closed-surface normal repair.
+- Conservative refusal of topology-sensitive inputs and cleanup rollback on failure.
+- Consistent completion summaries for Unity batches and Blender quick actions.
+- Blender regression coverage for source preservation, repeated cleanup, naming, materials/UVs, unsupported inputs and existing quick actions.
+- Synchronized package, add-on and update-feed versions.
+
+## v0.7.x: dependable batch cleanup
 
 ### Unity
 
@@ -68,17 +78,14 @@ The first priority is static asset preparation for any real-time project. Rigged
 - Restore the last texture-import batch when current settings still match the optimizer's previous result.
 - Review Read/Write Enabled model and texture imports before changing them.
 - Missing-reference navigator for loaded scenes and prefabs.
-- Better completion summaries: changed, unchanged, skipped, unsupported and failed.
 
 ### Blender
 
-- **Clean Selected Mesh**: remove loose geometry, exact duplicate geometry and safe near-duplicates on a copy.
 - Batch merge-duplicate-vertices across selected static meshes.
 - Batch remesh static prop selections with clear output naming.
 - Export generated atlas images to durable files.
-- Idempotence checks so running the same cleanup twice does not keep damaging the result.
 
-## v0.8 — scene and asset workflow
+## v0.8: scene and asset workflow
 
 ### Unity
 
@@ -96,7 +103,7 @@ The first priority is static asset preparation for any real-time project. Rigged
 - Better atlas packing and padding.
 - Before/after triangle, vertex and material-slot summaries.
 
-## v0.9 — project preparation
+## v0.9: project preparation
 
 ### Unity
 
@@ -113,7 +120,7 @@ The first priority is static asset preparation for any real-time project. Rigged
 - Optional UV repair on copies.
 - Collection-level cleanup actions.
 
-## v1.0 — general creator workflow
+## v1.0: general creator workflow
 
 v1.0 should allow a developer to choose a scope and complete a routine optimization pass without navigating dozens of individual inspectors.
 

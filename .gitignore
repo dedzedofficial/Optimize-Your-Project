@@ -10,3 +10,6 @@ Temp/
 Obj/
 Logs/
 UserSettings/
+dist/
+__pycache__/
+*.py[cod]

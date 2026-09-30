@@ -1,5 +1,7 @@
 name: Check release packages
 on:
+  push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 permissions:
@@ -11,3 +13,25 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate versions, logos and packages
         run: python3 scripts/check_release.py
+  blender-runtime:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        blender:
+          - { series: '3.6', version: '3.6.23' }
+          - { series: '4.2', version: '4.2.9' }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender runtime libraries
+        run: sudo apt-get update && sudo apt-get install -y libx11-6 libxi6 libxrender1 libxfixes3 libxkbcommon0 libsm6 libgl1 libegl1
+      - name: Download Blender
+        env:
+          BLENDER_SERIES: ${{ matrix.blender.series }}
+          BLENDER_VERSION: ${{ matrix.blender.version }}
+        run: |
+          curl --fail --location --retry 3 "https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${BLENDER_VERSION}-linux-x64.tar.xz" -o "$RUNNER_TEMP/blender.tar.xz"
+          mkdir -p "$RUNNER_TEMP/blender"
+          tar -xf "$RUNNER_TEMP/blender.tar.xz" -C "$RUNNER_TEMP/blender" --strip-components=1
+      - name: Test cleanup and existing quick actions
+        run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender.py'
