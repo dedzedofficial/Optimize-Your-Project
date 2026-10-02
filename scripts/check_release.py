@@ -43,12 +43,30 @@ assert "BeginCard(" in window
 localization = (root / "Editor/FISHHWBVR/VRLocalization.cs").read_text(encoding="utf-8")
 for language in ["English", "Japanese", "SimplifiedChinese", "Korean"]:
     assert language in localization
-for required in ["日本語", "简体中文", "한국어", "PROJECT INSIGHTS", "SHOW LARGEST TEXTURES", "REVIEW READ/WRITE MEMORY", "SHOW HEAVY MESHES"]:
+for required in [
+    "日本語", "简体中文", "한국어", "PROJECT INSIGHTS",
+    "SHOW LARGEST TEXTURES", "REVIEW READ/WRITE MEMORY", "SHOW HEAVY MESHES",
+    "FIX TEXTURE IMPORT SETTINGS", "FIND DUPLICATE MATERIALS",
+    "CLEAN UNUSED MATERIAL SLOTS", "FIND EXPENSIVE MATERIAL SETUPS",
+    "FIND OVERSIZED MESHES",
+]:
     assert required in localization
 assert "VRProjectInsights.LargestTextures" in window
 assert "VRProjectInsights.ReadWriteReview" in window
-assert "VRProjectInsights.HeavyMeshes" in window
+assert "VRProjectInsights.OversizedMeshes" in window
+assert "VRProjectInsights.DuplicateMaterials" in window
+assert "VRProjectInsights.ExpensiveMaterials" in window
+assert "VRProjectMaintenance.CollectTextureImportFixes" in window
+assert "VRProjectMaintenance.CollectUnusedMaterialSlots" in window
 assert "DrawLanguageAndSearch" in window
+
+maintenance = (root / "Editor/FISHHWBVR/VRProjectMaintenance.cs").read_text(encoding="utf-8")
+assert "CollectTextureImportFixes" in maintenance
+assert "ApplyTextureImportFix" in maintenance
+assert "CollectUnusedMaterialSlots" in maintenance
+assert "ApplyUnusedMaterialSlotFix" in maintenance
+assert "TextureImporterType.NormalMap" in maintenance
+assert "mesh.subMeshCount" in maintenance
 
 project_scanner = (root / "Editor/FISHHWBVR/VRProjectScanner.cs").read_text(encoding="utf-8")
 assert '"Optimize Your Project"' in project_scanner
@@ -77,6 +95,9 @@ assert 'bl_idname = "fishhwb.merge_vertices"' in source_text
 assert 'bl_idname = "fishhwb.clean_selected_meshes"' in source_text
 assert 'bl_idname = "fishhwb.create_lods_selected"' in source_text
 assert 'bl_idname = "fishhwb.show_heavy_meshes"' in source_text
+assert 'bl_idname = "fishhwb.create_game_ready_copy"' in source_text
+assert "FISHHWB_OT_create_game_ready_copy" in source_text.split("classes =", 1)[1]
+assert "_GameReady" in source_text
 assert "LANGUAGE_ITEMS" in source_text
 for language_code in ["'EN'", "'JA'", "'ZH'", "'KO'"]:
     assert language_code in source_text
