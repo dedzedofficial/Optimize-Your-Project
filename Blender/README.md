@@ -83,6 +83,8 @@ Then use **Edit > Preferences > Add-ons > Install...**, enable **Optimize Your P
 
 The final GitHub install button will point directly to the official Blender Extensions listing after it is published. The extension ZIP above is the submission package for that listing.
 
+The Blender extension package is licensed under **GPL-3.0-or-later**, as required for add-ons submitted to Blender Extensions. The repository's non-Blender portions retain their existing licensing.
+
 ## One-click cleanup
 
 Select one static mesh in Object Mode.
