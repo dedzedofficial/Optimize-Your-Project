@@ -57,23 +57,31 @@ Blender support for **Optimize Your Project** now combines fast one-click cleanu
 
 ## Install
 
-### Blender 4.2+ button install
+### Blender 4.2+ / Blender Extensions package
 
-[![INSTALL IN BLENDER 4.2+](https://img.shields.io/badge/INSTALL%20IN%20BLENDER-4.2%2B-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/archive/refs/heads/main.zip?blender_version_min=4.2.0)
+The package intended for Blender 4.2+ and `extensions.blender.org` is:
 
-1. Keep the Blender project you want to work on open.
-2. Drag the **INSTALL IN BLENDER** button from this GitHub page into the Blender window.
-3. Confirm **Install & Enable**.
-4. In the 3D Viewport press **N** and open the **FISHHWB** tab.
+```text
+optimize-your-project-blender-extension-0.7.4.zip
+```
 
-If you click the button instead of dragging it, your browser downloads the same extension ZIP. You can then drag the downloaded ZIP into Blender or use **Get Extensions > Install from Disk**.
+Download the `optimize-your-project-blender-0.7.4` artifact from the latest successful [Check release packages](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml) run. The artifact contains the extension ZIP above plus the Blender 3.6 legacy ZIP.
 
-### Blender 3.6 legacy install
+For a local install in Blender 4.2+, use **Edit > Preferences > Get Extensions > Install from Disk** and choose the extension ZIP.
 
-1. Download `optimize-your-project-blender-0.7.4.zip` from the GitHub Releases page after the `blender-v0.7.4` release is published.
-2. In Blender, use **Edit > Preferences > Add-ons > Install...**.
-3. Enable **Optimize Your Project for Blender**.
-4. In the 3D Viewport press **N** and open the **FISHHWB** tab.
+### Blender 3.6 legacy package
+
+Use:
+
+```text
+optimize-your-project-blender-0.7.4.zip
+```
+
+Then use **Edit > Preferences > Add-ons > Install...**, enable **Optimize Your Project for Blender**, press **N** in the 3D Viewport and open the **FISHHWB** tab.
+
+### Official Blender Extensions listing
+
+The final GitHub install button will point directly to the official Blender Extensions listing after it is published. The extension ZIP above is the submission package for that listing.
 
 ## One-click cleanup
 
