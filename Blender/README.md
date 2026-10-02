@@ -1,12 +1,12 @@
-# Optimize Your Project for Blender: v0.7.1
+# Optimize Your Project for Blender: v0.7.4
 
 <img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="112">
 
-Early Blender support for **Optimize Your Project**, focused on fast mesh cleanup instead of a large settings panel.
+Blender support for **Optimize Your Project** now combines fast one-click cleanup with batch preparation for static meshes. The v0.7.4 sidebar also supports English, Japanese, Simplified Chinese and Korean.
 
 ## Install
 
-1. Download `optimize-your-project-blender-0.7.1.zip` from the GitHub Releases page after the `blender-v0.7.1` release is published.
+1. Download `optimize-your-project-blender-0.7.1.zip` from the GitHub Releases page after the `blender-v0.7.4` release is published.
 2. In Blender, use **Edit → Preferences → Add-ons → Install...** or **Get Extensions → Install from Disk**.
 3. Enable **Optimize Your Project for Blender**.
 4. In the 3D Viewport press **N** and open the **FISHHWB** tab.
@@ -37,6 +37,18 @@ Set **Merge Distance** and press **Merge Duplicate Vertices**. The add-on create
 
 Shape-key meshes are skipped to avoid breaking topology-dependent keys.
 
+## Batch mesh preparation
+
+Select multiple mesh objects in Object Mode.
+
+- **Clean Selected Meshes** creates a separate cleaned copy for every supported selected static mesh. Unsupported topology-sensitive meshes are skipped and the originals stay untouched.
+- **Create LODs for Selection** runs the guarded LOD0 / LOD1 / LOD2 workflow across supported selected static meshes.
+- **Show Heavy Meshes** selects scene mesh objects above the configured triangle threshold so high-cost geometry is easier to find.
+
+## Interface languages
+
+Use the **Language** control at the top of the sidebar. v0.7.4 includes English, Japanese, Simplified Chinese and Korean for the main Blender workflow. Future language additions are tracked in the project roadmap.
+
 ## Advanced Mesh Tools
 
 The earlier preview tools are still available below the quick section:
@@ -50,4 +62,4 @@ These tools create output copies so the source object remains available for comp
 
 ## Notes
 
-Blender v0.7.1 is early support. Test generated meshes before replacing production assets, especially before GLB/FBX export into Unity or another engine.
+Blender v0.7.4 is early support. Test generated meshes before replacing production assets, especially before GLB/FBX export into Unity or another engine.
