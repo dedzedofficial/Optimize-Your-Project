@@ -1,4 +1,5 @@
 """Run with Blender --background --factory-startup --python-exit-code 1 --python scripts/test_blender.py."""
+import importlib.util
 import sys
 import unittest
 from pathlib import Path
@@ -228,3 +229,21 @@ finally:
     addon.unregister()
 if not result.wasSuccessful():
     raise RuntimeError('Blender regression checks failed')
+
+# Verify that cloning the full repository as "optimize_your_project" is a valid
+# Blender add-on entry point, not only the release ZIP package.
+repo_root = Path(__file__).resolve().parents[1]
+spec = importlib.util.spec_from_file_location(
+    "optimize_your_project",
+    repo_root / "__init__.py",
+    submodule_search_locations=[str(repo_root)],
+)
+git_addon = importlib.util.module_from_spec(spec)
+sys.modules["optimize_your_project"] = git_addon
+spec.loader.exec_module(git_addon)
+git_addon.register()
+try:
+    if not hasattr(bpy.types.Scene, "fishhwb_language"):
+        raise RuntimeError("Git install proxy did not register the Blender add-on")
+finally:
+    git_addon.unregister()
