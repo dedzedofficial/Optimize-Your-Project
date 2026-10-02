@@ -263,6 +263,9 @@ namespace FISHHWB.VROptimizer
                     case ShaderUtil.ShaderPropertyType.Range:
                         AppendFloat(builder, material.GetFloat(property));
                         break;
+                    case ShaderUtil.ShaderPropertyType.Int:
+                        builder.Append(material.GetInt(property));
+                        break;
                     case ShaderUtil.ShaderPropertyType.TexEnv:
                         var texture = material.GetTexture(property);
                         string texturePath = texture ? AssetDatabase.GetAssetPath(texture) : "";
