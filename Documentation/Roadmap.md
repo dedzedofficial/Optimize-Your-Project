@@ -33,17 +33,16 @@ https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
 
 ### Blender
 
-[![INSTALL IN BLENDER 4.2+](https://img.shields.io/badge/INSTALL%20IN%20BLENDER-4.2%2B-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/archive/refs/heads/main.zip?blender_version_min=4.2.0)
+The Blender build now produces two real ZIP packages:
 
-With **Blender 4.2 or newer already open**, drag the **INSTALL IN BLENDER** button from GitHub into the Blender window, then confirm **Install & Enable**. Blender downloads the extension and makes it available immediately in the open project. Clicking the button normally downloads the same extension ZIP instead. Blender documents website installation through a draggable extension URL.
+- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.4.zip`
+- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.4.zip`
 
-For **Blender 3.6**, use the legacy ZIP from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases):
+[![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
 
-```text
-optimize-your-project-blender-0.7.4.zip
-```
+Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.4` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
 
-Then use **Edit > Preferences > Add-ons > Install...**.
+The legacy ZIP also remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) when a matching Blender release is published.
 
 ### VRChat Creator Companion / VCC
 
@@ -124,7 +123,7 @@ The selection, texture-review and usability ideas planned for these patch number
 - Added **Fix Safe Material Cost Issues** by combining exact duplicate remapping with safe trailing empty-slot cleanup; topology-sensitive submesh reduction remains manual or Blender-assisted.
 - Added Blender **Clean Selected Meshes** for copy-based batch cleanup.
 - Added Blender **Create Game-Ready Copy** for source-preserving static mesh preparation with optional modifier application, applied rotation/scale, cleanup and unused material-slot removal.
-- Added a Blender 4.2+ **INSTALL IN BLENDER** button using the native extension install flow, with Blender 3.6 retaining the legacy ZIP route.
+- Added a dedicated Blender 4.2+ extension ZIP for Blender Extensions submission, with Blender 3.6 retaining the legacy ZIP route.
 - Added Blender **Create LODs for Selection** using the guarded static-mesh LOD path.
 - Added Blender **Show Heavy Meshes** with a configurable triangle threshold.
 - Expanded static release validation and Blender runtime regression coverage for the new batch and language features.

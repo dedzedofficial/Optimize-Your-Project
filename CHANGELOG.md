@@ -33,17 +33,16 @@ https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
 
 ### Blender
 
-[![INSTALL IN BLENDER 4.2+](https://img.shields.io/badge/INSTALL%20IN%20BLENDER-4.2%2B-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/archive/refs/heads/main.zip?blender_version_min=4.2.0)
+The Blender build now produces two real ZIP packages:
 
-With **Blender 4.2 or newer already open**, drag the **INSTALL IN BLENDER** button from GitHub into the Blender window, then confirm **Install & Enable**. Blender downloads the extension and makes it available immediately in the open project. Clicking the button normally downloads the same extension ZIP instead. Blender documents website installation through a draggable extension URL.
+- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.4.zip`
+- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.4.zip`
 
-For **Blender 3.6**, use the legacy ZIP from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases):
+[![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
 
-```text
-optimize-your-project-blender-0.7.4.zip
-```
+Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.4` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
 
-Then use **Edit > Preferences > Add-ons > Install...**.
+The legacy ZIP also remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) when a matching Blender release is published.
 
 ### VRChat Creator Companion / VCC
 
@@ -70,7 +69,7 @@ The product is now positioned as a **general developer optimization toolkit**. T
 - Kept Read/Write review diagnostic-only because disabling CPU access can break runtime scripts, non-uniform mesh lighting and other workflows that require readable data.
 - Added Blender **Clean Selected Meshes** for batch safe-copy cleanup while preserving every source object.
 - Added Blender **Create Game-Ready Copy** for source-preserving static mesh preparation with optional modifier application, applied rotation/scale, geometry cleanup and unused material-slot removal.
-- Added a Blender 4.2+ **INSTALL IN BLENDER** button backed by a native extension manifest. Dragging the button into an open Blender window downloads and installs the extension through Blender's own extension flow.
+- Added a dedicated `optimize-your-project-blender-extension-0.7.4.zip` package for Blender 4.2+ and Blender Extensions submission, while retaining the Blender 3.6 legacy ZIP.
 - Added Blender **Create LODs for Selection** for supported static meshes using the existing guarded LOD workflow.
 - Added Blender **Show Heavy Meshes** with a configurable triangle threshold.
 - Reworked Blender layout around one-click cleanup, batch mesh preparation, advanced tools and compact result reporting.

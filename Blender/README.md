@@ -33,17 +33,16 @@ https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
 
 ### Blender
 
-[![INSTALL IN BLENDER 4.2+](https://img.shields.io/badge/INSTALL%20IN%20BLENDER-4.2%2B-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/archive/refs/heads/main.zip?blender_version_min=4.2.0)
+The Blender build now produces two real ZIP packages:
 
-With **Blender 4.2 or newer already open**, drag the **INSTALL IN BLENDER** button from GitHub into the Blender window, then confirm **Install & Enable**. Blender downloads the extension and makes it available immediately in the open project. Clicking the button normally downloads the same extension ZIP instead. Blender documents website installation through a draggable extension URL.
+- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.4.zip`
+- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.4.zip`
 
-For **Blender 3.6**, use the legacy ZIP from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases):
+[![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
 
-```text
-optimize-your-project-blender-0.7.4.zip
-```
+Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.4` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
 
-Then use **Edit > Preferences > Add-ons > Install...**.
+The legacy ZIP also remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) when a matching Blender release is published.
 
 ### VRChat Creator Companion / VCC
 
@@ -58,23 +57,31 @@ Blender support for **Optimize Your Project** now combines fast one-click cleanu
 
 ## Install
 
-### Blender 4.2+ button install
+### Blender 4.2+ / Blender Extensions package
 
-[![INSTALL IN BLENDER 4.2+](https://img.shields.io/badge/INSTALL%20IN%20BLENDER-4.2%2B-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/archive/refs/heads/main.zip?blender_version_min=4.2.0)
+The package intended for Blender 4.2+ and `extensions.blender.org` is:
 
-1. Keep the Blender project you want to work on open.
-2. Drag the **INSTALL IN BLENDER** button from this GitHub page into the Blender window.
-3. Confirm **Install & Enable**.
-4. In the 3D Viewport press **N** and open the **FISHHWB** tab.
+```text
+optimize-your-project-blender-extension-0.7.4.zip
+```
 
-If you click the button instead of dragging it, your browser downloads the same extension ZIP. You can then drag the downloaded ZIP into Blender or use **Get Extensions > Install from Disk**.
+Download the `optimize-your-project-blender-0.7.4` artifact from the latest successful [Check release packages](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml) run. The artifact contains the extension ZIP above plus the Blender 3.6 legacy ZIP.
 
-### Blender 3.6 legacy install
+For a local install in Blender 4.2+, use **Edit > Preferences > Get Extensions > Install from Disk** and choose the extension ZIP.
 
-1. Download `optimize-your-project-blender-0.7.4.zip` from the GitHub Releases page after the `blender-v0.7.4` release is published.
-2. In Blender, use **Edit > Preferences > Add-ons > Install...**.
-3. Enable **Optimize Your Project for Blender**.
-4. In the 3D Viewport press **N** and open the **FISHHWB** tab.
+### Blender 3.6 legacy package
+
+Use:
+
+```text
+optimize-your-project-blender-0.7.4.zip
+```
+
+Then use **Edit > Preferences > Add-ons > Install...**, enable **Optimize Your Project for Blender**, press **N** in the 3D Viewport and open the **FISHHWB** tab.
+
+### Official Blender Extensions listing
+
+The final GitHub install button will point directly to the official Blender Extensions listing after it is published. The extension ZIP above is the submission package for that listing.
 
 ## One-click cleanup
 

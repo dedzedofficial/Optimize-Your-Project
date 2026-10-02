@@ -33,17 +33,16 @@ https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
 
 ### Blender
 
-[![INSTALL IN BLENDER 4.2+](https://img.shields.io/badge/INSTALL%20IN%20BLENDER-4.2%2B-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/archive/refs/heads/main.zip?blender_version_min=4.2.0)
+The Blender build now produces two real ZIP packages:
 
-With **Blender 4.2 or newer already open**, drag the **INSTALL IN BLENDER** button from GitHub into the Blender window, then confirm **Install & Enable**. Blender downloads the extension and makes it available immediately in the open project. Clicking the button normally downloads the same extension ZIP instead. Blender documents website installation through a draggable extension URL.
+- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.4.zip`
+- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.4.zip`
 
-For **Blender 3.6**, use the legacy ZIP from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases):
+[![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
 
-```text
-optimize-your-project-blender-0.7.4.zip
-```
+Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.4` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
 
-Then use **Edit > Preferences > Add-ons > Install...**.
+The legacy ZIP also remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) when a matching Blender release is published.
 
 ### VRChat Creator Companion / VCC
 
@@ -75,9 +74,9 @@ Automatic AssetPostprocessor-based optimization remains intentionally disabled. 
 
 The primary v0.7.4 Blender workflow is split into **One-Click Cleanup** and **Batch Mesh Prep**. Single-object cleanup, Game-Ready copy, remesh and duplicate-vertex actions remain available, while selected static meshes can be cleaned or prepared as LOD sets in a batch. The Game-Ready path produces a separate static copy, can evaluate existing modifiers, applies rotation and scale, performs conservative cleanup and removes unused material slots. Heavy mesh review selects scene geometry over a chosen triangle threshold. Source objects are preserved.
 
-### Blender button-install architecture
+### Blender package architecture
 
-The repository root contains `blender_manifest.toml` plus a small `__init__.py` proxy. For Blender 4.2+, the GitHub **INSTALL IN BLENDER** button points at the repository ZIP; Blender reads the root extension manifest and the proxy forwards registration to `Blender/vr_optimizer_blender/`. Blender 3.6 continues to use the dedicated legacy add-on ZIP.
+The repository root contains `blender_manifest.toml` plus a small `__init__.py` proxy. `scripts/build_blender_extension.py` packages those files with the maintained Blender add-on into `optimize-your-project-blender-extension-0.7.4.zip`, which is the Blender 4.2+ and Blender Extensions submission package. Blender 3.6 continues to use the dedicated legacy add-on ZIP.
 
 Both Unity and Blender expose English, Japanese, Simplified Chinese and Korean interface options. The localization tables live inside each integration so the tool does not require a separate localization package or alter the user's game localization setup.
 

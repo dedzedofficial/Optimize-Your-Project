@@ -155,8 +155,11 @@ for path in [
     assert "Changelog" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project.git" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project/releases" in content, path
-    assert "INSTALL IN BLENDER" in content, path
-    assert "https://github.com/dedzedofficial/Optimize-Your-Project/archive/refs/heads/main.zip?blender_version_min=4.2.0" in content, path
+    assert "DOWNLOAD BLENDER ZIP BUILDS" in content, path
+    assert "optimize-your-project-blender-extension-0.7.4.zip" in content, path
+    assert "optimize-your-project-blender-0.7.4.zip" in content, path
+    assert "https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml" in content, path
+    assert "archive/refs/heads/main.zip?blender_version_min=4.2.0" not in content, path
     assert "git clone https://github.com/dedzedofficial/Optimize-Your-Project.git optimize_your_project" not in content, path
     assert "git -C optimize_your_project pull" not in content, path
 
@@ -166,7 +169,7 @@ assert "VRChat / VCC (optional)" in readme
 assert "## Keywords" in readme
 assert "FIX DUPLICATE MATERIAL REFERENCES" not in readme  # README uses friendly title case
 assert "Fix Duplicate Material References" in readme
-assert "Drag the **INSTALL IN BLENDER** button" in readme
+assert "optimize-your-project-blender-extension-0.7.4.zip" in readme
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
 
 assert "## " + manifest["version"] in (root / "CHANGELOG.md").read_text()
@@ -209,5 +212,23 @@ with ZipFile(Path(built.stdout.strip())) as package:
     assert package.testzip() is None
     assert "vr_optimizer_blender/__init__.py" in package.namelist()
     assert "vr_optimizer_blender/optimize-your-project-logo.png" in package.namelist()
+
+extension_built = subprocess.run(
+    [sys.executable, "scripts/build_blender_extension.py"],
+    cwd=root,
+    check=True,
+    capture_output=True,
+    text=True,
+)
+extension_archive = Path(extension_built.stdout.strip())
+assert extension_archive.name == "optimize-your-project-blender-extension-0.7.4.zip"
+with ZipFile(extension_archive) as package:
+    assert package.testzip() is None
+    names = set(package.namelist())
+    assert "blender_manifest.toml" in names
+    assert "__init__.py" in names
+    assert "Blender/__init__.py" in names
+    assert "Blender/vr_optimizer_blender/__init__.py" in names
+    assert "Blender/vr_optimizer_blender/optimize-your-project-logo.png" in names
 
 print("v0.7.4 static release checks passed; Unity and Blender runtime editor tests remain required.")
