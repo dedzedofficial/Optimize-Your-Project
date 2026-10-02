@@ -33,13 +33,32 @@ https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
 
 ### Blender
 
-Open the [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) page and download:
+**Git URL install:** clone the repository into one of Blender's add-on script directories using an import-safe folder name:
+
+```bash
+git clone https://github.com/dedzedofficial/Optimize-Your-Project.git optimize_your_project
+```
+
+To print Blender's available add-on directories, run this in Blender's Python Console:
+
+```python
+import addon_utils
+print("\\n".join(addon_utils.paths()))
+```
+
+Run the `git clone` command from one of those add-on directories, then restart Blender or use **Refresh Local** and enable **Optimize Your Project for Blender**. Update a Git install later with:
+
+```bash
+git -C optimize_your_project pull
+```
+
+Blender's Add-ons screen does not directly consume an arbitrary Git clone URL, so this Git method uses the repository itself as the installed add-on. The normal ZIP route remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases):
 
 ```text
 optimize-your-project-blender-0.7.4.zip
 ```
 
-Then in Blender use **Edit > Preferences > Add-ons > Install...** or **Get Extensions > Install from Disk**.
+Then use **Edit > Preferences > Add-ons > Install...** or **Get Extensions > Install from Disk**.
 
 ### VRChat Creator Companion / VCC
 
