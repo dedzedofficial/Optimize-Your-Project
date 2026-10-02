@@ -15,7 +15,7 @@ versions = json.loads((root / "version.json").read_text(encoding="utf-8"))
 
 assert manifest["displayName"] == "Optimize Your Project"
 assert manifest["name"] == "com.fishhwb.vr-optimizer"  # historical compatibility ID
-assert manifest["version"] == "0.7.1"
+assert manifest["version"] == "0.7.4"
 assert versions["unity"] == manifest["version"]
 assert versions["unity_tag"] == "v" + manifest["version"]
 assert versions["unity_url"].endswith("/releases/tag/" + versions["unity_tag"])
@@ -28,17 +28,27 @@ assert icon.with_suffix(".png.meta").is_file()
 window_path = root / "Editor/FISHHWBVR/FISHHWBVROptimizerWindow.cs"
 window = window_path.read_text(encoding="utf-8")
 assert "Icons/Optimize-Your-Project.png" in window
-assert 'new[] { "PROJECT", "CHARACTER / AVATAR" }' in window
+assert 'new[] { T("project"), T("avatar") }' in window
 assert '"WORLD"' not in window
 assert '"UPDATES"' not in window
 assert "DrawUpdateFooter();" in window
 assert "VRUpdateHealth.FarBehind" in window
-assert "Android / Mobile" in window
+assert 'T("android")' in window
 assert "FISHHWB VR Optimizer" not in window
-assert "FREE FOR DEVELOPERS" in window
-assert "SUPPORT DEVELOPMENT ON PATREON" in window
+assert 'T("support")' in window
+assert 'T("support_button")' in window
 assert "https://www.patreon.com/cw/DedZed" in window
 assert "BeginCard(" in window
+
+localization = (root / "Editor/FISHHWBVR/VRLocalization.cs").read_text(encoding="utf-8")
+for language in ["English", "Japanese", "SimplifiedChinese", "Korean"]:
+    assert language in localization
+for required in ["日本語", "简体中文", "한국어", "PROJECT INSIGHTS", "SHOW LARGEST TEXTURES", "REVIEW READ/WRITE MEMORY", "SHOW HEAVY MESHES"]:
+    assert required in localization
+assert "VRProjectInsights.LargestTextures" in window
+assert "VRProjectInsights.ReadWriteReview" in window
+assert "VRProjectInsights.HeavyMeshes" in window
+assert "DrawLanguageAndSearch" in window
 
 project_scanner = (root / "Editor/FISHHWBVR/VRProjectScanner.cs").read_text(encoding="utf-8")
 assert '"Optimize Your Project"' in project_scanner
@@ -58,12 +68,18 @@ info = next(
     and any(isinstance(target, ast.Name) and target.id == "bl_info" for target in node.targets)
 )
 blender_version = ".".join(map(str, info["version"]))
-assert blender_version == versions["blender"] == "0.7.1"
+assert blender_version == versions["blender"] == "0.7.4"
 assert versions["blender_tag"] == "blender-v" + blender_version
 assert 'bl_idname = "fishhwb.clean_selected_mesh"' in source_text
 assert "FISHHWB_OT_clean_selected_mesh" in source_text.split("classes =", 1)[1]
 assert 'bl_idname = "fishhwb.one_click_remesh"' in source_text
 assert 'bl_idname = "fishhwb.merge_vertices"' in source_text
+assert 'bl_idname = "fishhwb.clean_selected_meshes"' in source_text
+assert 'bl_idname = "fishhwb.create_lods_selected"' in source_text
+assert 'bl_idname = "fishhwb.show_heavy_meshes"' in source_text
+assert "LANGUAGE_ITEMS" in source_text
+for language_code in ["'EN'", "'JA'", "'ZH'", "'KO'"]:
+    assert language_code in source_text
 assert "ONE-CLICK CLEANUP" in source_text
 assert "Show Advanced Mesh Tools" in source_text
 assert "FREE FOR DEVELOPERS" in source_text
@@ -126,4 +142,4 @@ with ZipFile(Path(built.stdout.strip())) as package:
     assert "vr_optimizer_blender/__init__.py" in package.namelist()
     assert "vr_optimizer_blender/optimize-your-project-logo.png" in package.namelist()
 
-print("v0.7.1 static release checks passed; Unity and Blender runtime editor tests remain required.")
+print("v0.7.4 static release checks passed; Unity and Blender runtime editor tests remain required.")
