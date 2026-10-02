@@ -77,14 +77,15 @@ The product is now positioned as a **general developer optimization toolkit**. T
 - Added a persistent Unity language selector and a Blender language selector so creators can switch the tool UI without changing their project language.
 - Added Unity action search so common texture, mesh, particle, light, memory and scan tasks are easier to find.
 - Added **Use Current Selection** for Unity asset scope so a selected Project asset or folder can set the working folder directly.
-- Added Unity **Project Insights** with **Show Largest Textures**, **Review Read/Write Memory** and richer **Find Oversized Meshes** review actions.
+- Added Unity **Project Insights** with **Show Largest Textures**, **Review Read/Write Memory** and **Fix Oversized Mesh Imports** for supported high-triangle imported models.
 - Added **Fix Texture Import Settings** for conservative normal-map and mask/data texture import corrections.
-- Added **Find Duplicate Materials** using shader, keyword, queue and saved-property comparison.
+- Upgraded duplicate-material handling to **Fix Duplicate Material References**, remapping loaded renderer references to one exact matching material asset with Unity Undo while preserving duplicate asset files.
 - Added **Clean Unused Material Slots** for trailing empty renderer slots beyond the mesh submesh count, with Unity Undo support. Non-empty extra materials are preserved.
-- Added **Find Expensive Material Setups** for high material-slot and submesh-count renderers.
+- Upgraded material-cost handling to **Fix Safe Material Cost Issues**, combining exact duplicate remapping with safe trailing empty-slot cleanup while leaving topology-sensitive submesh changes untouched.
 - Kept Read/Write review diagnostic-only because disabling CPU access can break runtime scripts, non-uniform mesh lighting and other workflows that require readable data.
 - Added Blender **Clean Selected Meshes** for batch safe-copy cleanup while preserving every source object.
 - Added Blender **Create Game-Ready Copy** for source-preserving static mesh preparation with optional modifier application, applied rotation/scale, geometry cleanup and unused material-slot removal.
+- Added a Git-managed Blender install route using the repository Git URL plus the root Blender add-on proxy, with `git pull` updates.
 - Added Blender **Create LODs for Selection** for supported static meshes using the existing guarded LOD workflow.
 - Added Blender **Show Heavy Meshes** with a configurable triangle threshold.
 - Reworked Blender layout around one-click cleanup, batch mesh preparation, advanced tools and compact result reporting.
