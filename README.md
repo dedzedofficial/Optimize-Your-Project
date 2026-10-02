@@ -64,7 +64,7 @@ v0.7.4 is a major usability and workflow update. It adds searchable Unity action
 | Platform | Fastest install |
 | --- | --- |
 | **Unity** | Package Manager → **+** → **Add package from git URL** → paste `https://github.com/dedzedofficial/Optimize-Your-Project.git` |
-| **Blender 4.2+** | Drag the **INSTALL IN BLENDER** button above into the open Blender window and confirm **Install & Enable** |
+| **Blender 4.2+** | Download `optimize-your-project-blender-extension-0.7.4.zip` from the latest successful release-check artifact; this is the Blender Extensions submission ZIP |
 | **VRChat / VCC (optional)** | [Add the VPM repository](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the chosen project |
 
 For a fixed Unity release after the v0.7.4 tag is published:
