@@ -243,4 +243,4 @@ Optimize Your Project is indexed around: **Unity optimization, Blender add-on, o
 
 [Website](https://fishhwb.github.io/) · [Discord](https://discord.gg/wZGxxkk4Jg) · [Patreon](https://www.patreon.com/cw/DedZed)
 
-Optimize Your Project is free and licensed under MIT.
+Optimize Your Project remains free. The Unity/general repository code is MIT-licensed; the Blender extension package is distributed under **GPL-3.0-or-later** to meet Blender Extensions requirements.
