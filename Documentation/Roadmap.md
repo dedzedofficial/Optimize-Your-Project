@@ -116,7 +116,7 @@ The selection, texture-review and usability ideas planned for these patch number
 - Added **Find Oversized Meshes** for high-triangle loaded-scene or character geometry with triangle, vertex, submesh and material-slot counts.
 - Added **Fix Texture Import Settings** for conservative normal-map and non-color mask/data texture import corrections.
 - Added **Find Duplicate Materials** by comparing shader state and saved material properties.
-- Added **Clean Unused Material Slots** for renderer slots beyond the mesh's submesh count, with Undo support.
+- Added **Clean Unused Material Slots** for trailing empty renderer slots beyond the mesh's submesh count, with Undo support. Non-empty extra materials are preserved.
 - Added **Find Expensive Material Setups** for high material-slot and submesh-count renderers.
 - Added Blender **Clean Selected Meshes** for copy-based batch cleanup.
 - Added Blender **Create Game-Ready Copy** for source-preserving static mesh preparation with optional modifier application, applied rotation/scale, cleanup and unused material-slot removal.
