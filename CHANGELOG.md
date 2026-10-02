@@ -2,6 +2,54 @@
 
 <img src="Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="96">
 
+<p align="center">
+  <a href="README.md"><strong>Overview</strong></a> |
+  <a href="Blender/README.md"><strong>Blender Guide</strong></a> |
+  <a href="Documentation/Roadmap.md"><strong>Roadmap</strong></a> |
+  <a href="Documentation/Architecture.md"><strong>Architecture</strong></a> |
+  <a href="CHANGELOG.md"><strong>Changelog</strong></a>
+</p>
+
+<p align="center">
+  <strong>Interface languages:</strong> English | 日本語 | 简体中文 | 한국어
+</p>
+
+<details open>
+<summary><strong>Install / Download Optimize Your Project</strong></summary>
+
+### Unity
+
+Open **Window > Package Manager**, press **+**, choose **Add package from git URL**, then paste:
+
+```text
+https://github.com/dedzedofficial/Optimize-Your-Project.git
+```
+
+For the fixed v0.7.4 release:
+
+```text
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
+```
+
+### Blender
+
+Open the [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) page and download:
+
+```text
+optimize-your-project-blender-0.7.4.zip
+```
+
+Then in Blender use **Edit > Preferences > Add-ons > Install...** or **Get Extensions > Install from Disk**.
+
+### VRChat Creator Companion / VCC
+
+Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the chosen project.
+
+</details>
+
+> **New here?** Start with the [Overview](README.md). You can read the complete documentation directly on GitHub before installing anything.
+
+
 The product is now positioned as a **general developer optimization toolkit**. The historical Unity package ID `com.fishhwb.vr-optimizer` is retained for installation compatibility; it does not mean the tool is VR-only.
 
 ## 0.7.4

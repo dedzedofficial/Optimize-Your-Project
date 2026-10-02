@@ -95,6 +95,13 @@ for path in [
     content = path.read_text(encoding="utf-8")
     assert "Optimize-Your-Project.png" in content, path
     assert "dedzedofficial/VR-Optimizer" not in content, path
+    assert "Install / Download Optimize Your Project" in content, path
+    assert "Blender Guide" in content, path
+    assert "Roadmap" in content, path
+    assert "Architecture" in content, path
+    assert "Changelog" in content, path
+    assert "https://github.com/dedzedofficial/Optimize-Your-Project.git" in content, path
+    assert "https://github.com/dedzedofficial/Optimize-Your-Project/releases" in content, path
 
 readme = (root / "README.md").read_text(encoding="utf-8")
 assert "general developer optimization" in readme.lower()
