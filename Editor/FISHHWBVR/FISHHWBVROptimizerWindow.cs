@@ -531,62 +531,159 @@ namespace FISHHWB.VROptimizer
                 T("materials"),
                 root ? T("materials_avatar") : T("materials_project"));
 
-            if (!root)
+            using (new EditorGUI.DisabledScope(!root && !folderValid))
             {
-                using (new EditorGUI.DisabledScope(!folderValid))
-                {
-                    if (GUILayout.Button(T("duplicate_materials"), compactButtonStyle))
-                    {
-                        issues = VRProjectInsights.DuplicateMaterials(folder);
-                        summary = "Duplicate material review: " + issues.Count + " duplicate assets found.";
-                    }
-                }
+                if (GUILayout.Button(T("duplicate_materials"), compactButtonStyle))
+                    FixDuplicateMaterials(root, folder);
             }
 
             if (GUILayout.Button(T("unused_material_slots"), compactButtonStyle))
-            {
-                var fixes = VRProjectMaintenance.CollectUnusedMaterialSlots(root);
-                int remove = 0;
-                foreach (var fix in fixes) remove += fix.RemoveCount;
+                FixUnusedMaterialSlots(root);
 
-                if (fixes.Count == 0)
-                {
-                    summary = "Unused material slot cleanup: no excess renderer slots found.";
-                }
-                else if (!EditorUtility.DisplayDialog(
-                    "Clean unused material slots",
-                    "Remove " + remove + " excess material slots from " + fixes.Count +
-                    " renderers? Only trailing empty slots beyond each mesh's submesh count are removed. Non-empty extra materials are preserved. Unity Undo is available.",
-                    "Clean Slots",
-                    "Cancel"))
-                {
-                    summary = new VRActionSummary { Cancelled = true, Skipped = fixes.Count }.Format("Material slots");
-                }
-                else
-                {
-                    Undo.IncrementCurrentGroup();
-                    int group = Undo.GetCurrentGroup();
-                    Undo.SetCurrentGroupName("Clean Unused Material Slots");
-                    try
-                    {
-                        var result = VRActionSummary.Run(
-                            "Material slots",
-                            fixes,
-                            item => item.Renderer ? item.Renderer.name : "Missing renderer",
-                            VRProjectMaintenance.ApplyUnusedMaterialSlotFix);
-                        summary = result.Format("Material slots") + "\nUse Undo if needed.";
-                    }
-                    finally { Undo.CollapseUndoOperations(group); }
-                }
-            }
-
-            if (GUILayout.Button(T("expensive_materials"), compactButtonStyle))
+            using (new EditorGUI.DisabledScope(!root && !folderValid))
             {
-                issues = VRProjectInsights.ExpensiveMaterials(root);
-                summary = "Material cost review: " + issues.Count + " high-slot renderers found.";
+                if (GUILayout.Button(T("expensive_materials"), compactButtonStyle))
+                    FixExpensiveMaterialSetups(root, folder);
             }
 
             EndCard();
+        }
+
+        void FixDuplicateMaterials(GameObject root, string folder)
+        {
+            var fixes = VRProjectMaintenance.CollectDuplicateMaterialFixes(root, folder);
+            int replacements = 0;
+            foreach (var fix in fixes) replacements += fix.ReplacementCount;
+
+            if (fixes.Count == 0)
+            {
+                summary = "Duplicate material fix: no exact duplicate references need remapping in this loaded scope.";
+                issues = null;
+                return;
+            }
+
+            if (!EditorUtility.DisplayDialog(
+                "Fix duplicate materials",
+                "Remap " + replacements + " material references on " + fixes.Count +
+                " renderers to one exact matching material asset? Duplicate material files are preserved and Unity Undo is available.",
+                "Fix Materials",
+                "Cancel"))
+            {
+                summary = new VRActionSummary { Cancelled = true, Skipped = fixes.Count }.Format("Duplicate materials");
+                return;
+            }
+
+            Undo.IncrementCurrentGroup();
+            int group = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Fix Duplicate Materials");
+            try
+            {
+                var result = VRActionSummary.Run(
+                    "Duplicate materials",
+                    fixes,
+                    item => item.Renderer ? item.Renderer.name : "Missing renderer",
+                    VRProjectMaintenance.ApplyDuplicateMaterialFix);
+                summary = result.Format("Duplicate materials") +
+                          "\nRemapped references: " + replacements +
+                          ". Duplicate material assets were not deleted. Use Undo if needed.";
+                issues = null;
+            }
+            finally { Undo.CollapseUndoOperations(group); }
+        }
+
+        void FixUnusedMaterialSlots(GameObject root)
+        {
+            var fixes = VRProjectMaintenance.CollectUnusedMaterialSlots(root);
+            int remove = 0;
+            foreach (var fix in fixes) remove += fix.RemoveCount;
+
+            if (fixes.Count == 0)
+            {
+                summary = "Unused material slot cleanup: no safe trailing empty slots found.";
+                issues = null;
+                return;
+            }
+
+            if (!EditorUtility.DisplayDialog(
+                "Clean unused material slots",
+                "Remove " + remove + " trailing empty material slots from " + fixes.Count +
+                " renderers? Non-empty extra materials are preserved. Unity Undo is available.",
+                "Clean Slots",
+                "Cancel"))
+            {
+                summary = new VRActionSummary { Cancelled = true, Skipped = fixes.Count }.Format("Material slots");
+                return;
+            }
+
+            Undo.IncrementCurrentGroup();
+            int group = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Clean Unused Material Slots");
+            try
+            {
+                var result = VRActionSummary.Run(
+                    "Material slots",
+                    fixes,
+                    item => item.Renderer ? item.Renderer.name : "Missing renderer",
+                    VRProjectMaintenance.ApplyUnusedMaterialSlotFix);
+                summary = result.Format("Material slots") + "\nUse Undo if needed.";
+                issues = null;
+            }
+            finally { Undo.CollapseUndoOperations(group); }
+        }
+
+        void FixExpensiveMaterialSetups(GameObject root, string folder)
+        {
+            var duplicates = VRProjectMaintenance.CollectDuplicateMaterialFixes(root, folder);
+            var slots = VRProjectMaintenance.CollectUnusedMaterialSlots(root);
+            int replacements = 0;
+            int remove = 0;
+            foreach (var fix in duplicates) replacements += fix.ReplacementCount;
+            foreach (var fix in slots) remove += fix.RemoveCount;
+
+            if (duplicates.Count == 0 && slots.Count == 0)
+            {
+                summary = "Material cost fix: no exact duplicate references or safe trailing empty slots need changes.";
+                issues = null;
+                return;
+            }
+
+            if (!EditorUtility.DisplayDialog(
+                "Fix material cost issues",
+                "Apply safe material fixes in this loaded scope?\n\nExact duplicate references: " + replacements +
+                "\nTrailing empty slots: " + remove +
+                "\n\nThis does not merge mesh submeshes or alter shader design. Unity Undo is available.",
+                "Fix Safe Issues",
+                "Cancel"))
+            {
+                summary = "Material cost fix cancelled.";
+                return;
+            }
+
+            Undo.IncrementCurrentGroup();
+            int group = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Fix Material Cost Issues");
+            try
+            {
+                var duplicateResult = VRActionSummary.Run(
+                    "Duplicate materials",
+                    duplicates,
+                    item => item.Renderer ? item.Renderer.name : "Missing renderer",
+                    VRProjectMaintenance.ApplyDuplicateMaterialFix);
+
+                var slotResult = VRActionSummary.Run(
+                    "Material slots",
+                    slots,
+                    item => item.Renderer ? item.Renderer.name : "Missing renderer",
+                    VRProjectMaintenance.ApplyUnusedMaterialSlotFix);
+
+                summary = "Material cost fixes complete:" +
+                          "\nDuplicate references remapped: " + replacements +
+                          "\nTrailing empty slots removed: " + remove +
+                          "\nChanged renderers: " + (duplicateResult.Changed + slotResult.Changed) +
+                          "\nHigh submesh counts that require topology or art changes are intentionally left untouched. Use Undo if needed.";
+                issues = null;
+            }
+            finally { Undo.CollapseUndoOperations(group); }
         }
 
         void LightCard(GameObject root)
@@ -649,12 +746,43 @@ namespace FISHHWB.VROptimizer
             }
 
             if (GUILayout.Button(T("oversized_meshes"), compactButtonStyle))
-            {
-                issues = VRProjectInsights.OversizedMeshes(root);
-                summary = "Oversized mesh review: " + issues.Count + " candidates.";
-            }
+                FixOversizedMeshImports(root);
 
             EndCard();
+        }
+
+        void FixOversizedMeshImports(GameObject root)
+        {
+            var fixes = VRProjectMaintenance.CollectOversizedMeshImportFixes(root);
+            if (fixes.Count == 0)
+            {
+                summary = "Oversized mesh import fix: no supported high-triangle imported model assets need importer changes.";
+                issues = null;
+                return;
+            }
+
+            if (!EditorUtility.DisplayDialog(
+                "Fix oversized mesh imports",
+                "Optimize " + fixes.Count +
+                " high-triangle imported model assets using Medium mesh compression plus Unity mesh vertex/polygon optimization? " +
+                "This improves importer/runtime mesh overhead without changing triangle topology.",
+                "Fix Imports",
+                "Cancel"))
+            {
+                summary = new VRActionSummary { Cancelled = true, Skipped = fixes.Count }.Format("Oversized mesh imports");
+                return;
+            }
+
+            var result = VRActionSummary.Run(
+                "Oversized mesh imports",
+                fixes,
+                item => item.Path,
+                VRProjectMaintenance.ApplyOversizedMeshImportFix);
+
+            summary = result.Format("Oversized mesh imports") +
+                      "\nApplied importer-side optimization only; triangle topology is preserved. " +
+                      "Use Blender LOD or reduced-copy tools when actual polygon reduction is required.";
+            issues = null;
         }
 
         void DrawLanguageAndSearch()
