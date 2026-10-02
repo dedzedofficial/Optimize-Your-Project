@@ -75,12 +75,12 @@ Optimize Your Project is a **general developer optimization toolkit**. Unity is 
 
 The repository root is a Unity Package Manager package. The v0.7.4 workflow is split into **Project** and **Avatar** pages, with a persistent interface language selector and action search:
 
-- **Project** covers ordinary Unity projects: textures in an Assets folder plus particles, model imports, materials and realtime lights in loaded scenes. Project Insights adds largest-texture, Read/Write memory and oversized-mesh review. Material review finds exact-state duplicates and high-slot renderers.
+- **Project** covers ordinary Unity projects: textures in an Assets folder plus particles, model imports, materials and realtime lights in loaded scenes. Project Insights adds largest-texture and Read/Write memory review plus importer-side oversized-mesh fixes. Material maintenance remaps exact-state duplicate references and removes only safely identifiable trailing empty slots.
 - **Avatar** provides a narrower hierarchy scope for character/avatar projects. It does not require the VRChat SDK.
 
 `VRProjectScanner` coordinates the existing scanner modules and `VRIssue` records. Those internal type names are retained for compatibility during v0.7; they do not limit the supported project type.
 
-`VRTextureOptimizer` edits supported importer metadata and reimports only changed assets. `VRProjectMaintenance` handles conservative filename-based texture import fixes and trims only trailing empty renderer material slots beyond the source mesh submesh count. `VRProjectInsights` compares saved material state for duplicates and reports oversized meshes and high material-slot setups. `VRParticleOptimizer` and `VRLightOptimizer` use Unity Undo for loaded scene objects where applicable. `VRSettings` stores per-user tool settings.
+`VRTextureOptimizer` edits supported importer metadata and reimports only changed assets. `VRProjectMaintenance` handles conservative filename-based texture import fixes, exact duplicate-material remapping, trailing empty material-slot cleanup and importer-side optimization for oversized imported meshes. `VRProjectInsights` retains the exact material signature and diagnostic helpers used to decide safe automated fixes. `VRParticleOptimizer` and `VRLightOptimizer` use Unity Undo for loaded scene objects where applicable. `VRSettings` stores per-user tool settings.
 
 Automatic AssetPostprocessor-based optimization remains intentionally disabled. The user explicitly presses an optimization action so the scope is visible.
 
@@ -89,6 +89,10 @@ Automatic AssetPostprocessor-based optimization remains intentionally disabled. 
 `Blender/vr_optimizer_blender/` is a separate Blender add-on. The folder name is retained for compatibility during the v0.7 transition.
 
 The primary v0.7.4 Blender workflow is split into **One-Click Cleanup** and **Batch Mesh Prep**. Single-object cleanup, Game-Ready copy, remesh and duplicate-vertex actions remain available, while selected static meshes can be cleaned or prepared as LOD sets in a batch. The Game-Ready path produces a separate static copy, can evaluate existing modifiers, applies rotation and scale, performs conservative cleanup and removes unused material slots. Heavy mesh review selects scene geometry over a chosen triangle threshold. Source objects are preserved.
+
+### Git install architecture
+
+The repository root contains a small Blender `__init__.py` proxy. When the repository is cloned into a Blender add-ons directory as `optimize_your_project`, Blender loads the root proxy and forwards registration to `Blender/vr_optimizer_blender/`. ZIP installs continue to package the dedicated Blender add-on directly.
 
 Both Unity and Blender expose English, Japanese, Simplified Chinese and Korean interface options. The localization tables live inside each integration so the tool does not require a separate localization package or alter the user's game localization setup.
 
