@@ -75,9 +75,9 @@ Automatic AssetPostprocessor-based optimization remains intentionally disabled. 
 
 The primary v0.7.4 Blender workflow is split into **One-Click Cleanup** and **Batch Mesh Prep**. Single-object cleanup, Game-Ready copy, remesh and duplicate-vertex actions remain available, while selected static meshes can be cleaned or prepared as LOD sets in a batch. The Game-Ready path produces a separate static copy, can evaluate existing modifiers, applies rotation and scale, performs conservative cleanup and removes unused material slots. Heavy mesh review selects scene geometry over a chosen triangle threshold. Source objects are preserved.
 
-### Git install architecture
+### Blender button-install architecture
 
-The repository root contains a small Blender `__init__.py` proxy. When the repository is cloned into a Blender add-ons directory as `optimize_your_project`, Blender loads the root proxy and forwards registration to `Blender/vr_optimizer_blender/`. ZIP installs continue to package the dedicated Blender add-on directly.
+The repository root contains `blender_manifest.toml` plus a small `__init__.py` proxy. For Blender 4.2+, the GitHub **INSTALL IN BLENDER** button points at the repository ZIP; Blender reads the root extension manifest and the proxy forwards registration to `Blender/vr_optimizer_blender/`. Blender 3.6 continues to use the dedicated legacy add-on ZIP.
 
 Both Unity and Blender expose English, Japanese, Simplified Chinese and Korean interface options. The localization tables live inside each integration so the tool does not require a separate localization package or alter the user's game localization setup.
 
