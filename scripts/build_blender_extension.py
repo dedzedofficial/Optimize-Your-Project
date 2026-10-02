@@ -12,6 +12,7 @@ required = [
     root / "blender_manifest.toml",
     root / "__init__.py",
     root / "Blender" / "__init__.py",
+    root / "Blender" / "EXTENSION_LICENSE.txt",
     root / "Blender" / "vr_optimizer_blender" / "__init__.py",
     root / "Blender" / "vr_optimizer_blender" / "optimize-your-project-logo.png",
 ]
@@ -35,6 +36,7 @@ with zipfile.ZipFile(archive) as package:
         "blender_manifest.toml",
         "__init__.py",
         "Blender/__init__.py",
+        "Blender/EXTENSION_LICENSE.txt",
         "Blender/vr_optimizer_blender/__init__.py",
         "Blender/vr_optimizer_blender/optimize-your-project-logo.png",
     ]:
