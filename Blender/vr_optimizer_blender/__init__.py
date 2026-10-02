@@ -4,7 +4,7 @@ bl_info = {
     "version": (0, 7, 4),
     "blender": (3, 6, 0),
     "location": "View3D > Sidebar > FISHHWB",
-    "description": "One-click mesh cleanup, remesh and vertex merging with optional mesh reduction, joining and LOD tools",
+    "description": "Multilingual one-click and batch mesh optimization with cleanup, LOD and review tools",
     "category": "Mesh",
 }
 
@@ -1070,7 +1070,7 @@ def register():
         name="Language", items=LANGUAGE_ITEMS, default='EN',
         description="Interface language for Optimize Your Project")
     bpy.types.Scene.fishhwb_heavy_triangles = IntProperty(
-        name="Heavy Triangle Limit", default=100000, min=1000,
+        name="Heavy Triangle Limit", default=100000, min=1,
         description="Triangle count used by Show Heavy Meshes")
     bpy.types.Scene.fishhwb_tri_limit = IntProperty(name="Triangle Limit", default=1000, min=1)
     bpy.types.Scene.fishhwb_apply_modifiers = BoolProperty(name="Apply Existing Modifiers", default=True,
