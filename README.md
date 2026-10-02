@@ -2,96 +2,154 @@
 
 <img src="Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="150">
 
-**v0.7.1 · General developer optimization tools · Unity + Blender · FISHHWB | Ded Zed**
+**v0.7.4 · General developer optimization tools · Unity + Blender · FISHHWB | Ded Zed**
 
-Optimize Your Project is for developers building **any kind of real-time project**. Its priority is removing repetitive optimization work through clear one-click actions, whether you are making a PC game, mobile project, VR title, social experience, prototype, or reusable asset pack. Unity is the first full integration and Blender is the first external creation-tool integration.
+Optimize Your Project is a free toolkit for developers building real-time projects. Its priority is removing repetitive optimization work through clear one-click and batch actions for games, mobile projects, VR titles, social experiences, prototypes and reusable asset packs.
+
+v0.7.4 is a major usability and workflow update. It adds searchable Unity actions, project review tools, Blender batch preparation and interface language support for **English, Japanese, Simplified Chinese and Korean**.
 
 ## Quick install
 
 | Platform | Fastest install |
 | --- | --- |
 | **Unity** | Package Manager → **+** → **Add package from git URL** → paste `https://github.com/dedzedofficial/Optimize-Your-Project.git` |
-| **Blender** | Download `optimize-your-project-blender-0.7.1.zip` from Releases → Blender Preferences / Get Extensions → **Install from Disk** |
+| **Blender** | Download `optimize-your-project-blender-0.7.4.zip` from Releases → Blender Preferences / Get Extensions → **Install from Disk** |
 | **VRChat / VCC (optional)** | [Add the VPM repository](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the chosen project |
 
-For a fixed Unity release after the v0.7.1 tag is published, use:
+For a fixed Unity release after the v0.7.4 tag is published:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.1
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
 ```
 
-## Unity v0.7.1
+## Languages
+
+The main Unity and Blender workflows support:
+
+- English
+- Japanese
+- Simplified Chinese
+- Korean
+
+Unity stores the selected tool language as an Editor preference. Blender exposes a Language control at the top of the sidebar.
+
+Future language work is tracked in [Documentation/Roadmap.md](Documentation/Roadmap.md). Planned additions include Spanish, French, German, Brazilian Portuguese, Italian, Traditional Chinese, Polish, Turkish and Russian.
+
+## Unity v0.7.4
 
 Open **FISHHWB → Optimize Your Project**.
 
-The Unity window now has only two work pages. Neither page requires a VR SDK:
+The Unity window keeps the two focused work pages:
 
-- **PROJECT**: replaces the old World + Project split. Texture work uses the chosen Assets folder; particle, imported-mesh and realtime-light jobs operate on loaded scenes.
-- **CHARACTER / AVATAR**: runs the same focused jobs against one selected character/avatar hierarchy. This can be used for ordinary game characters as well as social-VR avatars.
+- **PROJECT** for ordinary project assets and loaded scenes.
+- **CHARACTER / AVATAR** for one selected character hierarchy without requiring a VR SDK.
 
-Each job is a direct action. Detailed findings stay hidden unless you explicitly press **Scan Entire Project**. v0.7 also uses a cleaner card-based interface with clearer action hierarchy, larger primary buttons, compact version status, and a small optional support panel.
+### Faster navigation
 
-### Project buttons
+- **Language selector** at the top of the window.
+- **Find an action** search box to narrow the interface to texture, mesh, particle, light, memory or scan tasks.
+- **Use Current Selection** can set the Project asset scope from the selected Project window asset or folder.
+- Detailed findings stay hidden until a review or scan action is requested.
 
-- **Compress & Size Textures**: applies platform size caps and automatic compression to supported textures while preserving explicit formats and stricter existing limits.
-- **Optimize Particles**: applies the selected particle limits/settings to loaded scenes or the selected avatar.
-- **Compress Imported Meshes**: changes Unity model-importer mesh compression for model assets used in the current scope.
-- **Disable Realtime Shadows**: disables realtime light shadows in the current scope with Unity Undo support.
-- **Scan Entire Project**: runs the heavier diagnostic pass and shows filterable Critical / Warning results.
+### Project optimization buttons
 
-### Small update footer
+- **Compress & Size Textures** applies supported platform size caps and compression while preserving stricter existing limits and explicit formats.
+- **Optimize Particles** applies selected particle limits to loaded scenes or the chosen character hierarchy.
+- **Compress Imported Meshes** applies Unity model-importer mesh compression to model assets used in the current scope.
+- **Disable Realtime Shadows** disables supported realtime light shadows with Unity Undo support.
+- **Scan Entire Project** runs the heavier diagnostic pass and shows filterable Critical / Warning results.
 
-Updates no longer take a full page. The bottom footer shows the installed version and a status dot:
+### Project Insights
 
-- **Green**: current.
-- **Orange**: an update is available and the install is one patch release behind.
-- **Red**: two or more patch releases behind, or a newer minor/major release exists. Example: **0.6.3 → 0.6.5** is red.
-- **Grey**: update status has not been checked or could not be resolved.
+These buttons help find expensive assets without changing project files:
 
-Git-installed Unity packages can use the footer update button directly. Embedded/VCC installs show the correct update route instead.
+- **Show Largest Textures** lists the largest source textures in the chosen Assets folder.
+- **Review Read/Write Memory** lists textures and imported models with CPU-readable copies enabled.
+- **Show Heavy Meshes** lists high-triangle meshes in the loaded scene or selected character hierarchy.
 
-## Blender v0.7.1
+Read/Write review is intentionally diagnostic-only. CPU-readable copies can consume additional memory, but disabling them automatically can break scripts, runtime mesh access and other workflows that require readable data. Unity documents the extra CPU memory cost for readable texture and mesh data.
 
-Blender support is also project-general: these tools are intended for game assets, environment props, characters without topology-sensitive rigs, prototypes, VR content, and other real-time workflows.
+### Compact update footer
+
+The footer shows the installed version and update state:
+
+- **Green:** current.
+- **Orange:** one patch release behind.
+- **Red:** two or more patch releases behind, or a newer minor/major release exists.
+- **Grey:** update status has not been checked or could not be resolved.
+
+Git-installed packages can use the footer update button directly. Embedded or VCC installs show the correct update route.
+
+## Blender v0.7.4
 
 The Blender add-on is under `Blender/vr_optimizer_blender/`.
 
-After installation, open the 3D Viewport sidebar (**N**) → **FISHHWB**.
+After installation, open the 3D Viewport sidebar with **N**, then open the **FISHHWB** tab.
 
-The Blender sidebar mirrors the same cleaner product layout: selection summary, **ONE-CLICK CLEANUP**, collapsible advanced tools, and the optional free/support note. The first action section is **ONE-CLICK CLEANUP**:
+### One-click cleanup
 
-- **Clean Selected Mesh**: makes a `_Clean` copy, removes loose geometry and exact duplicate vertices, removes zero-area faces and unused material slots, and fixes closed-surface normals.
-- **One-Click Remesh**: makes a new static-mesh copy and remeshes it with an automatically selected detail size.
-- **Merge Duplicate Vertices**: makes a new copy and merges nearby duplicate vertices using **Merge Distance**.
+- **Clean Active Mesh** creates a separate cleaned copy.
+- **Clean Selected Meshes** batch-cleans supported selected static meshes and preserves every original.
+- **One-Click Remesh** creates a remeshed static-mesh copy.
+- **Merge Duplicate Vertices** creates a copy and merges nearby vertices using the Merge Distance setting.
 
-The original mesh is kept untouched. Clean Selected Mesh supports static local meshes without shape keys, vertex groups, modifiers or custom split normals. Open surface faces and their winding are preserved. Remesh also rejects rigged and shape-key meshes; Merge Duplicate Vertices rejects shape keys.
+### Batch mesh preparation
 
-Existing triangle-limit, join/atlas, and static LOD tools remain under **Advanced Mesh Tools**.
+- **Create LODs for Selection** creates LOD0 / LOD1 / LOD2 sets for supported selected static meshes.
+- **Show Heavy Meshes** selects scene mesh objects over a configurable triangle threshold.
+- Unsupported topology-sensitive content is skipped rather than forced through destructive processing.
 
-### Action results
+### Advanced Mesh Tools
 
-Unity batches and Blender quick actions report **Changed**, **Unchanged**, **Skipped**, **Unsupported**, and **Failed**. Counts refer to candidates in the chosen scope. Unity texture/model counts refer to unique assets; Blender quick actions process the active mesh only. Cancelled Unity batches show partial results and count unprocessed candidates as skipped. Blender keeps its latest report in the sidebar.
+The earlier advanced tools remain available:
+
+- **Create Reduced Copy**
+- **Join Selected and Merge Vertices**
+- **Merge Base Color Textures + UVs**
+- **Create LOD0 / LOD1 / LOD2** for the active mesh
+
+The add-on keeps source objects available for comparison whenever its copy-based workflow is used.
+
+## Action results
+
+Unity batches and Blender quick actions report **Changed**, **Unchanged**, **Skipped**, **Unsupported** and **Failed**.
+
+Unity importer jobs work on unique assets. Blender copy-based jobs keep the source mesh untouched. Cancelled or unsupported items are reported instead of being silently changed.
 
 ## Future development
 
-- Follow the [version-by-version development roadmap](Documentation/Roadmap.md) for planned one-click tools and platform integrations.
-- The v1.0 goal is at least **90% of identified, safely automatable optimization tasks** in each supported integration and target, with progress measured against a public task inventory.
-- Planned work covers Unity, Blender, Godot and Unreal, plus target-specific preparation and simple **find, explain, fix and restore** helper buttons.
-- Roadmap entries are future plans. Only implemented and tested capabilities count toward coverage.
+The [version-by-version development roadmap](Documentation/Roadmap.md) tracks the path toward v1.0.
+
+The v1.0 goal remains at least **90% of identified, safely automatable optimization tasks** available through one action for each declared stable integration and target.
+
+Planned work includes:
+
+- richer material and draw-call review,
+- lighting and effects preparation,
+- physics and collider helpers,
+- build-size and dependency review,
+- safer restore and compare workflows,
+- Godot and Unreal integrations,
+- more language support,
+- searchable help that can find, explain and route directly to supported fixes.
+
+Roadmap items are future plans. Only implemented and tested behavior counts as current support.
 
 ## Free for developers
 
-**Optimize Your Project is free to use.** The goal is to make development easier, remove repetitive optimization work, and give newer creators useful tools without putting the basics behind a paywall.
+**Optimize Your Project is free to use.** It is built to reduce repetitive optimization work, make development easier and give newer creators useful tools without putting the basics behind a paywall.
 
-If the project saves you time and you would like to help it keep growing, you can support development on [Patreon](https://www.patreon.com/cw/DedZed). Optional support helps fund testing, documentation, new one-click optimization tools, maintenance, and future integrations with more engines and creator workflows.
+If the project saves you time and you want to help it grow, you can support development on [Patreon](https://www.patreon.com/cw/DedZed). Optional support helps fund testing, documentation, new one-click tools and future integrations.
 
 **Supporting is always optional. The project stays free either way.**
 
 ## Safety
 
-Optimization changes can affect appearance. Use source control or a backup before large batches and inspect the result in the target platform.
+Optimization changes can affect appearance or runtime behavior. Use source control or a backup before large batches and inspect the result in the target platform.
 
-Unity importer jobs change import metadata rather than source image files. Scene particle/light changes support Undo where applicable. Blender quick cleanup creates copies rather than replacing the source mesh.
+Unity importer jobs change import metadata rather than source image files. Scene particle and light changes support Undo where applicable. Read/Write review does not automatically disable CPU access.
+
+Blender cleanup and preparation tools create copies for supported mesh workflows instead of replacing source objects.
 
 ## Repository layout
 
@@ -108,18 +166,18 @@ scripts/                            Release/package checks
 
 ## Release checks
 
-Pull requests run static package checks that validate:
+Pull requests validate:
 
-- Unity package/version feed consistency.
+- Unity package and update-feed version consistency.
 - Blender add-on version consistency and Python syntax.
-- Required branding/package files.
-- v0.7 Project/Avatar UI shape.
-- Presence of the Blender cleanup, remesh and vertex-merge operators.
-- Buildability of both the Unity VPM archive and Blender add-on ZIP.
+- Required branding and package files.
+- Unity v0.7 Project / Character UI shape.
+- Unity language and Project Insights integration.
+- Blender cleanup, remesh, vertex merge, batch cleanup, batch LOD and heavy-mesh actions.
+- English, Japanese, Simplified Chinese and Korean language entries.
+- Buildability of the Unity VPM archive and Blender add-on ZIP.
 
-Blender runtime regression checks run on Blender 3.6 and 4.2 in CI. They cover source preservation, cleanup idempotence, UV/material retention, safe refusal, failure rollback, remesh and vertex merging. Run locally with `blender --background --factory-startup --python-exit-code 1 --python scripts/test_blender.py`.
-
-Unity editor compilation and interactive editor checks are still required before publishing a release tag.
+Blender runtime regression checks run on Blender 3.6 and 4.2 in CI. Unity editor compilation and interactive editor checks are still required before publishing a release tag.
 
 ## Community
 

@@ -1,10 +1,10 @@
 bl_info = {
     "name": "Optimize Your Project for Blender",
     "author": "FISHHWB | Ded Zed",
-    "version": (0, 7, 1),
+    "version": (0, 7, 4),
     "blender": (3, 6, 0),
     "location": "View3D > Sidebar > FISHHWB",
-    "description": "One-click mesh cleanup, remesh and vertex merging with optional mesh reduction, joining and LOD tools",
+    "description": "Multilingual one-click and batch mesh optimization with cleanup, LOD and review tools",
     "category": "Mesh",
 }
 
@@ -14,9 +14,61 @@ import math
 from pathlib import Path
 import bpy.utils.previews
 from array import array
-from bpy.props import BoolProperty, FloatProperty, IntProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, StringProperty
 
 _brand_preview = None
+
+LANGUAGE_ITEMS = (
+    ('EN', 'English', 'English'),
+    ('JA', '日本語', 'Japanese'),
+    ('ZH', '简体中文', 'Chinese (Simplified)'),
+    ('KO', '한국어', 'Korean'),
+)
+
+_TRANSLATIONS = {
+    'language': {'EN': 'Language', 'JA': '言語', 'ZH': '语言', 'KO': '언어'},
+    'title': {'EN': 'OPTIMIZE YOUR PROJECT', 'JA': 'プロジェクトを最適化', 'ZH': '优化你的项目', 'KO': '프로젝트 최적화'},
+    'subtitle': {'EN': 'Free one-click tools for developers', 'JA': '開発者向け無料ワンクリックツール', 'ZH': '面向开发者的免费一键工具', 'KO': '개발자를 위한 무료 원클릭 도구'},
+    'selection': {'EN': 'CURRENT SELECTION', 'JA': '現在の選択', 'ZH': '当前选择', 'KO': '현재 선택'},
+    'select_mesh': {'EN': 'Select one or more mesh objects to begin', 'JA': '開始するには1つ以上のメッシュを選択', 'ZH': '请选择一个或多个网格对象', 'KO': '시작하려면 하나 이상의 메시 오브젝트를 선택하세요'},
+    'quick': {'EN': 'ONE-CLICK CLEANUP', 'JA': 'ワンクリッククリーンアップ', 'ZH': '一键清理', 'KO': '원클릭 정리'},
+    'quick_desc': {'EN': 'Fast, safe actions that create new copies.', 'JA': '新しいコピーを作成する安全で高速な処理です。', 'ZH': '快速、安全，并创建新副本。', 'KO': '새 복사본을 만드는 빠르고 안전한 작업입니다.'},
+    'clean_one': {'EN': 'CLEAN ACTIVE MESH', 'JA': 'アクティブメッシュをクリーン', 'ZH': '清理活动网格', 'KO': '활성 메시 정리'},
+    'clean_many': {'EN': 'CLEAN SELECTED MESHES', 'JA': '選択メッシュを一括クリーン', 'ZH': '批量清理所选网格', 'KO': '선택 메시 일괄 정리'},
+    'remesh': {'EN': 'ONE-CLICK REMESH', 'JA': 'ワンクリックリメッシュ', 'ZH': '一键重网格', 'KO': '원클릭 리메시'},
+    'merge': {'EN': 'MERGE DUPLICATE VERTICES', 'JA': '重複頂点をマージ', 'ZH': '合并重复顶点', 'KO': '중복 정점 병합'},
+    'batch': {'EN': 'BATCH MESH PREP', 'JA': 'メッシュ一括準備', 'ZH': '批量网格准备', 'KO': '메시 일괄 준비'},
+    'batch_desc': {'EN': 'Prepare several static meshes without replacing the originals.', 'JA': '元データを置き換えずに複数の静的メッシュを準備します。', 'ZH': '在不替换原始对象的情况下准备多个静态网格。', 'KO': '원본을 교체하지 않고 여러 정적 메시를 준비합니다.'},
+    'batch_lods': {'EN': 'CREATE LODS FOR SELECTION', 'JA': '選択メッシュの LOD を作成', 'ZH': '为所选网格创建 LOD', 'KO': '선택 메시 LOD 생성'},
+    'heavy': {'EN': 'SHOW HEAVY MESHES', 'JA': '重いメッシュを表示', 'ZH': '显示高开销网格', 'KO': '무거운 메시 표시'},
+    'heavy_limit': {'EN': 'Heavy Triangle Limit', 'JA': '重いメッシュの三角形しきい値', 'ZH': '高开销网格三角形阈值', 'KO': '무거운 메시 삼각형 기준'},
+    'more_tools': {'EN': 'MORE TOOLS', 'JA': 'その他のツール', 'ZH': '更多工具', 'KO': '추가 도구'},
+    'advanced_toggle': {'EN': 'Show Advanced Mesh Tools', 'JA': '高度なメッシュツールを表示', 'ZH': '显示高级网格工具', 'KO': '고급 메시 도구 표시'},
+    'tri_reduce': {'EN': 'Triangle Reduction', 'JA': '三角形削減', 'ZH': '三角形缩减', 'KO': '삼각형 감소'},
+    'reduced_copy': {'EN': 'CREATE REDUCED COPY', 'JA': '削減コピーを作成', 'ZH': '创建缩减副本', 'KO': '감소된 복사본 생성'},
+    'join_atlas': {'EN': 'Join + Atlas', 'JA': '結合 + アトラス', 'ZH': '合并 + 图集', 'KO': '결합 + 아틀라스'},
+    'join': {'EN': 'JOIN SELECTED MESHES', 'JA': '選択メッシュを結合', 'ZH': '合并所选网格', 'KO': '선택 메시 결합'},
+    'static_lods': {'EN': 'Static Mesh LODs', 'JA': '静的メッシュ LOD', 'ZH': '静态网格 LOD', 'KO': '정적 메시 LOD'},
+    'create_lods': {'EN': 'CREATE LOD0 / LOD1 / LOD2', 'JA': 'LOD0 / LOD1 / LOD2 を作成', 'ZH': '创建 LOD0 / LOD1 / LOD2', 'KO': 'LOD0 / LOD1 / LOD2 생성'},
+    'last_result': {'EN': 'LAST RESULT', 'JA': '最後の結果', 'ZH': '上次结果', 'KO': '마지막 결과'},
+    'free': {'EN': 'FREE FOR DEVELOPERS', 'JA': '開発者向け無料ツール', 'ZH': '面向开发者免费', 'KO': '개발자 무료 도구'},
+    'free_1': {'EN': 'Built to save time and reduce repetitive optimization work.', 'JA': '時間を節約し、反復的な最適化作業を減らすためのツールです。', 'ZH': '用于节省时间并减少重复的优化工作。', 'KO': '시간을 절약하고 반복적인 최적화 작업을 줄이기 위한 도구입니다.'},
+    'free_2': {'EN': 'Optional Patreon support funds new tools, tests and documentation.', 'JA': '任意の Patreon 支援は新機能、テスト、文書作成に使われます。', 'ZH': '可选 Patreon 支持将用于新工具、测试和文档。', 'KO': '선택적인 Patreon 후원은 새 도구, 테스트 및 문서에 사용됩니다.'},
+    'free_3': {'EN': 'The project stays free either way.', 'JA': '支援の有無にかかわらず無料です。', 'ZH': '无论是否支持，本项目都会保持免费。', 'KO': '후원 여부와 관계없이 무료로 유지됩니다.'},
+    'support': {'EN': 'SUPPORT DEVELOPMENT ON PATREON', 'JA': 'PATREON で開発を支援', 'ZH': '在 PATREON 支持开发', 'KO': 'PATREON에서 개발 후원'},
+    'merge_distance': {'EN': 'Merge Distance', 'JA': 'マージ距離', 'ZH': '合并距离', 'KO': '병합 거리'},
+    'triangle_limit': {'EN': 'Triangle Limit', 'JA': '三角形上限', 'ZH': '三角形上限', 'KO': '삼각형 제한'},
+    'apply_modifiers': {'EN': 'Apply Existing Modifiers', 'JA': '既存モディファイアを適用', 'ZH': '应用现有修改器', 'KO': '기존 모디파이어 적용'},
+    'make_atlas': {'EN': 'Merge Base Color Textures + UVs', 'JA': 'ベースカラーテクスチャ + UV を統合', 'ZH': '合并基础颜色纹理 + UV', 'KO': '베이스 컬러 텍스처 + UV 병합'},
+    'atlas_size': {'EN': 'Atlas Size', 'JA': 'アトラスサイズ', 'ZH': '图集尺寸', 'KO': '아틀라스 크기'},
+    'padding': {'EN': 'Padding (Pixels)', 'JA': 'パディング（ピクセル）', 'ZH': '边距（像素）', 'KO': '패딩(픽셀)'},
+}
+
+def tr(context, key):
+    lang = getattr(context.scene, 'fishhwb_language', 'EN') if context and context.scene else 'EN'
+    values = _TRANSLATIONS.get(key, {})
+    return values.get(lang, values.get('EN', key))
+
 
 
 def triangle_count(mesh):
@@ -739,6 +791,143 @@ class FISHHWB_OT_merge_vertices(bpy.types.Operator):
             return {'CANCELLED'}
 
 
+
+class FISHHWB_OT_clean_selected_meshes(bpy.types.Operator):
+    bl_idname = "fishhwb.clean_selected_meshes"
+    bl_label = "Clean Selected Meshes"
+    bl_description = "Clean all selected supported static meshes on new copies"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT' and any(obj.type == 'MESH' for obj in context.selected_objects)
+
+    def execute(self, context):
+        sources = [obj for obj in context.selected_objects if obj.type == 'MESH']
+        original_active = context.view_layer.objects.active
+        original_selection = list(context.selected_objects)
+        created = []
+        changed = unchanged = skipped = unsupported = failed = 0
+
+        for source in sources:
+            reason = _cleanup_unsupported(source)
+            if reason:
+                unsupported += 1
+                continue
+
+            copy = None
+            try:
+                copy = _copy_mesh_object(source, context, "_Clean")
+                stats = _clean_mesh(copy.data)
+                created.append(copy)
+                if any(stats.values()):
+                    changed += 1
+                else:
+                    unchanged += 1
+            except Exception:
+                failed += 1
+                if copy is not None and copy.name in bpy.data.objects:
+                    mesh = copy.data
+                    bpy.data.objects.remove(copy, do_unlink=True)
+                    if mesh and mesh.users == 0:
+                        bpy.data.meshes.remove(mesh)
+
+        for obj in context.selected_objects:
+            obj.select_set(False)
+
+        if created:
+            for obj in created:
+                obj.select_set(True)
+            context.view_layer.objects.active = created[0]
+        else:
+            for obj in original_selection:
+                if obj and obj.name in bpy.data.objects:
+                    obj.select_set(True)
+            context.view_layer.objects.active = original_active
+
+        detail = f"Processed {len(sources)} selected meshes. {len(created)} cleaned copies created; originals preserved."
+        _action_report(self, context, detail, changed=changed, unchanged=unchanged,
+                       skipped=skipped, unsupported=unsupported, failed=failed)
+        return {'FINISHED'} if created else {'CANCELLED'}
+
+
+class FISHHWB_OT_create_lods_selected(bpy.types.Operator):
+    bl_idname = "fishhwb.create_lods_selected"
+    bl_label = "Create LODs for Selection"
+    bl_description = "Create LOD0, LOD1 and LOD2 copies for every supported selected static mesh"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT' and any(obj.type == 'MESH' for obj in context.selected_objects)
+
+    def execute(self, context):
+        sources = [obj for obj in context.selected_objects if obj.type == 'MESH']
+        original_active = context.view_layer.objects.active
+        outputs = []
+        changed = unsupported = failed = 0
+
+        for source in sources:
+            if source.data.shape_keys or source.vertex_groups or any(m.type == 'ARMATURE' for m in source.modifiers):
+                unsupported += 1
+                continue
+            if source.modifiers and not context.scene.fishhwb_apply_modifiers:
+                unsupported += 1
+                continue
+
+            _select_only(context, source)
+            try:
+                result = bpy.ops.fishhwb.create_lods()
+                if 'FINISHED' in result:
+                    changed += 1
+                    if context.active_object:
+                        outputs.append(context.active_object)
+                else:
+                    failed += 1
+            except Exception:
+                failed += 1
+
+        for obj in context.selected_objects:
+            obj.select_set(False)
+        if outputs:
+            for obj in outputs:
+                obj.select_set(True)
+            context.view_layer.objects.active = outputs[0]
+        elif original_active and original_active.name in bpy.data.objects:
+            original_active.select_set(True)
+            context.view_layer.objects.active = original_active
+
+        detail = f"Created LOD sets for {changed} of {len(sources)} selected meshes. Originals preserved."
+        _action_report(self, context, detail, changed=changed, unsupported=unsupported, failed=failed)
+        return {'FINISHED'} if changed else {'CANCELLED'}
+
+
+class FISHHWB_OT_show_heavy_meshes(bpy.types.Operator):
+    bl_idname = "fishhwb.show_heavy_meshes"
+    bl_label = "Show Heavy Meshes"
+    bl_description = "Select mesh objects whose source triangle count exceeds the chosen threshold"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        threshold = max(1, context.scene.fishhwb_heavy_triangles)
+        candidates = [obj for obj in context.scene.objects if obj.type == 'MESH' and obj.data]
+        heavy = [(triangle_count(obj.data), obj) for obj in candidates if triangle_count(obj.data) >= threshold]
+        heavy.sort(key=lambda item: item[0], reverse=True)
+
+        for obj in context.selected_objects:
+            obj.select_set(False)
+        for _, obj in heavy:
+            obj.select_set(True)
+        if heavy:
+            context.view_layer.objects.active = heavy[0][1]
+
+        top = ", ".join(f"{obj.name}: {count:,}" for count, obj in heavy[:5])
+        detail = f"Found {len(heavy)} meshes at or above {threshold:,} triangles."
+        if top:
+            detail += " Largest: " + top
+        _action_report(self, context, detail, unchanged=len(heavy), skipped=max(0, len(candidates) - len(heavy)))
+        return {'FINISHED'}
+
 class FISHHWB_PT_tri_limit(bpy.types.Panel):
     bl_label = "Optimize Your Project"
     bl_idname = "FISHHWB_PT_tri_limit"
@@ -754,81 +943,95 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
         brand = layout.box()
         if _brand_preview and "logo" in _brand_preview:
             brand.template_icon(icon_value=_brand_preview["logo"].icon_id, scale=3)
-        brand.label(text="OPTIMIZE YOUR PROJECT", icon='TOOL_SETTINGS')
-        brand.label(text="Free one-click tools for developers")
-        brand.label(text="v0.7.1 • Blender")
+        brand.label(text=tr(context, 'title'), icon='TOOL_SETTINGS')
+        brand.label(text=tr(context, 'subtitle'))
+        brand.label(text="v0.7.4 • Blender")
+        brand.prop(context.scene, 'fishhwb_language', text=tr(context, 'language'))
 
         obj = context.active_object
+        selected_meshes = [item for item in context.selected_objects if item.type == 'MESH']
         selected = layout.box()
-        selected.label(text="CURRENT SELECTION", icon='MESH_DATA')
+        selected.label(text=tr(context, 'selection'), icon='MESH_DATA')
         if obj and obj.type == 'MESH':
             selected.label(text=obj.name)
             stats = selected.row(align=True)
             stats.label(text=f"Triangles: {triangle_count(obj.data):,}")
             stats.label(text=f"Vertices: {len(obj.data.vertices):,}")
+            if len(selected_meshes) > 1:
+                selected.label(text=f"{len(selected_meshes)} mesh objects selected")
         else:
-            selected.label(text="Select one mesh object to begin", icon='INFO')
+            selected.label(text=tr(context, 'select_mesh'), icon='INFO')
 
         quick = layout.box()
-        quick.label(text="ONE-CLICK CLEANUP", icon='MODIFIER')
-        quick.label(text="Fast, safe actions that create new copies.")
+        quick.label(text=tr(context, 'quick'), icon='MODIFIER')
+        quick.label(text=tr(context, 'quick_desc'))
         quick.separator()
 
         clean = quick.row()
-        clean.scale_y = 1.45
-        clean.operator('fishhwb.clean_selected_mesh', text="CLEAN SELECTED MESH", icon='BRUSH_DATA')
-        quick.label(text="Clean mesh clutter on a new static copy.")
-        quick.separator()
+        clean.scale_y = 1.35
+        clean.operator('fishhwb.clean_selected_mesh', text=tr(context, 'clean_one'), icon='BRUSH_DATA')
 
+        batch_clean = quick.row()
+        batch_clean.scale_y = 1.45
+        batch_clean.operator('fishhwb.clean_selected_meshes', text=tr(context, 'clean_many'), icon='MODIFIER')
+
+        quick.separator()
         remesh = quick.row()
-        remesh.scale_y = 1.45
-        remesh.operator('fishhwb.one_click_remesh', text="ONE-CLICK REMESH", icon='MOD_REMESH')
+        remesh.scale_y = 1.35
+        remesh.operator('fishhwb.one_click_remesh', text=tr(context, 'remesh'), icon='MOD_REMESH')
 
         quick.separator()
-        quick.label(text="Merge nearby duplicate vertices")
-        quick.prop(context.scene, 'fishhwb_merge_distance')
+        quick.prop(context.scene, 'fishhwb_merge_distance', text=tr(context, 'merge_distance'))
         merge = quick.row()
-        merge.scale_y = 1.45
-        merge.operator('fishhwb.merge_vertices', text="MERGE DUPLICATE VERTICES", icon='AUTOMERGE_ON')
+        merge.scale_y = 1.35
+        merge.operator('fishhwb.merge_vertices', text=tr(context, 'merge'), icon='AUTOMERGE_ON')
+
+        batch = layout.box()
+        batch.label(text=tr(context, 'batch'), icon='MODIFIER')
+        batch.label(text=tr(context, 'batch_desc'))
+
+        lod_row = batch.row()
+        lod_row.scale_y = 1.35
+        lod_row.operator('fishhwb.create_lods_selected', text=tr(context, 'batch_lods'), icon='MOD_DECIM')
+
+        batch.prop(context.scene, 'fishhwb_heavy_triangles', text=tr(context, 'heavy_limit'))
+        heavy = batch.row()
+        heavy.scale_y = 1.25
+        heavy.operator('fishhwb.show_heavy_meshes', text=tr(context, 'heavy'), icon='MESH_DATA')
 
         tools = layout.box()
-        tools.label(text="MORE TOOLS", icon='PREFERENCES')
-        tools.prop(
-            context.scene,
-            'fishhwb_show_advanced',
-            text="Show Advanced Mesh Tools",
-            toggle=True)
+        tools.label(text=tr(context, 'more_tools'), icon='PREFERENCES')
+        tools.prop(context.scene, 'fishhwb_show_advanced', text=tr(context, 'advanced_toggle'), toggle=True)
 
         if context.scene.fishhwb_show_advanced:
             advanced = tools.column(align=False)
             advanced.separator()
-            advanced.label(text="Triangle Reduction", icon='MOD_DECIM')
-            advanced.prop(context.scene, 'fishhwb_tri_limit')
-            advanced.prop(context.scene, 'fishhwb_apply_modifiers')
+            advanced.label(text=tr(context, 'tri_reduce'), icon='MOD_DECIM')
+            advanced.prop(context.scene, 'fishhwb_tri_limit', text=tr(context, 'triangle_limit'))
+            advanced.prop(context.scene, 'fishhwb_apply_modifiers', text=tr(context, 'apply_modifiers'))
             row = advanced.row()
             row.scale_y = 1.2
-            row.operator('fishhwb.tri_limit', text="CREATE REDUCED COPY", icon='MOD_DECIM')
+            row.operator('fishhwb.tri_limit', text=tr(context, 'reduced_copy'), icon='MOD_DECIM')
 
             advanced.separator()
-            advanced.label(text="Join + Atlas", icon='AUTOMERGE_ON')
-            advanced.prop(context.scene, 'fishhwb_make_atlas')
+            advanced.label(text=tr(context, 'join_atlas'), icon='AUTOMERGE_ON')
+            advanced.prop(context.scene, 'fishhwb_make_atlas', text=tr(context, 'make_atlas'))
             if context.scene.fishhwb_make_atlas:
-                advanced.prop(context.scene, 'fishhwb_atlas_size')
-                advanced.prop(context.scene, 'fishhwb_atlas_padding')
+                advanced.prop(context.scene, 'fishhwb_atlas_size', text=tr(context, 'atlas_size'))
+                advanced.prop(context.scene, 'fishhwb_atlas_padding', text=tr(context, 'padding'))
             row = advanced.row()
             row.scale_y = 1.2
-            row.operator('fishhwb.join_merge', text="JOIN SELECTED MESHES", icon='AUTOMERGE_ON')
+            row.operator('fishhwb.join_merge', text=tr(context, 'join'), icon='AUTOMERGE_ON')
 
             advanced.separator()
-            advanced.label(text="Static Mesh LODs", icon='MOD_DECIM')
+            advanced.label(text=tr(context, 'static_lods'), icon='MOD_DECIM')
             row = advanced.row()
             row.scale_y = 1.2
-            row.operator('fishhwb.create_lods', text="CREATE LOD0 / LOD1 / LOD2", icon='MOD_DECIM')
+            row.operator('fishhwb.create_lods', text=tr(context, 'create_lods'), icon='MOD_DECIM')
 
         if context.scene.fishhwb_last_result:
             result = layout.box()
-            result.label(text="LAST RESULT", icon='INFO')
-            # Wrap long reports to fit narrow sidebar panels.
+            result.label(text=tr(context, 'last_result'), icon='INFO')
             import textwrap
             width = max(24, int(context.region.width / (7 * context.preferences.system.ui_scale)))
             for line in context.scene.fishhwb_last_result.splitlines():
@@ -836,29 +1039,24 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
                     result.label(text=wrapped)
 
         support = layout.box()
-        support.label(text="FREE FOR DEVELOPERS", icon='HEART')
-        support.label(text="Built to save time, reduce busywork,")
-        support.label(text="and help newer creators learn.")
+        support.label(text=tr(context, 'free'), icon='HEART')
+        support.label(text=tr(context, 'free_1'))
         support.separator()
-        support.label(text="If this tool helps you, optional Patreon")
-        support.label(text="support funds new tools, testing,")
-        support.label(text="documentation and future integrations.")
-        support.label(text="The project stays free either way.")
+        support.label(text=tr(context, 'free_2'))
+        support.label(text=tr(context, 'free_3'))
 
         donate = support.row()
         donate.scale_y = 1.35
-        donate.operator(
-            "wm.url_open",
-            text="SUPPORT DEVELOPMENT ON PATREON",
-            icon='URL').url = "https://www.patreon.com/cw/DedZed"
+        donate.operator("wm.url_open", text=tr(context, 'support'), icon='URL').url = "https://www.patreon.com/cw/DedZed"
 
         links = layout.row(align=True)
         links.operator("wm.url_open", text="GitHub", icon='URL').url = "https://github.com/dedzedofficial/Optimize-Your-Project"
         links.operator("wm.url_open", text="Website", icon='URL').url = "https://fishhwb.github.io/"
 
-
-classes = (FISHHWB_OT_clean_selected_mesh, FISHHWB_OT_tri_limit, FISHHWB_OT_join_merge, FISHHWB_OT_one_click_remesh,
-           FISHHWB_OT_merge_vertices, FISHHWB_OT_create_lods, FISHHWB_PT_tri_limit)
+classes = (FISHHWB_OT_clean_selected_mesh, FISHHWB_OT_clean_selected_meshes, FISHHWB_OT_tri_limit,
+           FISHHWB_OT_join_merge, FISHHWB_OT_one_click_remesh, FISHHWB_OT_merge_vertices,
+           FISHHWB_OT_create_lods, FISHHWB_OT_create_lods_selected, FISHHWB_OT_show_heavy_meshes,
+           FISHHWB_PT_tri_limit)
 
 
 def register():
@@ -868,6 +1066,12 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.Scene.fishhwb_last_result = StringProperty(options={'SKIP_SAVE'})
+    bpy.types.Scene.fishhwb_language = EnumProperty(
+        name="Language", items=LANGUAGE_ITEMS, default='EN',
+        description="Interface language for Optimize Your Project")
+    bpy.types.Scene.fishhwb_heavy_triangles = IntProperty(
+        name="Heavy Triangle Limit", default=100000, min=1,
+        description="Triangle count used by Show Heavy Meshes")
     bpy.types.Scene.fishhwb_tri_limit = IntProperty(name="Triangle Limit", default=1000, min=1)
     bpy.types.Scene.fishhwb_apply_modifiers = BoolProperty(name="Apply Existing Modifiers", default=True,
         description="Include existing modifiers in the new copy before decimation")
@@ -892,6 +1096,8 @@ def unregister():
         bpy.utils.previews.remove(_brand_preview)
         _brand_preview = None
     del bpy.types.Scene.fishhwb_last_result
+    del bpy.types.Scene.fishhwb_language
+    del bpy.types.Scene.fishhwb_heavy_triangles
     del bpy.types.Scene.fishhwb_tri_limit
     del bpy.types.Scene.fishhwb_apply_modifiers
     del bpy.types.Scene.fishhwb_merge_distance

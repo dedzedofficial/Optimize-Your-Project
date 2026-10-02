@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using static FISHHWB.VROptimizer.VRLocalization;
 
 namespace FISHHWB.VROptimizer
 {
@@ -18,11 +19,12 @@ namespace FISHHWB.VROptimizer
         Filter filter;
         GameObject avatar;
         string projectFolder = "Assets";
+        string actionSearch = "";
         Texture2D icon;
         Vector2 scroll;
         List<VRIssue> issues;
         ModelImporterMeshCompression meshLevel = ModelImporterMeshCompression.Medium;
-        string summary = "Choose a job and press its button.";
+        string summary;
         bool showParticleControls;
 
         GUIStyle cardStyle;
@@ -46,6 +48,7 @@ namespace FISHHWB.VROptimizer
             icon = AssetDatabase.LoadAssetAtPath<Texture2D>(
                 "Packages/com.fishhwb.vr-optimizer/Editor/FISHHWBVR/Icons/Optimize-Your-Project.png");
             titleContent = new GUIContent("Optimize Your Project", icon);
+            summary = T("choose_job");
             VRUpdateChecker.CheckIfDue();
         }
 
@@ -56,13 +59,15 @@ namespace FISHHWB.VROptimizer
 
             scroll = EditorGUILayout.BeginScrollView(scroll);
             Header();
+            GUILayout.Space(8);
+            DrawLanguageAndSearch();
             GUILayout.Space(10);
 
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(8);
             var next = (Page)GUILayout.Toolbar(
                 (int)page,
-                new[] { "PROJECT", "CHARACTER / AVATAR" },
+                new[] { T("project"), T("avatar") },
                 GUILayout.Height(38),
                 GUILayout.ExpandWidth(true));
             GUILayout.Space(8);
@@ -72,7 +77,7 @@ namespace FISHHWB.VROptimizer
             {
                 page = next;
                 issues = null;
-                summary = "Choose a job and press its button.";
+                summary = T("choose_job");
             }
 
             GUILayout.Space(12);
@@ -210,72 +215,91 @@ namespace FISHHWB.VROptimizer
             GUI.Label(new Rect(rect.x + 82, rect.y + 14, rect.width - 94, 25), "OPTIMIZE YOUR PROJECT", title);
             GUI.Label(
                 new Rect(rect.x + 82, rect.y + 42, rect.width - 94, 18),
-                "Free developer tools • one-click optimization • v" + VRUpdateChecker.CurrentVersion,
+                "v" + VRUpdateChecker.CurrentVersion + "  •  EN / 日本語 / 简体中文 / 한국어",
                 detail);
         }
 
         void DrawProject()
         {
-            DrawSectionIntro(
-                "PROJECT",
-                "Fast, focused optimization for assets and loaded scenes. Pick a job, run it, and keep moving.");
+            DrawSectionIntro(T("project"), T("project_intro"));
 
-            BeginCard("ASSET SCOPE", "Choose which Assets folder texture jobs should work inside.");
-            string chosen = EditorGUILayout.TextField("Assets folder", projectFolder);
+            BeginCard(T("asset_scope"), T("asset_scope_desc"));
+            string chosen = EditorGUILayout.TextField(T("assets_folder"), projectFolder);
             if (chosen != projectFolder) projectFolder = chosen;
+
+            if (GUILayout.Button(T("use_selection")))
+                projectFolder = VRProjectInsights.FolderFromSelection(projectFolder);
 
             bool valid = projectFolder == "Assets" ||
                          projectFolder.StartsWith("Assets/", StringComparison.Ordinal) &&
                          AssetDatabase.IsValidFolder(projectFolder);
 
             if (!valid)
-                EditorGUILayout.HelpBox("Enter an existing folder under Assets.", MessageType.Warning);
+                EditorGUILayout.HelpBox(T("invalid_folder"), MessageType.Warning);
             EndCard();
 
-            using (new EditorGUI.DisabledScope(!valid))
-                TextureCard(null, "TEXTURES", "Resize and compress supported textures in the selected Assets folder.", projectFolder);
-
-            ParticleCard(null);
-            MeshCard(null);
-            LightCard(null);
-
-            BeginCard(
-                "PROJECT CHECK",
-                "Need more detail? Run a full scan only when you want a list of findings and direct links to problem assets.");
-
-            if (ActionButton("SCAN ENTIRE PROJECT"))
+            if (MatchesAction("texture memory"))
             {
-                issues = VRProjectScanner.Scan(settings, null, out bool cancelled);
-                summary = (cancelled ? "Partial scan: " : "Project scan complete: ") + issues.Count + " findings.";
+                using (new EditorGUI.DisabledScope(!valid))
+                    TextureCard(null, T("textures"), T("textures_desc_project"), projectFolder);
             }
 
-            EndCard();
+            if (MatchesAction("particle effects"))
+                ParticleCard(null);
+
+            if (MatchesAction("mesh model compression"))
+                MeshCard(null);
+
+            if (MatchesAction("light shadow"))
+                LightCard(null);
+
+            if (MatchesAction("memory texture mesh heavy review"))
+            {
+                using (new EditorGUI.DisabledScope(!valid))
+                    InsightsCard(null, projectFolder);
+            }
+
+            if (MatchesAction("scan diagnostic project check"))
+            {
+                BeginCard(T("scan"), T("scan_desc"));
+                if (ActionButton(T("scan_button")))
+                {
+                    issues = VRProjectScanner.Scan(settings, null, out bool cancelled);
+                    summary = (cancelled ? "Partial scan: " : "Project scan complete: ") + issues.Count + " findings.";
+                }
+                EndCard();
+            }
+
             DrawIssues();
         }
 
         void DrawAvatar()
         {
-            DrawSectionIntro(
-                "CHARACTER / AVATAR",
-                "Optimize one character hierarchy without changing the rest of your loaded scene.");
+            DrawSectionIntro(T("avatar"), T("avatar_intro"));
 
-            BeginCard("CHARACTER / AVATAR ROOT", "Select the root object you want these one-click jobs to target.");
+            BeginCard(T("avatar_root"), T("avatar_root_desc"));
             avatar = (GameObject)EditorGUILayout.ObjectField(avatar, typeof(GameObject), true);
 
-            if (GUILayout.Button("USE CURRENT SELECTION"))
+            if (GUILayout.Button(T("use_selection")))
                 avatar = Selection.activeGameObject;
 
             bool valid = VRAvatarWorkflow.EditableRoot(avatar);
             if (!valid)
-                EditorGUILayout.HelpBox("Select a character or avatar root in a loaded scene.", MessageType.Info);
+                EditorGUILayout.HelpBox(T("avatar_help"), MessageType.Info);
             EndCard();
 
             using (new EditorGUI.DisabledScope(!valid))
             {
-                TextureCard(avatar, "TEXTURES", "Resize and compress textures referenced by this character hierarchy.");
-                ParticleCard(avatar);
-                MeshCard(avatar);
-                LightCard(avatar);
+                if (MatchesAction("texture memory"))
+                    TextureCard(avatar, T("textures"), T("textures_desc_avatar"));
+                if (MatchesAction("particle effects"))
+                    ParticleCard(avatar);
+                if (MatchesAction("mesh model compression"))
+                    MeshCard(avatar);
+                if (MatchesAction("light shadow"))
+                    LightCard(avatar);
+                if (MatchesAction("mesh heavy review"))
+                    InsightsCard(avatar, "Assets");
             }
         }
 
@@ -284,9 +308,9 @@ namespace FISHHWB.VROptimizer
             BeginCard(title, scope);
 
             EditorGUI.BeginChangeCheck();
-            settings.pc = SizeField("PC / Standalone", settings.pc);
-            settings.android = SizeField("Android / Mobile", settings.android);
-            settings.ios = SizeField("iOS", settings.ios);
+            settings.pc = SizeField(T("pc"), settings.pc);
+            settings.android = SizeField(T("android"), settings.android);
+            settings.ios = SizeField(T("ios"), settings.ios);
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -294,7 +318,7 @@ namespace FISHHWB.VROptimizer
                 settings.Save();
             }
 
-            if (ActionButton("COMPRESS & SIZE TEXTURES"))
+            if (ActionButton(T("compress_textures")))
                 OptimizeTextures(root, folder);
 
             EndCard();
@@ -368,28 +392,28 @@ namespace FISHHWB.VROptimizer
         void ParticleCard(GameObject root)
         {
             BeginCard(
-                "PARTICLES",
-                root ? "Apply the selected limits to particle systems under this character hierarchy." : "Apply the selected limits to particle systems in loaded scenes.");
+                T("particles"),
+                root ? T("particles_avatar") : T("particles_project"));
 
             EditorGUI.BeginChangeCheck();
-            settings.capParticles = EditorGUILayout.Toggle("Cap particle count", settings.capParticles);
+            settings.capParticles = EditorGUILayout.Toggle(T("cap_particles"), settings.capParticles);
 
             if (settings.capParticles)
-                settings.maxParticles = EditorGUILayout.IntField("Maximum particles", settings.maxParticles);
+                settings.maxParticles = EditorGUILayout.IntField(T("max_particles"), settings.maxParticles);
 
-            showParticleControls = EditorGUILayout.Foldout(showParticleControls, "More particle controls", true);
+            showParticleControls = EditorGUILayout.Foldout(showParticleControls, T("more_particles"), true);
             if (showParticleControls)
             {
-                settings.capLifetime = EditorGUILayout.Toggle("Cap constant lifetime", settings.capLifetime);
+                settings.capLifetime = EditorGUILayout.Toggle(T("cap_lifetime"), settings.capLifetime);
                 if (settings.capLifetime)
-                    settings.maxLifetime = EditorGUILayout.FloatField("Maximum lifetime", settings.maxLifetime);
+                    settings.maxLifetime = EditorGUILayout.FloatField(T("max_lifetime"), settings.maxLifetime);
 
-                settings.disableTrails = EditorGUILayout.Toggle("Disable trails", settings.disableTrails);
-                settings.disableCollision = EditorGUILayout.Toggle("Disable collision", settings.disableCollision);
-                settings.disableNoise = EditorGUILayout.Toggle("Disable noise", settings.disableNoise);
-                settings.disableLights = EditorGUILayout.Toggle("Disable particle lights", settings.disableLights);
-                settings.disableShadows = EditorGUILayout.Toggle("Disable shadows", settings.disableShadows);
-                settings.disableSubEmitters = EditorGUILayout.Toggle("Disable sub emitters", settings.disableSubEmitters);
+                settings.disableTrails = EditorGUILayout.Toggle(T("disable_trails"), settings.disableTrails);
+                settings.disableCollision = EditorGUILayout.Toggle(T("disable_collision"), settings.disableCollision);
+                settings.disableNoise = EditorGUILayout.Toggle(T("disable_noise"), settings.disableNoise);
+                settings.disableLights = EditorGUILayout.Toggle(T("disable_particle_lights"), settings.disableLights);
+                settings.disableShadows = EditorGUILayout.Toggle(T("disable_particle_shadows"), settings.disableShadows);
+                settings.disableSubEmitters = EditorGUILayout.Toggle(T("disable_subemitters"), settings.disableSubEmitters);
             }
 
             if (EditorGUI.EndChangeCheck())
@@ -398,7 +422,7 @@ namespace FISHHWB.VROptimizer
                 settings.Save();
             }
 
-            if (ActionButton("OPTIMIZE PARTICLES"))
+            if (ActionButton(T("optimize_particles")))
                 OptimizeParticles(root);
 
             EndCard();
@@ -431,12 +455,12 @@ namespace FISHHWB.VROptimizer
         void MeshCard(GameObject root)
         {
             BeginCard(
-                "MESH IMPORTS",
-                root ? "Apply Unity mesh compression to imported models referenced by this character hierarchy." : "Apply Unity mesh compression to imported models used by loaded scenes.");
+                T("mesh_imports"),
+                root ? T("mesh_avatar") : T("mesh_project"));
 
-            meshLevel = (ModelImporterMeshCompression)EditorGUILayout.EnumPopup("Compression", meshLevel);
+            meshLevel = (ModelImporterMeshCompression)EditorGUILayout.EnumPopup(T("compression"), meshLevel);
 
-            if (ActionButton("COMPRESS IMPORTED MESHES"))
+            if (ActionButton(T("compress_meshes")))
             {
                 var meshes = VRMeshCompression.Collect(root, out int unsupported);
                 int pending = 0;
@@ -469,10 +493,10 @@ namespace FISHHWB.VROptimizer
         void LightCard(GameObject root)
         {
             BeginCard(
-                "REALTIME LIGHT SHADOWS",
-                root ? "Quickly disable realtime shadows under this character hierarchy." : "Quickly disable realtime shadows in loaded scenes.");
+                T("lights"),
+                root ? T("lights_avatar") : T("lights_project"));
 
-            if (ActionButton("DISABLE REALTIME SHADOWS"))
+            if (ActionButton(T("disable_shadows")))
             {
                 var lights = new List<Light>(root
                     ? (IEnumerable<Light>)root.GetComponentsInChildren<Light>(true)
@@ -509,13 +533,71 @@ namespace FISHHWB.VROptimizer
             EndCard();
         }
 
+        void InsightsCard(GameObject root, string folder)
+        {
+            BeginCard(T("insights"), T("insights_desc"));
+
+            if (!root && GUILayout.Button(T("largest_textures"), compactButtonStyle))
+            {
+                issues = VRProjectInsights.LargestTextures(folder);
+                summary = "Largest texture review: " + issues.Count + " candidates.";
+            }
+
+            if (!root && GUILayout.Button(T("readwrite_review"), compactButtonStyle))
+            {
+                issues = VRProjectInsights.ReadWriteReview(folder);
+                summary = "Read/Write review: " + issues.Count + " candidates.";
+            }
+
+            if (GUILayout.Button(T("heavy_meshes"), compactButtonStyle))
+            {
+                issues = VRProjectInsights.HeavyMeshes(root);
+                summary = "Heavy mesh review: " + issues.Count + " candidates.";
+            }
+
+            EndCard();
+        }
+
+        void DrawLanguageAndSearch()
+        {
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Space(10);
+            EditorGUILayout.BeginVertical(cardStyle);
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(T("language"), GUILayout.Width(78));
+            int current = (int)VRLocalization.Current;
+            int next = EditorGUILayout.Popup(current, VRLocalization.LanguageNames);
+            if (next != current)
+            {
+                VRLocalization.Current = (VRLanguage)next;
+                summary = T("choose_job");
+                Repaint();
+            }
+            EditorGUILayout.EndHorizontal();
+
+            actionSearch = EditorGUILayout.TextField(T("search"), actionSearch);
+            if (string.IsNullOrWhiteSpace(actionSearch))
+                EditorGUILayout.LabelField(T("search_hint"), sectionDetailStyle);
+
+            EditorGUILayout.EndVertical();
+            GUILayout.Space(10);
+            EditorGUILayout.EndHorizontal();
+        }
+
+        bool MatchesAction(string keywords)
+        {
+            if (string.IsNullOrWhiteSpace(actionSearch)) return true;
+            return keywords.IndexOf(actionSearch.Trim(), StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         void DrawIssues()
         {
             if (issues == null) return;
 
             GUILayout.Space(6);
-            EditorGUILayout.LabelField("PROJECT SCAN RESULTS  •  " + issues.Count, EditorStyles.boldLabel);
-            filter = (Filter)GUILayout.Toolbar((int)filter, new[] { "ALL", "CRITICAL", "WARNING" });
+            EditorGUILayout.LabelField(T("scan_results") + "  •  " + issues.Count, EditorStyles.boldLabel);
+            filter = (Filter)GUILayout.Toolbar((int)filter, new[] { T("all"), T("critical"), T("warning") });
 
             int count = 0;
             foreach (var issue in issues)
@@ -540,7 +622,7 @@ namespace FISHHWB.VROptimizer
 
                 using (new EditorGUI.DisabledScope(!issue.Target))
                 {
-                    if (GUILayout.Button("SELECT", GUILayout.Width(90)))
+                    if (GUILayout.Button(T("select"), GUILayout.Width(100)))
                     {
                         Selection.activeObject = issue.Target;
                         EditorGUIUtility.PingObject(issue.Target);
@@ -551,32 +633,28 @@ namespace FISHHWB.VROptimizer
             }
 
             if (count == 0)
-                EditorGUILayout.LabelField("No findings in this filter.", EditorStyles.miniLabel);
+                EditorGUILayout.LabelField(T("no_findings"), EditorStyles.miniLabel);
         }
 
         void DrawResultCard()
         {
-            BeginCard("LAST RESULT", "A short summary of the most recent action.");
-            EditorGUILayout.LabelField(summary, EditorStyles.wordWrappedLabel);
+            BeginCard(T("last_result"), T("last_result_desc"));
+            EditorGUILayout.LabelField(summary ?? T("choose_job"), EditorStyles.wordWrappedLabel);
             EndCard();
         }
 
         void DrawSupportPanel()
         {
-            BeginCard(
-                "FREE FOR DEVELOPERS",
-                "Optimize Your Project is free to use. It exists to remove repetitive work, make development easier, and help newer creators learn without a paywall.");
+            BeginCard(T("support"), T("support_desc"));
 
-            EditorGUILayout.LabelField(
-                "If the tool saves you time and you want to help it grow, optional Patreon support helps fund testing, documentation, new one-click tools, and future engine support. The project stays free either way.",
-                EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.LabelField(T("support_body"), EditorStyles.wordWrappedMiniLabel);
 
             var previous = GUI.backgroundColor;
             GUI.backgroundColor = EditorGUIUtility.isProSkin
                 ? new Color(.74f, .48f, .82f)
                 : new Color(.72f, .50f, .78f);
 
-            if (GUILayout.Button("SUPPORT DEVELOPMENT ON PATREON", primaryButtonStyle))
+            if (GUILayout.Button(T("support_button"), primaryButtonStyle))
                 Application.OpenURL("https://www.patreon.com/cw/DedZed");
 
             GUI.backgroundColor = previous;
@@ -585,7 +663,7 @@ namespace FISHHWB.VROptimizer
 
         void DrawUpdateFooter()
         {
-            BeginCard("VERSION", "Keep the tool current without leaving this window.");
+            BeginCard(T("version"), T("version_desc"));
             EditorGUILayout.BeginHorizontal();
 
             var health = VRUpdateChecker.Health;
@@ -599,16 +677,16 @@ namespace FISHHWB.VROptimizer
             switch (health)
             {
                 case VRUpdateHealth.Current:
-                    stateText = "Up to date";
+                    stateText = T("up_to_date");
                     break;
                 case VRUpdateHealth.UpdateAvailable:
-                    stateText = "Update available";
+                    stateText = T("update_available");
                     break;
                 case VRUpdateHealth.FarBehind:
-                    stateText = "Update recommended";
+                    stateText = T("update_recommended");
                     break;
                 default:
-                    stateText = VRUpdateChecker.Checking ? "Checking..." : "Update status unknown";
+                    stateText = VRUpdateChecker.Checking ? T("checking") : T("update_unknown");
                     break;
             }
 
@@ -628,7 +706,7 @@ namespace FISHHWB.VROptimizer
                 }
                 else
                 {
-                    if (GUILayout.Button(VRUpdateChecker.Checking ? "CHECKING..." : "CHECK UPDATE", GUILayout.MinWidth(100)))
+                    if (GUILayout.Button(VRUpdateChecker.Checking ? T("checking").ToUpperInvariant() : T("check_update"), GUILayout.MinWidth(100)))
                         VRUpdateChecker.Check(true);
                 }
             }

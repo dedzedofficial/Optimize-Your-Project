@@ -161,6 +161,35 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(before, snapshot(source.data))
 
 
+    def test_batch_cleanup_preserves_all_sources(self):
+        first = self.mesh(name='BatchA', vertices=[(0,0,0),(1,0,0),(0,1,0),(0,0,0)],
+                          faces=[(0,1,2),(3,1,2)])
+        first_before = snapshot(first.data)
+        second = self.mesh(name='BatchB')
+        second_before = snapshot(second.data)
+        first.select_set(True)
+        second.select_set(True)
+        bpy.context.view_layer.objects.active = first
+
+        self.assertEqual(bpy.ops.fishhwb.clean_selected_meshes(), {'FINISHED'})
+        names = {obj.name for obj in bpy.context.selected_objects}
+        self.assertIn('BatchA_Clean', names)
+        self.assertIn('BatchB_Clean', names)
+        self.assertEqual(first_before, snapshot(first.data))
+        self.assertEqual(second_before, snapshot(second.data))
+        self.assertIn('Changed: 1', bpy.context.scene.fishhwb_last_result)
+        self.assertIn('Unchanged: 1', bpy.context.scene.fishhwb_last_result)
+
+    def test_language_switch_and_heavy_mesh_review(self):
+        bpy.context.scene.fishhwb_language = 'JA'
+        self.assertEqual(addon.tr(bpy.context, 'language'), '言語')
+        heavy = self.mesh(name='Heavy')
+        bpy.context.scene.fishhwb_heavy_triangles = 1
+        self.assertEqual(bpy.ops.fishhwb.show_heavy_meshes(), {'FINISHED'})
+        self.assertEqual(bpy.context.active_object, heavy)
+        self.assertIn('Found 1 meshes', bpy.context.scene.fishhwb_last_result)
+
+
 addon.register()
 try:
     result = unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.loadTestsFromTestCase(CleanupTests))

@@ -4,6 +4,21 @@
 
 The product is now positioned as a **general developer optimization toolkit**. The historical Unity package ID `com.fishhwb.vr-optimizer` is retained for installation compatibility; it does not mean the tool is VR-only.
 
+## 0.7.4
+
+- Added interface language support for English, Japanese, Simplified Chinese and Korean across the main Unity and Blender workflows.
+- Added a persistent Unity language selector and a Blender language selector so creators can switch the tool UI without changing their project language.
+- Added Unity action search so common texture, mesh, particle, light, memory and scan tasks are easier to find.
+- Added **Use Current Selection** for Unity asset scope so a selected Project asset or folder can set the working folder directly.
+- Added Unity **Project Insights** with **Show Largest Textures**, **Review Read/Write Memory** and **Show Heavy Meshes** review actions.
+- Kept Read/Write review diagnostic-only because disabling CPU access can break runtime scripts, non-uniform mesh lighting and other workflows that require readable data.
+- Added Blender **Clean Selected Meshes** for batch safe-copy cleanup while preserving every source object.
+- Added Blender **Create LODs for Selection** for supported static meshes using the existing guarded LOD workflow.
+- Added Blender **Show Heavy Meshes** with a configurable triangle threshold.
+- Reworked Blender layout around one-click cleanup, batch mesh preparation, advanced tools and compact result reporting.
+- Expanded release checks and Blender regression tests to cover v0.7.4 languages and batch operations.
+- Added a staged language roadmap for future releases while keeping new translations reviewable and optional.
+
 ## 0.7.1
 
 - Added Blender **Clean Selected Mesh** as the first one-click action, producing a separate cleaned copy with unique output naming.
