@@ -61,7 +61,7 @@ The repository root is a Unity Package Manager package. The v0.7.4 workflow is s
 
 `VRProjectScanner` coordinates the existing scanner modules and `VRIssue` records. Those internal type names are retained for compatibility during v0.7; they do not limit the supported project type.
 
-`VRTextureOptimizer` edits supported importer metadata and reimports only changed assets. `VRProjectMaintenance` handles conservative filename-based texture import fixes and trims only renderer material slots beyond the source mesh submesh count. `VRProjectInsights` compares saved material state for duplicates and reports oversized meshes and high material-slot setups. `VRParticleOptimizer` and `VRLightOptimizer` use Unity Undo for loaded scene objects where applicable. `VRSettings` stores per-user tool settings.
+`VRTextureOptimizer` edits supported importer metadata and reimports only changed assets. `VRProjectMaintenance` handles conservative filename-based texture import fixes and trims only trailing empty renderer material slots beyond the source mesh submesh count. `VRProjectInsights` compares saved material state for duplicates and reports oversized meshes and high material-slot setups. `VRParticleOptimizer` and `VRLightOptimizer` use Unity Undo for loaded scene objects where applicable. `VRSettings` stores per-user tool settings.
 
 Automatic AssetPostprocessor-based optimization remains intentionally disabled. The user explicitly presses an optimization action so the scope is visible.
 
