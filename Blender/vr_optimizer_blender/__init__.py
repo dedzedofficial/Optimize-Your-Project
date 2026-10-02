@@ -987,7 +987,7 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
         merge.operator('fishhwb.merge_vertices', text=tr(context, 'merge'), icon='AUTOMERGE_ON')
 
         batch = layout.box()
-        batch.label(text=tr(context, 'batch'), icon='OUTLINER_OB_GROUP_INSTANCE')
+        batch.label(text=tr(context, 'batch'), icon='MODIFIER')
         batch.label(text=tr(context, 'batch_desc'))
 
         lod_row = batch.row()
@@ -997,7 +997,7 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
         batch.prop(context.scene, 'fishhwb_heavy_triangles', text=tr(context, 'heavy_limit'))
         heavy = batch.row()
         heavy.scale_y = 1.25
-        heavy.operator('fishhwb.show_heavy_meshes', text=tr(context, 'heavy'), icon='VIEWZOOM')
+        heavy.operator('fishhwb.show_heavy_meshes', text=tr(context, 'heavy'), icon='MESH_DATA')
 
         tools = layout.box()
         tools.label(text=tr(context, 'more_tools'), icon='PREFERENCES')
