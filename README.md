@@ -141,30 +141,17 @@ The Blender add-on is under `Blender/vr_optimizer_blender/`.
 
 After installation, open the 3D Viewport sidebar with **N**, then open the **FISHHWB** tab.
 
-### One-click cleanup
+**Blender v0.7.4 intentionally supports only Remesh and LOD generation.** The earlier cleanup, Game-Ready, duplicate-vertex, heavy-mesh, triangle-limit, join/atlas and related experimental Blender tools were removed because they were not reliable or useful enough to keep presenting as supported optimization features.
 
-- **Clean Active Mesh** creates a separate cleaned copy.
-- **Clean Selected Meshes** batch-cleans supported selected static meshes and preserves every original.
-- **Create Game-Ready Copy** creates a separate `_GameReady` static copy, optionally applies existing modifiers, applies rotation and scale, cleans geometry and removes unused material slots while preserving the source.
-- **One-Click Remesh** creates a remeshed static-mesh copy.
-- **Merge Duplicate Vertices** creates a copy and merges nearby vertices using the Merge Distance setting.
+The simplified Blender UI now contains only:
 
-### Batch mesh preparation
+- **One-Click Remesh**: creates a separate automatically remeshed copy of the active supported static mesh.
+- **Create LOD0 / LOD1 / LOD2**: creates three LOD copies for the active supported static mesh while preserving the original.
+- **Create LODs for Selection**: appears when multiple meshes are selected and creates LOD sets for each supported static mesh.
+- **Apply Existing Modifiers**: the only LOD option retained, allowing supported modifiers to be baked into LOD0 before lower LODs are generated.
 
-- **Create LODs for Selection** creates LOD0 / LOD1 / LOD2 sets for supported selected static meshes.
-- **Show Heavy Meshes** selects scene mesh objects over a configurable triangle threshold.
-- Unsupported topology-sensitive content is skipped rather than forced through destructive processing.
+Remesh and LOD generation preserve the source object. Shape-key, vertex-group and armature-driven meshes are rejected rather than forced through topology-changing operations.
 
-### Advanced Mesh Tools
-
-The earlier advanced tools remain available:
-
-- **Create Reduced Copy**
-- **Join Selected and Merge Vertices**
-- **Merge Base Color Textures + UVs**
-- **Create LOD0 / LOD1 / LOD2** for the active mesh
-
-The add-on keeps source objects available for comparison whenever its copy-based workflow is used.
 
 ## Action results
 
