@@ -61,7 +61,7 @@ The product is now positioned as a **general developer optimization toolkit**. T
 - Added Unity **Project Insights** with **Show Largest Textures**, **Review Read/Write Memory** and richer **Find Oversized Meshes** review actions.
 - Added **Fix Texture Import Settings** for conservative normal-map and mask/data texture import corrections.
 - Added **Find Duplicate Materials** using shader, keyword, queue and saved-property comparison.
-- Added **Clean Unused Material Slots** for renderer slots beyond the mesh submesh count, with Unity Undo support.
+- Added **Clean Unused Material Slots** for trailing empty renderer slots beyond the mesh submesh count, with Unity Undo support. Non-empty extra materials are preserved.
 - Added **Find Expensive Material Setups** for high material-slot and submesh-count renderers.
 - Kept Read/Write review diagnostic-only because disabling CPU access can break runtime scripts, non-uniform mesh lighting and other workflows that require readable data.
 - Added Blender **Clean Selected Meshes** for batch safe-copy cleanup while preserving every source object.
