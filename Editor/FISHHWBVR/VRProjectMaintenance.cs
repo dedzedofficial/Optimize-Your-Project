@@ -44,7 +44,7 @@ namespace FISHHWB.VROptimizer
         static readonly string[] LinearDataTokens =
         {
             "_mask", "-mask", "_metallic", "-metallic", "_roughness", "-roughness",
-            "_smoothness", "-smoothness", "_occlusion", "-occlusion", "_height", "-height",
+            "_smoothness", "-smoothness", "_occlusion", "-occlusion", "_ao", "-ao", "_height", "-height",
             "_displacement", "-displacement", "_orm", "-orm", "_rma", "-rma", "_mra", "-mra"
         };
 
@@ -122,10 +122,13 @@ namespace FISHHWB.VROptimizer
             void Add(Renderer renderer, Mesh mesh)
             {
                 if (!renderer || !mesh) return;
-                int keep = Mathf.Max(0, mesh.subMeshCount);
-                int current = renderer.sharedMaterials == null ? 0 : renderer.sharedMaterials.Length;
-                if (current <= keep) return;
-                fixes.Add(new VRUnusedMaterialSlotFix(renderer, keep, current - keep));
+                int submeshes = Mathf.Max(0, mesh.subMeshCount);
+                var materials = renderer.sharedMaterials ?? Array.Empty<Material>();
+                int keep = materials.Length;
+                while (keep > submeshes && materials[keep - 1] == null)
+                    keep--;
+                if (keep == materials.Length) return;
+                fixes.Add(new VRUnusedMaterialSlotFix(renderer, keep, materials.Length - keep));
             }
         }
 
