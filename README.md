@@ -80,7 +80,7 @@ v0.7.4 is a major usability and workflow update. It adds searchable Unity action
 | Platform | Fastest install |
 | --- | --- |
 | **Unity** | Package Manager → **+** → **Add package from git URL** → paste `https://github.com/dedzedofficial/Optimize-Your-Project.git` |
-| **Blender** | Download `optimize-your-project-blender-0.7.4.zip` from Releases → Blender Preferences / Get Extensions → **Install from Disk** |
+| **Blender** | Git: clone `https://github.com/dedzedofficial/Optimize-Your-Project.git` as `optimize_your_project` inside a Blender add-ons directory, or install the release ZIP from disk |
 | **VRChat / VCC (optional)** | [Add the VPM repository](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the chosen project |
 
 For a fixed Unity release after the v0.7.4 tag is published:
@@ -124,9 +124,9 @@ The Unity window keeps the two focused work pages:
 - **Fix Texture Import Settings** applies conservative filename-based fixes for recognized normal maps and non-color mask/data textures while preserving unrelated import settings.
 - **Optimize Particles** applies selected particle limits to loaded scenes or the chosen character hierarchy.
 - **Compress Imported Meshes** applies Unity model-importer mesh compression to model assets used in the current scope.
-- **Find Duplicate Materials** compares material shader state and saved properties in the selected Assets folder.
+- **Fix Duplicate Material References** remaps loaded renderers from exact duplicate material assets to one canonical exact match with Unity Undo. Duplicate asset files are preserved.
 - **Clean Unused Material Slots** removes only trailing empty renderer slots beyond the mesh's actual submesh count and supports Unity Undo. Non-empty extra materials are preserved.
-- **Find Expensive Material Setups** highlights renderers with high material-slot or submesh counts for review.
+- **Fix Safe Material Cost Issues** combines exact duplicate-material remapping with safe trailing empty-slot cleanup. High submesh counts that require art or topology changes are left untouched.
 - **Disable Realtime Shadows** disables supported realtime light shadows with Unity Undo support.
 - **Scan Entire Project** runs the heavier diagnostic pass and shows filterable Critical / Warning results.
 
@@ -136,7 +136,7 @@ These buttons help find expensive assets without changing project files:
 
 - **Show Largest Textures** lists the largest source textures in the chosen Assets folder.
 - **Review Read/Write Memory** lists textures and imported models with CPU-readable copies enabled.
-- **Find Oversized Meshes** lists high-triangle meshes with triangle, vertex, submesh and material-slot counts.
+- **Fix Oversized Mesh Imports** applies Medium mesh compression plus Unity vertex/polygon import optimization to supported high-triangle imported models without changing triangle topology.
 
 Read/Write review is intentionally diagnostic-only. CPU-readable copies can consume additional memory, but disabling them automatically can break scripts, runtime mesh access and other workflows that require readable data. Unity documents the extra CPU memory cost for readable texture and mesh data.
 
@@ -196,7 +196,7 @@ The v1.0 goal remains at least **90% of identified, safely automatable optimizat
 
 Planned work includes:
 
-- deeper material consolidation and draw-call tooling,
+- deeper material consolidation and draw-call tooling beyond the safe automatic fixes in v0.7.4,
 - lighting and effects preparation,
 - physics and collider helpers,
 - build-size and dependency review,
@@ -250,6 +250,10 @@ Pull requests validate:
 - Buildability of the Unity VPM archive and Blender add-on ZIP.
 
 Blender runtime regression checks run on Blender 3.6 and 4.2 in CI. Unity editor compilation and interactive editor checks are still required before publishing a release tag.
+
+## Keywords
+
+Optimize Your Project is indexed around: **Unity optimization, Blender add-on, one-click optimization, game optimization, asset optimization, texture optimization, mesh optimization, material optimization, duplicate materials, draw calls, LOD, game-ready assets, mobile optimization, VR, XR, VRChat, indie development and developer tools**.
 
 ## Community
 
