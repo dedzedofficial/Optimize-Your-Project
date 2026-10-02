@@ -33,13 +33,32 @@ https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
 
 ### Blender
 
-Open the [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) page and download:
+**Git URL install:** clone the repository into one of Blender's add-on script directories using an import-safe folder name:
+
+```bash
+git clone https://github.com/dedzedofficial/Optimize-Your-Project.git optimize_your_project
+```
+
+To print Blender's available add-on directories, run this in Blender's Python Console:
+
+```python
+import addon_utils
+print("\\n".join(addon_utils.paths()))
+```
+
+Run the `git clone` command from one of those add-on directories, then restart Blender or use **Refresh Local** and enable **Optimize Your Project for Blender**. Update a Git install later with:
+
+```bash
+git -C optimize_your_project pull
+```
+
+Blender's Add-ons screen does not directly consume an arbitrary Git clone URL, so this Git method uses the repository itself as the installed add-on. The normal ZIP route remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases):
 
 ```text
 optimize-your-project-blender-0.7.4.zip
 ```
 
-Then in Blender use **Edit > Preferences > Add-ons > Install...** or **Get Extensions > Install from Disk**.
+Then use **Edit > Preferences > Add-ons > Install...** or **Get Extensions > Install from Disk**.
 
 ### VRChat Creator Companion / VCC
 
@@ -54,8 +73,23 @@ Blender support for **Optimize Your Project** now combines fast one-click cleanu
 
 ## Install
 
+### Git URL install
+
+1. In Blender's Python Console, run `import addon_utils; print("\\n".join(addon_utils.paths()))` and choose one of the displayed add-on directories.
+2. Open a terminal in that directory.
+3. Clone the repository with `git clone https://github.com/dedzedofficial/Optimize-Your-Project.git optimize_your_project`.
+4. Restart Blender or use **Refresh Local** in Preferences.
+5. Enable **Optimize Your Project for Blender**.
+6. In the 3D Viewport press **N** and open the **FISHHWB** tab.
+
+To update the Git install later, run `git -C optimize_your_project pull` from the same add-on directory.
+
+The destination name `optimize_your_project` is intentional: it gives Blender an import-safe Python module folder while still using the normal GitHub Git URL.
+
+### ZIP install
+
 1. Download `optimize-your-project-blender-0.7.4.zip` from the GitHub Releases page after the `blender-v0.7.4` release is published.
-2. In Blender, use **Edit → Preferences → Add-ons → Install...** or **Get Extensions → Install from Disk**.
+2. In Blender, use **Edit > Preferences > Add-ons > Install...** or **Get Extensions > Install from Disk**.
 3. Enable **Optimize Your Project for Blender**.
 4. In the 3D Viewport press **N** and open the **FISHHWB** tab.
 

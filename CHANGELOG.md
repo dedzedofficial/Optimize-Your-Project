@@ -33,13 +33,32 @@ https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
 
 ### Blender
 
-Open the [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) page and download:
+**Git URL install:** clone the repository into one of Blender's add-on script directories using an import-safe folder name:
+
+```bash
+git clone https://github.com/dedzedofficial/Optimize-Your-Project.git optimize_your_project
+```
+
+To print Blender's available add-on directories, run this in Blender's Python Console:
+
+```python
+import addon_utils
+print("\\n".join(addon_utils.paths()))
+```
+
+Run the `git clone` command from one of those add-on directories, then restart Blender or use **Refresh Local** and enable **Optimize Your Project for Blender**. Update a Git install later with:
+
+```bash
+git -C optimize_your_project pull
+```
+
+Blender's Add-ons screen does not directly consume an arbitrary Git clone URL, so this Git method uses the repository itself as the installed add-on. The normal ZIP route remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases):
 
 ```text
 optimize-your-project-blender-0.7.4.zip
 ```
 
-Then in Blender use **Edit > Preferences > Add-ons > Install...** or **Get Extensions > Install from Disk**.
+Then use **Edit > Preferences > Add-ons > Install...** or **Get Extensions > Install from Disk**.
 
 ### VRChat Creator Companion / VCC
 
@@ -58,14 +77,15 @@ The product is now positioned as a **general developer optimization toolkit**. T
 - Added a persistent Unity language selector and a Blender language selector so creators can switch the tool UI without changing their project language.
 - Added Unity action search so common texture, mesh, particle, light, memory and scan tasks are easier to find.
 - Added **Use Current Selection** for Unity asset scope so a selected Project asset or folder can set the working folder directly.
-- Added Unity **Project Insights** with **Show Largest Textures**, **Review Read/Write Memory** and richer **Find Oversized Meshes** review actions.
+- Added Unity **Project Insights** with **Show Largest Textures**, **Review Read/Write Memory** and **Fix Oversized Mesh Imports** for supported high-triangle imported models.
 - Added **Fix Texture Import Settings** for conservative normal-map and mask/data texture import corrections.
-- Added **Find Duplicate Materials** using shader, keyword, queue and saved-property comparison.
+- Upgraded duplicate-material handling to **Fix Duplicate Material References**, remapping loaded renderer references to one exact matching material asset with Unity Undo while preserving duplicate asset files.
 - Added **Clean Unused Material Slots** for trailing empty renderer slots beyond the mesh submesh count, with Unity Undo support. Non-empty extra materials are preserved.
-- Added **Find Expensive Material Setups** for high material-slot and submesh-count renderers.
+- Upgraded material-cost handling to **Fix Safe Material Cost Issues**, combining exact duplicate remapping with safe trailing empty-slot cleanup while leaving topology-sensitive submesh changes untouched.
 - Kept Read/Write review diagnostic-only because disabling CPU access can break runtime scripts, non-uniform mesh lighting and other workflows that require readable data.
 - Added Blender **Clean Selected Meshes** for batch safe-copy cleanup while preserving every source object.
 - Added Blender **Create Game-Ready Copy** for source-preserving static mesh preparation with optional modifier application, applied rotation/scale, geometry cleanup and unused material-slot removal.
+- Added a Git-managed Blender install route using the repository Git URL plus the root Blender add-on proxy, with `git pull` updates.
 - Added Blender **Create LODs for Selection** for supported static meshes using the existing guarded LOD workflow.
 - Added Blender **Show Heavy Meshes** with a configurable triangle threshold.
 - Reworked Blender layout around one-click cleanup, batch mesh preparation, advanced tools and compact result reporting.

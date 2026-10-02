@@ -16,6 +16,13 @@ versions = json.loads((root / "version.json").read_text(encoding="utf-8"))
 assert manifest["displayName"] == "Optimize Your Project"
 assert manifest["name"] == "com.fishhwb.vr-optimizer"  # historical compatibility ID
 assert manifest["version"] == "0.7.4"
+for keyword in [
+    "optimize-your-project", "one-click-optimization", "game-optimization",
+    "unity", "blender", "blender-addon", "asset-optimization",
+    "texture-optimization", "mesh-optimization", "material-optimization",
+    "draw-calls", "lod", "game-ready", "vrchat",
+]:
+    assert keyword in manifest["keywords"], keyword
 assert versions["unity"] == manifest["version"]
 assert versions["unity_tag"] == "v" + manifest["version"]
 assert versions["unity_url"].endswith("/releases/tag/" + versions["unity_tag"])
@@ -46,18 +53,21 @@ for language in ["English", "Japanese", "SimplifiedChinese", "Korean"]:
 for required in [
     "日本語", "简体中文", "한국어", "PROJECT INSIGHTS",
     "SHOW LARGEST TEXTURES", "REVIEW READ/WRITE MEMORY", "SHOW HEAVY MESHES",
-    "FIX TEXTURE IMPORT SETTINGS", "FIND DUPLICATE MATERIALS",
-    "CLEAN UNUSED MATERIAL SLOTS", "FIND EXPENSIVE MATERIAL SETUPS",
-    "FIND OVERSIZED MESHES",
+    "FIX TEXTURE IMPORT SETTINGS", "FIX DUPLICATE MATERIAL REFERENCES",
+    "CLEAN UNUSED MATERIAL SLOTS", "FIX SAFE MATERIAL COST ISSUES",
+    "FIX OVERSIZED MESH IMPORTS",
 ]:
     assert required in localization
 assert "VRProjectInsights.LargestTextures" in window
 assert "VRProjectInsights.ReadWriteReview" in window
-assert "VRProjectInsights.OversizedMeshes" in window
-assert "VRProjectInsights.DuplicateMaterials" in window
-assert "VRProjectInsights.ExpensiveMaterials" in window
+assert "FixDuplicateMaterials" in window
+assert "FixUnusedMaterialSlots" in window
+assert "FixExpensiveMaterialSetups" in window
+assert "FixOversizedMeshImports" in window
 assert "VRProjectMaintenance.CollectTextureImportFixes" in window
+assert "VRProjectMaintenance.CollectDuplicateMaterialFixes" in window
 assert "VRProjectMaintenance.CollectUnusedMaterialSlots" in window
+assert "VRProjectMaintenance.CollectOversizedMeshImportFixes" in window
 assert "DrawLanguageAndSearch" in window
 
 maintenance = (root / "Editor/FISHHWBVR/VRProjectMaintenance.cs").read_text(encoding="utf-8")
@@ -65,7 +75,14 @@ assert "CollectTextureImportFixes" in maintenance
 assert "ApplyTextureImportFix" in maintenance
 assert "CollectUnusedMaterialSlots" in maintenance
 assert "ApplyUnusedMaterialSlotFix" in maintenance
+assert "CollectDuplicateMaterialFixes" in maintenance
+assert "ApplyDuplicateMaterialFix" in maintenance
+assert "CollectOversizedMeshImportFixes" in maintenance
+assert "ApplyOversizedMeshImportFix" in maintenance
 assert "TextureImporterType.NormalMap" in maintenance
+assert "ModelImporterMeshCompression.Medium" in maintenance
+assert "optimizeMeshPolygons" in maintenance
+assert "optimizeMeshVertices" in maintenance
 assert "mesh.subMeshCount" in maintenance
 
 project_scanner = (root / "Editor/FISHHWBVR/VRProjectScanner.cs").read_text(encoding="utf-8")
@@ -107,6 +124,12 @@ assert "FREE FOR DEVELOPERS" in source_text
 assert "SUPPORT DEVELOPMENT ON PATREON" in source_text
 assert "https://www.patreon.com/cw/DedZed" in source_text
 
+git_proxy = (root / "__init__.py").read_text(encoding="utf-8")
+assert "from .Blender.vr_optimizer_blender import bl_info" in git_proxy
+assert "def register()" in git_proxy
+assert "def unregister()" in git_proxy
+assert (root / "Blender/__init__.py").is_file()
+
 for path in [
     root / "README.md",
     root / "Blender/README.md",
@@ -123,10 +146,15 @@ for path in [
     assert "Changelog" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project.git" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project/releases" in content, path
+    assert "git clone https://github.com/dedzedofficial/Optimize-Your-Project.git optimize_your_project" in content, path
+    assert "git -C optimize_your_project pull" in content, path
 
 readme = (root / "README.md").read_text(encoding="utf-8")
 assert "general developer optimization" in readme.lower()
 assert "VRChat / VCC (optional)" in readme
+assert "## Keywords" in readme
+assert "FIX DUPLICATE MATERIAL REFERENCES" not in readme  # README uses friendly title case
+assert "Fix Duplicate Material References" in readme
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
 
 assert "## " + manifest["version"] in (root / "CHANGELOG.md").read_text()

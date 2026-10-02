@@ -227,7 +227,7 @@ namespace FISHHWB.VROptimizer
             return triangles;
         }
 
-        static string MaterialSignature(Material material)
+        internal static string MaterialSignature(Material material)
         {
             var shader = material.shader;
             if (!shader) return null;
