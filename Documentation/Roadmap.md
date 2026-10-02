@@ -2,7 +2,7 @@
 
 <img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="96">
 
-**Current implementation: v0.7.1. Future versions below are planned, not available features.**
+**Current implementation: v0.7.4. Future versions below are planned, not available features.**
 
 ## The v1.0 goal
 
@@ -53,29 +53,24 @@
 - Blender regression checks for source preservation, repeated cleanup, materials/UVs and existing quick actions.
 - Synchronized package and add-on versions. Unity editor validation remains required before release tagging.
 
-### v0.7.2: choose a scope, undo a batch | Planned
+### v0.7.2 and v0.7.3: planning folded into v0.7.4 | Superseded
 
-- **Use My Selection:** select the relevant folder, hierarchy or collection in one action.
-- **Restore Last Import Settings:** restore a recorded texture/model batch when the current state still matches its saved result.
-- **Show Changed Items:** jump straight to the assets or objects changed by the last action.
-- Keep cancellation, progress and failed-item details consistent across existing buttons.
-- Publish the initial optimization-task inventory and platform support checklist.
+The selection, texture-review and usability ideas planned for these patch numbers were consolidated into the larger v0.7.4 release instead of publishing two smaller intermediate versions.
 
-### v0.7.3: texture memory made simple | Planned
+### v0.7.4: searchable, multilingual batch workflow | Implemented
 
-- **Fit Textures to Target:** apply reviewed size caps and compatible compression in the selected scope.
-- **Review Texture Memory Copies:** find Read/Write settings that may be unnecessary, with explicit approval where runtime access cannot be verified.
-- **Fix Texture Import Mismatches:** handle reliably detected normal-map and color-data import mistakes.
-- **Show Largest Textures:** select the biggest candidates and explain their estimated memory cost.
-- Preserve explicit artistic choices and avoid reimporting unchanged assets.
-
-### v0.7.4: batch mesh preparation | Planned
-
-- **Clean Selected Meshes:** apply Blender cleanup across a selection or collection, keeping separate originals.
-- **Create LOD Copies:** generate named static-mesh LOD sets across supported selections.
-- **Review Mesh Memory Copies:** identify imported models whose CPU-access settings need review.
-- **Show Heavy Meshes:** select high-cost candidates with triangle, vertex and material-slot counts.
-- Keep topology-sensitive characters on a separate guarded path.
+- Added English, Japanese, Simplified Chinese and Korean interface support in Unity and Blender.
+- Added a persistent Unity language preference and Blender scene language selector.
+- Added Unity action search so texture, mesh, particle, light, memory and scan jobs are easier to reach.
+- Added Unity **Use Current Selection** for Project-folder scope.
+- Added **Show Largest Textures** for quick high-resolution texture review.
+- Added **Review Read/Write Memory** for readable textures and imported models without automatically disabling settings that may be required at runtime.
+- Added **Show Heavy Meshes** for high-triangle loaded-scene or character geometry.
+- Added Blender **Clean Selected Meshes** for copy-based batch cleanup.
+- Added Blender **Create LODs for Selection** using the guarded static-mesh LOD path.
+- Added Blender **Show Heavy Meshes** with a configurable triangle threshold.
+- Expanded static release validation and Blender runtime regression coverage for the new batch and language features.
+- Kept detailed scans optional and source-preservation behavior explicit.
 
 ### v0.7.5: helpful fixes within reach | Planned
 
@@ -84,6 +79,17 @@
 - **Show Optimization Help:** explain the selected action, affected scope and restoration route in plain language.
 - Add a searchable action panel so a developer can type a task and run its matching button.
 - Apply only unambiguous fixes automatically; show uncertain matches for review.
+
+## Language roadmap
+
+v0.7.4 starts with **English, Japanese, Simplified Chinese and Korean**. New languages should be added only when the visible UI, critical warnings and release documentation can be reviewed together.
+
+- **v0.8.x target:** Spanish, French and German.
+- **v0.8.x later target:** Brazilian Portuguese, Italian and Traditional Chinese.
+- **v0.9.x target:** Polish, Turkish and Russian, followed by additional community-requested languages.
+- Keep English as the fallback language for missing translation keys.
+- Add pseudo-localization and layout-overflow checks before v1.0 so long translations do not break compact Editor panels.
+- Allow community translation corrections through small, reviewable language-table changes instead of requiring code rewrites.
 
 ## v0.8: broader optimization coverage
 
