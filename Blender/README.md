@@ -50,7 +50,7 @@ Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedze
 > **New here?** Start with the [Overview](../README.md). You can read the complete documentation directly on GitHub before installing anything.
 
 
-Blender support for **Optimize Your Project** now combines fast one-click cleanup with batch preparation for static meshes. The v0.7.4 sidebar also supports English, Japanese, Simplified Chinese and Korean.
+Blender support for **Optimize Your Project** now combines fast one-click cleanup, Game-Ready static copies and batch preparation for static meshes. The v0.7.4 sidebar also supports English, Japanese, Simplified Chinese and Korean.
 
 ## Install
 
@@ -72,6 +72,12 @@ The button merges vertices at exactly equal coordinates, removes zero-area faces
 The tool refuses shape keys, vertex groups, rigs, modifiers, linked/overridden data, custom split normals, empty meshes and non-finite coordinates with a reason. Make a separate static copy and resolve these conditions first. Loose lines and points are removed intentionally, so compare the result before replacing an asset that uses them.
 
 The **Last Result** panel reports object outcomes plus vertices removed, exact duplicates merged, loose edges removed, zero-area faces removed, material slots removed and faces reoriented. Duplicate counts are part of the total removed vertices, not an additional total. A clean mesh reports **Unchanged** even though an output copy is created. Failures discard the incomplete copy and restore the original selection.
+
+### Create Game-Ready Copy
+
+Press **Create Game-Ready Copy** on a supported static mesh. The add-on creates a separate `_GameReady` object and keeps the original unchanged.
+
+When **Apply Existing Modifiers** is enabled, modifiers are evaluated onto the new copy. The copy then applies rotation and scale, performs the conservative cleanup pass, removes unused material slots and reports the resulting triangle count. Rigged meshes, shape keys, vertex groups, linked data and custom split normals are skipped instead of being flattened silently.
 
 ### One-Click Remesh
 

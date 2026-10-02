@@ -54,7 +54,7 @@ Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedze
 
 Optimize Your Project is a free toolkit for developers building real-time projects. Its priority is removing repetitive optimization work through clear one-click and batch actions for games, mobile projects, VR titles, social experiences, prototypes and reusable asset packs.
 
-v0.7.4 is a major usability and workflow update. It adds searchable Unity actions, project review tools, Blender batch preparation and interface language support for **English, Japanese, Simplified Chinese and Korean**.
+v0.7.4 is a major usability and workflow update. It adds searchable Unity actions, texture import repair, material-cost tools, richer mesh review, Blender batch preparation, a Game-Ready copy workflow and interface language support for **English, Japanese, Simplified Chinese and Korean**.
 
 ## Quick install
 
@@ -102,8 +102,12 @@ The Unity window keeps the two focused work pages:
 ### Project optimization buttons
 
 - **Compress & Size Textures** applies supported platform size caps and compression while preserving stricter existing limits and explicit formats.
+- **Fix Texture Import Settings** applies conservative filename-based fixes for recognized normal maps and non-color mask/data textures while preserving unrelated import settings.
 - **Optimize Particles** applies selected particle limits to loaded scenes or the chosen character hierarchy.
 - **Compress Imported Meshes** applies Unity model-importer mesh compression to model assets used in the current scope.
+- **Find Duplicate Materials** compares material shader state and saved properties in the selected Assets folder.
+- **Clean Unused Material Slots** removes only trailing empty renderer slots beyond the mesh's actual submesh count and supports Unity Undo. Non-empty extra materials are preserved.
+- **Find Expensive Material Setups** highlights renderers with high material-slot or submesh counts for review.
 - **Disable Realtime Shadows** disables supported realtime light shadows with Unity Undo support.
 - **Scan Entire Project** runs the heavier diagnostic pass and shows filterable Critical / Warning results.
 
@@ -113,7 +117,7 @@ These buttons help find expensive assets without changing project files:
 
 - **Show Largest Textures** lists the largest source textures in the chosen Assets folder.
 - **Review Read/Write Memory** lists textures and imported models with CPU-readable copies enabled.
-- **Show Heavy Meshes** lists high-triangle meshes in the loaded scene or selected character hierarchy.
+- **Find Oversized Meshes** lists high-triangle meshes with triangle, vertex, submesh and material-slot counts.
 
 Read/Write review is intentionally diagnostic-only. CPU-readable copies can consume additional memory, but disabling them automatically can break scripts, runtime mesh access and other workflows that require readable data. Unity documents the extra CPU memory cost for readable texture and mesh data.
 
@@ -138,6 +142,7 @@ After installation, open the 3D Viewport sidebar with **N**, then open the **FIS
 
 - **Clean Active Mesh** creates a separate cleaned copy.
 - **Clean Selected Meshes** batch-cleans supported selected static meshes and preserves every original.
+- **Create Game-Ready Copy** creates a separate `_GameReady` static copy, optionally applies existing modifiers, applies rotation and scale, cleans geometry and removes unused material slots while preserving the source.
 - **One-Click Remesh** creates a remeshed static-mesh copy.
 - **Merge Duplicate Vertices** creates a copy and merges nearby vertices using the Merge Distance setting.
 
@@ -172,7 +177,7 @@ The v1.0 goal remains at least **90% of identified, safely automatable optimizat
 
 Planned work includes:
 
-- richer material and draw-call review,
+- deeper material consolidation and draw-call tooling,
 - lighting and effects preparation,
 - physics and collider helpers,
 - build-size and dependency review,
@@ -221,7 +226,7 @@ Pull requests validate:
 - Required branding and package files.
 - Unity v0.7 Project / Character UI shape.
 - Unity language and Project Insights integration.
-- Blender cleanup, remesh, vertex merge, batch cleanup, batch LOD and heavy-mesh actions.
+- Blender cleanup, Game-Ready copy, remesh, vertex merge, batch cleanup, batch LOD and heavy-mesh actions.
 - English, Japanese, Simplified Chinese and Korean language entries.
 - Buildability of the Unity VPM archive and Blender add-on ZIP.
 

@@ -113,8 +113,13 @@ The selection, texture-review and usability ideas planned for these patch number
 - Added Unity **Use Current Selection** for Project-folder scope.
 - Added **Show Largest Textures** for quick high-resolution texture review.
 - Added **Review Read/Write Memory** for readable textures and imported models without automatically disabling settings that may be required at runtime.
-- Added **Show Heavy Meshes** for high-triangle loaded-scene or character geometry.
+- Added **Find Oversized Meshes** for high-triangle loaded-scene or character geometry with triangle, vertex, submesh and material-slot counts.
+- Added **Fix Texture Import Settings** for conservative normal-map and non-color mask/data texture import corrections.
+- Added **Find Duplicate Materials** by comparing shader state and saved material properties.
+- Added **Clean Unused Material Slots** for trailing empty renderer slots beyond the mesh's submesh count, with Undo support. Non-empty extra materials are preserved.
+- Added **Find Expensive Material Setups** for high material-slot and submesh-count renderers.
 - Added Blender **Clean Selected Meshes** for copy-based batch cleanup.
+- Added Blender **Create Game-Ready Copy** for source-preserving static mesh preparation with optional modifier application, applied rotation/scale, cleanup and unused material-slot removal.
 - Added Blender **Create LODs for Selection** using the guarded static-mesh LOD path.
 - Added Blender **Show Heavy Meshes** with a configurable triangle threshold.
 - Expanded static release validation and Blender runtime regression coverage for the new batch and language features.
@@ -151,11 +156,11 @@ v0.7.4 starts with **English, Japanese, Simplified Chinese and Korean**. New lan
 
 ### v0.8.1: materials and draw calls | Planned
 
-- **Find Duplicate Materials:** identify equivalent material settings within the selected scope.
-- **Consolidate Approved Materials:** remap verified duplicates with a recorded restoration path.
-- **Clean Unused Material Slots:** batch supported cleanup without changing used assignments.
+- Expand the v0.7.4 duplicate-material review into **Consolidate Approved Materials** with a recorded restoration path.
+- Expand the v0.7.4 material-cost review with shader-pass and pipeline-aware analysis where reliable.
 - **Check Instancing and Batching:** find eligible candidates and apply only verified compatible changes.
-- **Show Material Cost:** highlight excessive slots and unsupported shader combinations for review.
+- Add project-wide prefab and asset material-slot cleanup only where usage can be proven safely.
+- Keep the v0.7.4 loaded-scene and character material tools available as the fast everyday path.
 
 ### v0.8.2: physics, animation and visibility | Planned
 

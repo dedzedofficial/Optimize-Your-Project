@@ -180,9 +180,40 @@ class CleanupTests(unittest.TestCase):
         self.assertIn('Changed: 1', bpy.context.scene.fishhwb_last_result)
         self.assertIn('Unchanged: 1', bpy.context.scene.fishhwb_last_result)
 
+    def test_game_ready_copy_preserves_source(self):
+        source = self.mesh(
+            name='GameReady',
+            vertices=[(0,0,0),(1,0,0),(0,1,0),(0,0,0),(1,1,0)],
+            faces=[(0,1,2),(3,2,4)])
+        source.data.materials.append(bpy.data.materials.new('Used'))
+        source.data.materials.append(bpy.data.materials.new('Unused'))
+        for face in source.data.polygons:
+            face.material_index = 0
+        source.rotation_euler = (0.2, 0.3, 0.4)
+        source.scale = (2.0, 1.5, 0.5)
+        before = snapshot(source.data)
+        before_rotation = tuple(source.rotation_euler)
+        before_scale = tuple(source.scale)
+        bpy.context.scene.fishhwb_apply_modifiers = True
+
+        self.assertEqual(bpy.ops.fishhwb.create_game_ready_copy(), {'FINISHED'})
+        output = bpy.context.active_object
+        self.assertEqual(output.name, 'GameReady_GameReady')
+        self.assertEqual(before, snapshot(source.data))
+        self.assertEqual(before_rotation, tuple(source.rotation_euler))
+        self.assertEqual(before_scale, tuple(source.scale))
+        self.assertEqual(len(output.data.vertices), 4)
+        self.assertEqual(len(output.data.materials), 1)
+        self.assertIs(output.data.materials[0], source.data.materials[0])
+        self.assertTrue(all(abs(v - 1.0) < 1e-5 for v in output.scale))
+        self.assertTrue(all(abs(v) < 1e-5 for v in output.rotation_euler))
+        self.assertIn('Changed: 1', bpy.context.scene.fishhwb_last_result)
+        self.assertIn('Original object preserved', bpy.context.scene.fishhwb_last_result)
+
     def test_language_switch_and_heavy_mesh_review(self):
         bpy.context.scene.fishhwb_language = 'JA'
         self.assertEqual(addon.tr(bpy.context, 'language'), '言語')
+        self.assertEqual(addon.tr(bpy.context, 'game_ready'), 'ゲーム用コピーを作成')
         heavy = self.mesh(name='Heavy')
         bpy.context.scene.fishhwb_heavy_triangles = 1
         self.assertEqual(bpy.ops.fishhwb.show_heavy_meshes(), {'FINISHED'})

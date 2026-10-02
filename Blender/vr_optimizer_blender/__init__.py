@@ -35,6 +35,7 @@ _TRANSLATIONS = {
     'quick_desc': {'EN': 'Fast, safe actions that create new copies.', 'JA': '新しいコピーを作成する安全で高速な処理です。', 'ZH': '快速、安全，并创建新副本。', 'KO': '새 복사본을 만드는 빠르고 안전한 작업입니다.'},
     'clean_one': {'EN': 'CLEAN ACTIVE MESH', 'JA': 'アクティブメッシュをクリーン', 'ZH': '清理活动网格', 'KO': '활성 메시 정리'},
     'clean_many': {'EN': 'CLEAN SELECTED MESHES', 'JA': '選択メッシュを一括クリーン', 'ZH': '批量清理所选网格', 'KO': '선택 메시 일괄 정리'},
+    'game_ready': {'EN': 'CREATE GAME-READY COPY', 'JA': 'ゲーム用コピーを作成', 'ZH': '创建游戏就绪副本', 'KO': '게임용 복사본 만들기'},
     'remesh': {'EN': 'ONE-CLICK REMESH', 'JA': 'ワンクリックリメッシュ', 'ZH': '一键重网格', 'KO': '원클릭 리메시'},
     'merge': {'EN': 'MERGE DUPLICATE VERTICES', 'JA': '重複頂点をマージ', 'ZH': '合并重复顶点', 'KO': '중복 정점 병합'},
     'batch': {'EN': 'BATCH MESH PREP', 'JA': 'メッシュ一括準備', 'ZH': '批量网格准备', 'KO': '메시 일괄 준비'},
@@ -539,6 +540,24 @@ def _cleanup_unsupported(source):
     return None
 
 
+def _game_ready_unsupported(source, apply_modifiers):
+    if source.data.shape_keys:
+        return "Shape keys depend on the original topology."
+    if source.vertex_groups or source.find_armature() or any(mod.type == 'ARMATURE' for mod in source.modifiers):
+        return "Game-ready copy currently supports static meshes without rigs or vertex groups."
+    if source.data.has_custom_normals:
+        return "Custom split normals need a dedicated shading workflow."
+    if source.library or source.data.library or source.override_library or source.data.override_library:
+        return "Linked or overridden meshes must be made local first."
+    if any(not math.isfinite(value) for vertex in source.data.vertices for value in vertex.co):
+        return "Mesh coordinates contain non-finite values."
+    if not source.data.vertices:
+        return "The mesh has no vertices."
+    if source.modifiers and not apply_modifiers:
+        return "Enable Apply Existing Modifiers before creating a game-ready copy."
+    return None
+
+
 def _clean_mesh(mesh):
     """Clean only the caller-owned mesh. Keep open surfaces and their winding."""
     stats = dict(vertices=0, loose_edges=0, duplicates=0, zero_faces=0,
@@ -902,6 +921,80 @@ class FISHHWB_OT_create_lods_selected(bpy.types.Operator):
         return {'FINISHED'} if changed else {'CANCELLED'}
 
 
+class FISHHWB_OT_create_game_ready_copy(bpy.types.Operator):
+    bl_idname = "fishhwb.create_game_ready_copy"
+    bl_label = "Create Game-Ready Copy"
+    bl_description = "Create a cleaned static copy with optional modifiers and applied rotation/scale"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return (context.mode == 'OBJECT' and context.active_object is not None
+                and context.active_object.type == 'MESH'
+                and context.active_object.select_get())
+
+    def execute(self, context):
+        source = context.active_object
+        reason = _game_ready_unsupported(source, context.scene.fishhwb_apply_modifiers)
+        if reason:
+            _action_report(self, context, reason, unsupported=1)
+            return {'CANCELLED'}
+
+        original_selection = list(context.selected_objects)
+        original_active = source
+        copy = None
+        try:
+            before = triangle_count(source.data)
+            modifier_count = len(source.modifiers)
+            copy = _copy_mesh_object(source, context, "_GameReady")
+
+            if copy.modifiers:
+                depsgraph = context.evaluated_depsgraph_get()
+                context.view_layer.update()
+                evaluated = copy.evaluated_get(depsgraph)
+                result = bpy.data.meshes.new_from_object(
+                    evaluated, preserve_all_data_layers=True, depsgraph=depsgraph)
+                if result is None:
+                    raise RuntimeError("Blender could not evaluate the mesh modifiers")
+                old_mesh = copy.data
+                copy.modifiers.clear()
+                copy.data = result
+                if old_mesh.users == 0:
+                    bpy.data.meshes.remove(old_mesh)
+
+            _select_only(context, copy)
+            bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+            stats = _clean_mesh(copy.data)
+            copy.data.name = copy.name
+            after = triangle_count(copy.data)
+
+            detail = (
+                f"{copy.name}: {before:,} -> {after:,} triangles; "
+                f"{modifier_count} modifiers applied; "
+                f"{stats['duplicates']:,} exact duplicate vertices merged; "
+                f"{stats['loose_edges']:,} loose edges removed; "
+                f"{stats['zero_faces']:,} zero-area faces removed; "
+                f"{stats['material_slots']:,} unused material slots removed; "
+                "rotation and scale applied. Original object preserved."
+            )
+            _action_report(self, context, detail, changed=1)
+            return {'FINISHED'}
+        except Exception as exc:
+            if copy is not None and copy.name in bpy.data.objects:
+                mesh = copy.data
+                bpy.data.objects.remove(copy, do_unlink=True)
+                if mesh and mesh.users == 0:
+                    bpy.data.meshes.remove(mesh)
+            for item in context.selected_objects:
+                item.select_set(False)
+            for item in original_selection:
+                if item and item.name in bpy.data.objects:
+                    item.select_set(True)
+            context.view_layer.objects.active = original_active
+            _action_report(self, context, "Game-ready copy failed: " + str(exc), failed=1)
+            return {'CANCELLED'}
+
+
 class FISHHWB_OT_show_heavy_meshes(bpy.types.Operator):
     bl_idname = "fishhwb.show_heavy_meshes"
     bl_label = "Show Heavy Meshes"
@@ -974,6 +1067,11 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
         batch_clean = quick.row()
         batch_clean.scale_y = 1.45
         batch_clean.operator('fishhwb.clean_selected_meshes', text=tr(context, 'clean_many'), icon='MODIFIER')
+
+        game_ready = quick.row()
+        game_ready.scale_y = 1.45
+        game_ready.operator('fishhwb.create_game_ready_copy', text=tr(context, 'game_ready'), icon='OUTLINER_OB_MESH')
+        quick.prop(context.scene, 'fishhwb_apply_modifiers', text=tr(context, 'apply_modifiers'))
 
         quick.separator()
         remesh = quick.row()
@@ -1055,8 +1153,8 @@ class FISHHWB_PT_tri_limit(bpy.types.Panel):
 
 classes = (FISHHWB_OT_clean_selected_mesh, FISHHWB_OT_clean_selected_meshes, FISHHWB_OT_tri_limit,
            FISHHWB_OT_join_merge, FISHHWB_OT_one_click_remesh, FISHHWB_OT_merge_vertices,
-           FISHHWB_OT_create_lods, FISHHWB_OT_create_lods_selected, FISHHWB_OT_show_heavy_meshes,
-           FISHHWB_PT_tri_limit)
+           FISHHWB_OT_create_lods, FISHHWB_OT_create_lods_selected, FISHHWB_OT_create_game_ready_copy,
+           FISHHWB_OT_show_heavy_meshes, FISHHWB_PT_tri_limit)
 
 
 def register():
