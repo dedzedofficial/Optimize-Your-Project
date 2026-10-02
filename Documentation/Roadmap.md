@@ -14,7 +14,7 @@
   <strong>Interface languages:</strong> English | 日本語 | 简体中文 | 한국어
 </p>
 
-<details>
+<details open>
 <summary><strong>Install / Download Optimize Your Project</strong></summary>
 
 ### Unity
@@ -33,7 +33,7 @@ https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
 
 ### Blender
 
-Open the repository's **Releases** page and download:
+Open the [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) page and download:
 
 ```text
 optimize-your-project-blender-0.7.4.zip
@@ -43,7 +43,7 @@ Then in Blender use **Edit > Preferences > Add-ons > Install...** or **Get Exten
 
 ### VRChat Creator Companion / VCC
 
-Use the repository's VPM listing from the main [README](../README.md) and add **Optimize Your Project** to the chosen project.
+Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the chosen project.
 
 </details>
 
