@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 bl_info = {
     "name": "Optimize Your Project for Blender",
     "author": "FISHHWB | Ded Zed",
