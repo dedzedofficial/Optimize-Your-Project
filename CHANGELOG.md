@@ -70,7 +70,7 @@ The product is now positioned as a **general developer optimization toolkit**. T
 - Kept Read/Write review diagnostic-only because disabling CPU access can break runtime scripts, non-uniform mesh lighting and other workflows that require readable data.
 - Added Blender **Clean Selected Meshes** for batch safe-copy cleanup while preserving every source object.
 - Added Blender **Create Game-Ready Copy** for source-preserving static mesh preparation with optional modifier application, applied rotation/scale, geometry cleanup and unused material-slot removal.
-- Added a Git-managed Blender install route using the repository Git URL plus the root Blender add-on proxy, with `git pull` updates.
+- Added a Blender 4.2+ **INSTALL IN BLENDER** button backed by a native extension manifest. Dragging the button into an open Blender window downloads and installs the extension through Blender's own extension flow.
 - Added Blender **Create LODs for Selection** for supported static meshes using the existing guarded LOD workflow.
 - Added Blender **Show Heavy Meshes** with a configurable triangle threshold.
 - Reworked Blender layout around one-click cleanup, batch mesh preparation, advanced tools and compact result reporting.
