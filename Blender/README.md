@@ -58,23 +58,21 @@ Blender support for **Optimize Your Project** now combines fast one-click cleanu
 
 ## Install
 
-### Git URL install
+### Blender 4.2+ button install
 
-1. In Blender's Python Console, run `import addon_utils; print("\\n".join(addon_utils.paths()))` and choose one of the displayed add-on directories.
-2. Open a terminal in that directory.
-3. Clone the repository with `git clone https://github.com/dedzedofficial/Optimize-Your-Project.git optimize_your_project`.
-4. Restart Blender or use **Refresh Local** in Preferences.
-5. Enable **Optimize Your Project for Blender**.
-6. In the 3D Viewport press **N** and open the **FISHHWB** tab.
+[![INSTALL IN BLENDER 4.2+](https://img.shields.io/badge/INSTALL%20IN%20BLENDER-4.2%2B-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/archive/refs/heads/main.zip?blender_version_min=4.2.0)
 
-To update the Git install later, run `git -C optimize_your_project pull` from the same add-on directory.
+1. Keep the Blender project you want to work on open.
+2. Drag the **INSTALL IN BLENDER** button from this GitHub page into the Blender window.
+3. Confirm **Install & Enable**.
+4. In the 3D Viewport press **N** and open the **FISHHWB** tab.
 
-The destination name `optimize_your_project` is intentional: it gives Blender an import-safe Python module folder while still using the normal GitHub Git URL.
+If you click the button instead of dragging it, your browser downloads the same extension ZIP. You can then drag the downloaded ZIP into Blender or use **Get Extensions > Install from Disk**.
 
-### ZIP install
+### Blender 3.6 legacy install
 
 1. Download `optimize-your-project-blender-0.7.4.zip` from the GitHub Releases page after the `blender-v0.7.4` release is published.
-2. In Blender, use **Edit > Preferences > Add-ons > Install...** or **Get Extensions > Install from Disk**.
+2. In Blender, use **Edit > Preferences > Add-ons > Install...**.
 3. Enable **Optimize Your Project for Blender**.
 4. In the 3D Viewport press **N** and open the **FISHHWB** tab.
 
