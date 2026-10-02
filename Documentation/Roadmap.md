@@ -124,7 +124,7 @@ The selection, texture-review and usability ideas planned for these patch number
 - Added **Fix Safe Material Cost Issues** by combining exact duplicate remapping with safe trailing empty-slot cleanup; topology-sensitive submesh reduction remains manual or Blender-assisted.
 - Added Blender **Clean Selected Meshes** for copy-based batch cleanup.
 - Added Blender **Create Game-Ready Copy** for source-preserving static mesh preparation with optional modifier application, applied rotation/scale, cleanup and unused material-slot removal.
-- Added a Git-managed Blender install path using the GitHub Git URL and a root registration proxy so users can update with `git pull`.
+- Added a Blender 4.2+ **INSTALL IN BLENDER** button using the native extension install flow, with Blender 3.6 retaining the legacy ZIP route.
 - Added Blender **Create LODs for Selection** using the guarded static-mesh LOD path.
 - Added Blender **Show Heavy Meshes** with a configurable triangle threshold.
 - Expanded static release validation and Blender runtime regression coverage for the new batch and language features.
