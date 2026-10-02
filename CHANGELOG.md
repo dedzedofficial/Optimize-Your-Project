@@ -67,13 +67,11 @@ The product is now positioned as a **general developer optimization toolkit**. T
 - Added **Clean Unused Material Slots** for trailing empty renderer slots beyond the mesh submesh count, with Unity Undo support. Non-empty extra materials are preserved.
 - Upgraded material-cost handling to **Fix Safe Material Cost Issues**, combining exact duplicate remapping with safe trailing empty-slot cleanup while leaving topology-sensitive submesh changes untouched.
 - Kept Read/Write review diagnostic-only because disabling CPU access can break runtime scripts, non-uniform mesh lighting and other workflows that require readable data.
-- Added Blender **Clean Selected Meshes** for batch safe-copy cleanup while preserving every source object.
-- Added Blender **Create Game-Ready Copy** for source-preserving static mesh preparation with optional modifier application, applied rotation/scale, geometry cleanup and unused material-slot removal.
 - Added a dedicated `optimize-your-project-blender-extension-0.7.4.zip` package for Blender 4.2+ and Blender Extensions submission, while retaining the Blender 3.6 legacy ZIP.
-- Added Blender **Create LODs for Selection** for supported static meshes using the existing guarded LOD workflow.
-- Added Blender **Show Heavy Meshes** with a configurable triangle threshold.
-- Reworked Blender layout around one-click cleanup, batch mesh preparation, advanced tools and compact result reporting.
-- Expanded release checks and Blender regression tests to cover v0.7.4 languages and batch operations.
+- Simplified Blender v0.7.4 to only **One-Click Remesh** and **LOD generation**, including **Create LODs for Selection** for supported static meshes.
+- Removed the experimental cleanup, Game-Ready, duplicate-vertex, heavy-mesh, triangle-limit, join/atlas and related Blender controls because they were not reliable or useful enough to keep presenting as supported features.
+- Reworked the Blender sidebar into a compact Remesh + LOD-only interface.
+- Focused Blender runtime regression tests on source-preserving Remesh and LOD behavior.
 - Added a staged language roadmap for future releases while keeping new translations reviewable and optional.
 
 ## 0.7.1

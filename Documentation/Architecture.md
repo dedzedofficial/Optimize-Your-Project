@@ -72,7 +72,7 @@ Automatic AssetPostprocessor-based optimization remains intentionally disabled. 
 
 `Blender/vr_optimizer_blender/` is a separate Blender add-on. The folder name is retained for compatibility during the v0.7 transition.
 
-The primary v0.7.4 Blender workflow is split into **One-Click Cleanup** and **Batch Mesh Prep**. Single-object cleanup, Game-Ready copy, remesh and duplicate-vertex actions remain available, while selected static meshes can be cleaned or prepared as LOD sets in a batch. The Game-Ready path produces a separate static copy, can evaluate existing modifiers, applies rotation and scale, performs conservative cleanup and removes unused material slots. Heavy mesh review selects scene geometry over a chosen triangle threshold. Source objects are preserved.
+The v0.7.4 Blender workflow is intentionally limited to **Remesh** and **LOD generation**. The add-on creates source-preserving remeshed copies and LOD0 / LOD1 / LOD2 sets for supported static meshes. A batch LOD operator handles multiple selected meshes. Shape-key, vertex-group and armature-driven inputs are rejected because these operations change topology. Earlier experimental cleanup, Game-Ready, merge, heavy-mesh, triangle-limit and atlas code was removed from the supported Blender add-on because it was not reliable or useful enough to justify the larger UI.
 
 ### Blender package architecture
 

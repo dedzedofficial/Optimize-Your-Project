@@ -114,24 +114,31 @@ info = next(
 blender_version = ".".join(map(str, info["version"]))
 assert blender_version == versions["blender"] == "0.7.4"
 assert versions["blender_tag"] == "blender-v" + blender_version
-assert 'bl_idname = "fishhwb.clean_selected_mesh"' in source_text
-assert "FISHHWB_OT_clean_selected_mesh" in source_text.split("classes =", 1)[1]
 assert 'bl_idname = "fishhwb.one_click_remesh"' in source_text
-assert 'bl_idname = "fishhwb.merge_vertices"' in source_text
-assert 'bl_idname = "fishhwb.clean_selected_meshes"' in source_text
+assert 'bl_idname = "fishhwb.create_lods"' in source_text
 assert 'bl_idname = "fishhwb.create_lods_selected"' in source_text
-assert 'bl_idname = "fishhwb.show_heavy_meshes"' in source_text
-assert 'bl_idname = "fishhwb.create_game_ready_copy"' in source_text
-assert "FISHHWB_OT_create_game_ready_copy" in source_text.split("classes =", 1)[1]
-assert "_GameReady" in source_text
+assert "FISHHWB_OT_one_click_remesh" in source_text.split("classes =", 1)[1]
+assert "FISHHWB_OT_create_lods" in source_text.split("classes =", 1)[1]
+assert "FISHHWB_OT_create_lods_selected" in source_text.split("classes =", 1)[1]
 assert "LANGUAGE_ITEMS" in source_text
 for language_code in ["'EN'", "'JA'", "'ZH'", "'KO'"]:
     assert language_code in source_text
-assert "ONE-CLICK CLEANUP" in source_text
-assert "Show Advanced Mesh Tools" in source_text
-assert "FREE FOR DEVELOPERS" in source_text
-assert "SUPPORT DEVELOPMENT ON PATREON" in source_text
-assert "https://www.patreon.com/cw/DedZed" in source_text
+assert "Blender v0.7.4: Remesh + LOD only" in source_text
+assert "ONE-CLICK REMESH" in source_text
+assert "LOD GENERATION" in source_text
+for removed in [
+    'fishhwb.clean_selected_mesh',
+    'fishhwb.clean_selected_meshes',
+    'fishhwb.create_game_ready_copy',
+    'fishhwb.merge_vertices',
+    'fishhwb.show_heavy_meshes',
+    'fishhwb.tri_limit',
+    'fishhwb.join_merge',
+    'ONE-CLICK CLEANUP',
+    'Show Advanced Mesh Tools',
+    '_GameReady',
+]:
+    assert removed not in source_text, removed
 
 extension_proxy = (root / "__init__.py").read_text(encoding="utf-8")
 assert extension_proxy.startswith("# SPDX-License-Identifier: GPL-3.0-or-later")
@@ -165,6 +172,8 @@ for path in [
     assert "optimize-your-project-blender-extension-0.7.4.zip" in content, path
     assert "optimize-your-project-blender-0.7.4.zip" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml" in content, path
+    assert "Remesh" in content, path
+    assert "LOD" in content, path
     assert "archive/refs/heads/main.zip?blender_version_min=4.2.0" not in content, path
     assert "git clone https://github.com/dedzedofficial/Optimize-Your-Project.git optimize_your_project" not in content, path
     assert "git -C optimize_your_project pull" not in content, path
@@ -176,6 +185,7 @@ assert "## Keywords" in readme
 assert "FIX DUPLICATE MATERIAL REFERENCES" not in readme  # README uses friendly title case
 assert "Fix Duplicate Material References" in readme
 assert "optimize-your-project-blender-extension-0.7.4.zip" in readme
+assert "Blender v0.7.4 intentionally supports only" in readme
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
 
 assert "## " + manifest["version"] in (root / "CHANGELOG.md").read_text()
