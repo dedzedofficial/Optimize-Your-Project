@@ -106,7 +106,7 @@ The Unity window keeps the two focused work pages:
 - **Optimize Particles** applies selected particle limits to loaded scenes or the chosen character hierarchy.
 - **Compress Imported Meshes** applies Unity model-importer mesh compression to model assets used in the current scope.
 - **Find Duplicate Materials** compares material shader state and saved properties in the selected Assets folder.
-- **Clean Unused Material Slots** removes only renderer slots beyond the mesh's actual submesh count and supports Unity Undo.
+- **Clean Unused Material Slots** removes only trailing empty renderer slots beyond the mesh's actual submesh count and supports Unity Undo. Non-empty extra materials are preserved.
 - **Find Expensive Material Setups** highlights renderers with high material-slot or submesh counts for review.
 - **Disable Realtime Shadows** disables supported realtime light shadows with Unity Undo support.
 - **Scan Entire Project** runs the heavier diagnostic pass and shows filterable Critical / Warning results.
