@@ -121,12 +121,12 @@ The selection, texture-review and usability ideas planned for these patch number
 - Added **Fix Duplicate Material References** by comparing exact shader state and saved properties, then remapping loaded renderer references with Undo while preserving the source material assets.
 - Added **Clean Unused Material Slots** for trailing empty renderer slots beyond the mesh's submesh count, with Undo support. Non-empty extra materials are preserved.
 - Added **Fix Safe Material Cost Issues** by combining exact duplicate remapping with safe trailing empty-slot cleanup; topology-sensitive submesh reduction remains manual or Blender-assisted.
-- Added Blender **Clean Selected Meshes** for copy-based batch cleanup.
-- Added Blender **Create Game-Ready Copy** for source-preserving static mesh preparation with optional modifier application, applied rotation/scale, cleanup and unused material-slot removal.
 - Added a dedicated Blender 4.2+ extension ZIP for Blender Extensions submission, with Blender 3.6 retaining the legacy ZIP route.
 - Added Blender **Create LODs for Selection** using the guarded static-mesh LOD path.
-- Added Blender **Show Heavy Meshes** with a configurable triangle threshold.
-- Expanded static release validation and Blender runtime regression coverage for the new batch and language features.
+- Simplified Blender v0.7.4 to a deliberately small supported scope: **One-Click Remesh**, **Create LOD0 / LOD1 / LOD2**, and **Create LODs for Selection**.
+- Removed the earlier experimental Blender cleanup, Game-Ready, duplicate-vertex, heavy-mesh, triangle-limit, join/atlas and related controls because they were not reliable or useful enough to count as supported optimization features.
+- Reduced the Blender sidebar to Remesh, LOD generation, the single Apply Existing Modifiers option, selection information and result reporting.
+- Focused Blender runtime regression coverage on source preservation, Remesh behavior, active LOD generation, batch LOD generation and unsupported topology guards.
 - Kept detailed scans optional and source-preservation behavior explicit.
 
 ### v0.7.5: helpful fixes within reach | Planned
