@@ -33,6 +33,7 @@ assert extension_manifest["schema_version"] == "1.0.0"
 assert extension_manifest["id"] == "optimize_your_project"
 assert extension_manifest["version"] == versions["blender"] == "0.7.4"
 assert extension_manifest["type"] == "add-on"
+assert extension_manifest["license"] == ["SPDX:GPL-3.0-or-later"]
 assert extension_manifest["blender_version_min"] == "4.2.0"
 assert (root / "Editor/FISHHWBVR/VRUpdateChecker.cs").read_text().find('"' + manifest["version"] + '"') >= 0
 
@@ -133,11 +134,16 @@ assert "SUPPORT DEVELOPMENT ON PATREON" in source_text
 assert "https://www.patreon.com/cw/DedZed" in source_text
 
 extension_proxy = (root / "__init__.py").read_text(encoding="utf-8")
+assert extension_proxy.startswith("# SPDX-License-Identifier: GPL-3.0-or-later")
 assert "Blender 4.2+ extension entry point" in extension_proxy
 assert "from .Blender.vr_optimizer_blender import bl_info" in extension_proxy
 assert "def register()" in extension_proxy
 assert "def unregister()" in extension_proxy
 assert (root / "Blender/__init__.py").is_file()
+assert (root / "Blender/EXTENSION_LICENSE.txt").is_file()
+assert (root / "Blender/vr_optimizer_blender/__init__.py").read_text(encoding="utf-8").startswith(
+    "# SPDX-License-Identifier: GPL-3.0-or-later"
+)
 
 for path in [
     root / "README.md",
@@ -228,6 +234,7 @@ with ZipFile(extension_archive) as package:
     assert "blender_manifest.toml" in names
     assert "__init__.py" in names
     assert "Blender/__init__.py" in names
+    assert "Blender/EXTENSION_LICENSE.txt" in names
     assert "Blender/vr_optimizer_blender/__init__.py" in names
     assert "Blender/vr_optimizer_blender/optimize-your-project-logo.png" in names
 
