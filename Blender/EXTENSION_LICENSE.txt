@@ -1,0 +1,10 @@
+Optimize Your Project for Blender
+Copyright 2026 FISHHWB | Ded Zed
+
+SPDX-License-Identifier: GPL-3.0-or-later
+
+The Blender extension package is distributed under the GNU General Public License
+version 3.0 or later.
+
+License information:
+https://www.gnu.org/licenses/gpl-3.0.html

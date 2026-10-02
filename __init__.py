@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Blender 4.2+ extension entry point for Optimize Your Project.
 
 The repository ZIP is installable as a Blender extension. This proxy forwards
