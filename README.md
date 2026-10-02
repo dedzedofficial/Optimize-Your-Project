@@ -57,7 +57,7 @@ Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedze
 
 Optimize Your Project is a free toolkit for developers building real-time projects. Its priority is removing repetitive optimization work through clear one-click and batch actions for games, mobile projects, VR titles, social experiences, prototypes and reusable asset packs.
 
-v0.7.4 is a major usability and workflow update. It adds searchable Unity actions, texture import repair, material-cost tools, richer mesh review, Blender batch preparation, a Game-Ready copy workflow and interface language support for **English, Japanese, Simplified Chinese and Korean**.
+v0.7.4 is a major usability and workflow update. It adds searchable Unity actions, texture import repair, material-cost tools, richer mesh review, a deliberately focused Blender Remesh + LOD workflow, and interface language support for **English, Japanese, Simplified Chinese and Korean**.
 
 ## Quick install
 
@@ -216,7 +216,7 @@ Pull requests validate:
 - Required branding and package files.
 - Unity v0.7 Project / Character UI shape.
 - Unity language and Project Insights integration.
-- Blender cleanup, Game-Ready copy, remesh, vertex merge, batch cleanup, batch LOD and heavy-mesh actions.
+- Blender Remesh, active LOD generation, batch LOD generation, source preservation and unsupported-topology guards.
 - English, Japanese, Simplified Chinese and Korean language entries.
 - Buildability of the Unity VPM archive and Blender add-on ZIP.
 
