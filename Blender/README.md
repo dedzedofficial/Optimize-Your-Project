@@ -118,17 +118,6 @@ They were removed from this version because they did not provide a reliable enou
 
 Use the **Language** control at the top of the sidebar. v0.7.4 includes English, Japanese, Simplified Chinese and Korean for the main Blender workflow. Future language additions are tracked in the project roadmap.
 
-## Advanced Mesh Tools
-
-The earlier preview tools are still available below the quick section:
-
-- **Create Reduced Copy**: decimated duplicate under a triangle limit.
-- **Join Selected and Merge Vertices**: joins selected mesh copies and welds nearby vertices.
-- **Merge Base Color Textures + UVs**: optional supported Base Color atlas path for the join tool.
-- **Create LOD0 / LOD1 / LOD2**: static mesh copies at 100%, up to 66%, and up to 33% triangle counts.
-
-These tools create output copies so the source object remains available for comparison.
-
 ## Notes
 
 Blender v0.7.4 is early support. Test generated meshes before replacing production assets, especially before GLB/FBX export into Unity or another engine.
