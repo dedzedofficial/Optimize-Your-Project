@@ -250,10 +250,13 @@ namespace FISHHWB.VROptimizer
             if (MatchesAction("mesh model compression"))
                 MeshCard(null);
 
+            if (MatchesAction("material duplicate unused expensive draw call"))
+                MaterialCard(null, projectFolder, valid);
+
             if (MatchesAction("light shadow"))
                 LightCard(null);
 
-            if (MatchesAction("memory texture mesh heavy review"))
+            if (MatchesAction("memory texture mesh heavy oversized review"))
             {
                 using (new EditorGUI.DisabledScope(!valid))
                     InsightsCard(null, projectFolder);
@@ -296,9 +299,11 @@ namespace FISHHWB.VROptimizer
                     ParticleCard(avatar);
                 if (MatchesAction("mesh model compression"))
                     MeshCard(avatar);
+                if (MatchesAction("material unused expensive draw call"))
+                    MaterialCard(avatar, "Assets", false);
                 if (MatchesAction("light shadow"))
                     LightCard(avatar);
-                if (MatchesAction("mesh heavy review"))
+                if (MatchesAction("mesh heavy oversized review"))
                     InsightsCard(avatar, "Assets");
             }
         }
@@ -320,6 +325,9 @@ namespace FISHHWB.VROptimizer
 
             if (ActionButton(T("compress_textures")))
                 OptimizeTextures(root, folder);
+
+            if (!root && GUILayout.Button(T("fix_texture_imports"), compactButtonStyle))
+                FixTextureImports(folder);
 
             EndCard();
         }
@@ -387,6 +395,33 @@ namespace FISHHWB.VROptimizer
                     ? VRActionOutcome.Changed : VRActionOutcome.Unchanged;
             }, unsupported);
             summary = result.Format("Textures");
+        }
+
+        void FixTextureImports(string folder)
+        {
+            var fixes = VRProjectMaintenance.CollectTextureImportFixes(folder);
+            if (fixes.Count == 0)
+            {
+                summary = "Texture import review complete: no conservative filename-based fixes found.";
+                return;
+            }
+
+            if (!EditorUtility.DisplayDialog(
+                "Fix texture import settings",
+                "Apply " + fixes.Count + " conservative import fixes? Recognized normal-map filenames are imported as Normal Maps and recognized mask/data textures use linear color space. Other import settings are preserved.",
+                "Fix Imports",
+                "Cancel"))
+            {
+                summary = new VRActionSummary { Cancelled = true, Skipped = fixes.Count }.Format("Texture import fixes");
+                return;
+            }
+
+            var result = VRActionSummary.Run(
+                "Texture import fixes",
+                fixes,
+                item => item.Path,
+                VRProjectMaintenance.ApplyTextureImportFix);
+            summary = result.Format("Texture import fixes");
         }
 
         void ParticleCard(GameObject root)
@@ -490,6 +525,70 @@ namespace FISHHWB.VROptimizer
             EndCard();
         }
 
+        void MaterialCard(GameObject root, string folder, bool folderValid)
+        {
+            BeginCard(
+                T("materials"),
+                root ? T("materials_avatar") : T("materials_project"));
+
+            if (!root)
+            {
+                using (new EditorGUI.DisabledScope(!folderValid))
+                {
+                    if (GUILayout.Button(T("duplicate_materials"), compactButtonStyle))
+                    {
+                        issues = VRProjectInsights.DuplicateMaterials(folder);
+                        summary = "Duplicate material review: " + issues.Count + " duplicate assets found.";
+                    }
+                }
+            }
+
+            if (GUILayout.Button(T("unused_material_slots"), compactButtonStyle))
+            {
+                var fixes = VRProjectMaintenance.CollectUnusedMaterialSlots(root);
+                int remove = 0;
+                foreach (var fix in fixes) remove += fix.RemoveCount;
+
+                if (fixes.Count == 0)
+                {
+                    summary = "Unused material slot cleanup: no excess renderer slots found.";
+                }
+                else if (!EditorUtility.DisplayDialog(
+                    "Clean unused material slots",
+                    "Remove " + remove + " excess material slots from " + fixes.Count +
+                    " renderers? Only slots beyond each mesh's submesh count are removed. Unity Undo is available.",
+                    "Clean Slots",
+                    "Cancel"))
+                {
+                    summary = new VRActionSummary { Cancelled = true, Skipped = fixes.Count }.Format("Material slots");
+                }
+                else
+                {
+                    Undo.IncrementCurrentGroup();
+                    int group = Undo.GetCurrentGroup();
+                    Undo.SetCurrentGroupName("Clean Unused Material Slots");
+                    try
+                    {
+                        var result = VRActionSummary.Run(
+                            "Material slots",
+                            fixes,
+                            item => item.Renderer ? item.Renderer.name : "Missing renderer",
+                            VRProjectMaintenance.ApplyUnusedMaterialSlotFix);
+                        summary = result.Format("Material slots") + "\nUse Undo if needed.";
+                    }
+                    finally { Undo.CollapseUndoOperations(group); }
+                }
+            }
+
+            if (GUILayout.Button(T("expensive_materials"), compactButtonStyle))
+            {
+                issues = VRProjectInsights.ExpensiveMaterials(root);
+                summary = "Material cost review: " + issues.Count + " high-slot renderers found.";
+            }
+
+            EndCard();
+        }
+
         void LightCard(GameObject root)
         {
             BeginCard(
@@ -549,10 +648,10 @@ namespace FISHHWB.VROptimizer
                 summary = "Read/Write review: " + issues.Count + " candidates.";
             }
 
-            if (GUILayout.Button(T("heavy_meshes"), compactButtonStyle))
+            if (GUILayout.Button(T("oversized_meshes"), compactButtonStyle))
             {
-                issues = VRProjectInsights.HeavyMeshes(root);
-                summary = "Heavy mesh review: " + issues.Count + " candidates.";
+                issues = VRProjectInsights.OversizedMeshes(root);
+                summary = "Oversized mesh review: " + issues.Count + " candidates.";
             }
 
             EndCard();
