@@ -132,13 +132,14 @@ The selection, texture-review and usability ideas planned for these patch number
 - Added Unity **Use Current Selection** for Project-folder scope.
 - Added **Show Largest Textures** for quick high-resolution texture review.
 - Added **Review Read/Write Memory** for readable textures and imported models without automatically disabling settings that may be required at runtime.
-- Added **Find Oversized Meshes** for high-triangle loaded-scene or character geometry with triangle, vertex, submesh and material-slot counts.
+- Added **Fix Oversized Mesh Imports** for supported high-triangle imported models using Medium mesh compression plus Unity vertex/polygon import optimization while preserving triangle topology.
 - Added **Fix Texture Import Settings** for conservative normal-map and non-color mask/data texture import corrections.
-- Added **Find Duplicate Materials** by comparing shader state and saved material properties.
+- Added **Fix Duplicate Material References** by comparing exact shader state and saved properties, then remapping loaded renderer references with Undo while preserving the source material assets.
 - Added **Clean Unused Material Slots** for trailing empty renderer slots beyond the mesh's submesh count, with Undo support. Non-empty extra materials are preserved.
-- Added **Find Expensive Material Setups** for high material-slot and submesh-count renderers.
+- Added **Fix Safe Material Cost Issues** by combining exact duplicate remapping with safe trailing empty-slot cleanup; topology-sensitive submesh reduction remains manual or Blender-assisted.
 - Added Blender **Clean Selected Meshes** for copy-based batch cleanup.
 - Added Blender **Create Game-Ready Copy** for source-preserving static mesh preparation with optional modifier application, applied rotation/scale, cleanup and unused material-slot removal.
+- Added a Git-managed Blender install path using the GitHub Git URL and a root registration proxy so users can update with `git pull`.
 - Added Blender **Create LODs for Selection** using the guarded static-mesh LOD path.
 - Added Blender **Show Heavy Meshes** with a configurable triangle threshold.
 - Expanded static release validation and Blender runtime regression coverage for the new batch and language features.
