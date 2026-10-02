@@ -556,7 +556,7 @@ namespace FISHHWB.VROptimizer
                 else if (!EditorUtility.DisplayDialog(
                     "Clean unused material slots",
                     "Remove " + remove + " excess material slots from " + fixes.Count +
-                    " renderers? Only slots beyond each mesh's submesh count are removed. Unity Undo is available.",
+                    " renderers? Only trailing empty slots beyond each mesh's submesh count are removed. Non-empty extra materials are preserved. Unity Undo is available.",
                     "Clean Slots",
                     "Cancel"))
                 {
