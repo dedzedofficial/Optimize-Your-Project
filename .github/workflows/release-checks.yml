@@ -35,3 +35,15 @@ jobs:
           tar -xf "$RUNNER_TEMP/blender.tar.xz" -C "$RUNNER_TEMP/blender" --strip-components=1
       - name: Test cleanup and existing quick actions
         run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender.py'
+      - name: Validate Blender install-button extension
+        if: matrix.blender.series == '4.2'
+        run: |
+          "$RUNNER_TEMP/blender/blender" --background --factory-startup --command extension validate .
+          rm -rf "$RUNNER_TEMP/button-archive"
+          mkdir -p "$RUNNER_TEMP/button-archive/Optimize-Your-Project-main"
+          rsync -a --exclude .git --exclude dist ./ "$RUNNER_TEMP/button-archive/Optimize-Your-Project-main/"
+          (
+            cd "$RUNNER_TEMP/button-archive"
+            zip -qr main.zip Optimize-Your-Project-main
+          )
+          "$RUNNER_TEMP/blender/blender" --background --factory-startup --command extension validate "$RUNNER_TEMP/button-archive/main.zip"

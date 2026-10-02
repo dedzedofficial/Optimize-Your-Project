@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 import subprocess
 import sys
+import tomllib
 from zipfile import ZipFile
 
 root = Path(__file__).resolve().parents[1]
@@ -26,6 +27,13 @@ for keyword in [
 assert versions["unity"] == manifest["version"]
 assert versions["unity_tag"] == "v" + manifest["version"]
 assert versions["unity_url"].endswith("/releases/tag/" + versions["unity_tag"])
+
+extension_manifest = tomllib.loads((root / "blender_manifest.toml").read_text(encoding="utf-8"))
+assert extension_manifest["schema_version"] == "1.0.0"
+assert extension_manifest["id"] == "optimize_your_project"
+assert extension_manifest["version"] == versions["blender"] == "0.7.4"
+assert extension_manifest["type"] == "add-on"
+assert extension_manifest["blender_version_min"] == "4.2.0"
 assert (root / "Editor/FISHHWBVR/VRUpdateChecker.cs").read_text().find('"' + manifest["version"] + '"') >= 0
 
 icon = root / "Editor/FISHHWBVR/Icons/Optimize-Your-Project.png"
@@ -124,10 +132,11 @@ assert "FREE FOR DEVELOPERS" in source_text
 assert "SUPPORT DEVELOPMENT ON PATREON" in source_text
 assert "https://www.patreon.com/cw/DedZed" in source_text
 
-git_proxy = (root / "__init__.py").read_text(encoding="utf-8")
-assert "from .Blender.vr_optimizer_blender import bl_info" in git_proxy
-assert "def register()" in git_proxy
-assert "def unregister()" in git_proxy
+extension_proxy = (root / "__init__.py").read_text(encoding="utf-8")
+assert "Blender 4.2+ extension entry point" in extension_proxy
+assert "from .Blender.vr_optimizer_blender import bl_info" in extension_proxy
+assert "def register()" in extension_proxy
+assert "def unregister()" in extension_proxy
 assert (root / "Blender/__init__.py").is_file()
 
 for path in [
@@ -146,8 +155,10 @@ for path in [
     assert "Changelog" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project.git" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project/releases" in content, path
-    assert "git clone https://github.com/dedzedofficial/Optimize-Your-Project.git optimize_your_project" in content, path
-    assert "git -C optimize_your_project pull" in content, path
+    assert "INSTALL IN BLENDER" in content, path
+    assert "https://github.com/dedzedofficial/Optimize-Your-Project/archive/refs/heads/main.zip?blender_version_min=4.2.0" in content, path
+    assert "git clone https://github.com/dedzedofficial/Optimize-Your-Project.git optimize_your_project" not in content, path
+    assert "git -C optimize_your_project pull" not in content, path
 
 readme = (root / "README.md").read_text(encoding="utf-8")
 assert "general developer optimization" in readme.lower()
@@ -155,6 +166,7 @@ assert "VRChat / VCC (optional)" in readme
 assert "## Keywords" in readme
 assert "FIX DUPLICATE MATERIAL REFERENCES" not in readme  # README uses friendly title case
 assert "Fix Duplicate Material References" in readme
+assert "Drag the **INSTALL IN BLENDER** button" in readme
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
 
 assert "## " + manifest["version"] in (root / "CHANGELOG.md").read_text()

@@ -1,0 +1,19 @@
+schema_version = "1.0.0"
+
+id = "optimize_your_project"
+version = "0.7.4"
+name = "Optimize Your Project"
+tagline = "One-click optimization tools for game-ready Blender assets"
+maintainer = "FISHHWB | Ded Zed"
+type = "add-on"
+
+website = "https://github.com/dedzedofficial/Optimize-Your-Project"
+blender_version_min = "4.2.0"
+
+license = [
+  "SPDX:MIT",
+]
+
+copyright = [
+  "2026 FISHHWB | Ded Zed",
+]

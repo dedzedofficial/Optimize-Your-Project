@@ -1,8 +1,7 @@
-"""Blender Git-install entry point for Optimize Your Project.
+"""Blender 4.2+ extension entry point for Optimize Your Project.
 
-Clone this repository into a Blender add-ons directory using the folder name
-"optimize_your_project". Blender will load this proxy and forward registration
-to the maintained add-on under Blender/vr_optimizer_blender.
+The repository ZIP is installable as a Blender extension. This proxy forwards
+registration to the maintained add-on under Blender/vr_optimizer_blender.
 """
 
 from .Blender.vr_optimizer_blender import bl_info
