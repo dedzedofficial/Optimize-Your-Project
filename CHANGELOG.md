@@ -151,3 +151,9 @@ The product is now positioned as a **general developer optimization toolkit**. T
 ### Owning-button rule for v0.7.55
 
 Related operations belong to their existing action. Optimize Textures includes recognized texture import repair alongside size/compression. Optimize Model Imports includes vertex/polygon import optimization alongside compression. Material fixes use the combined action. Reviews remain diagnostic and do not introduce competing fix buttons. Model topology is preserved; Blender handles actual remesh and LOD generation.
+
+### v0.7.55 remesh appearance fix
+
+- Replaced destructive voxel reconstruction with surface-preserving triangle reduction under the existing Remesh button. Retains UV layers and material assignments and avoids fusing nearby surfaces.
+- Kept neutral-space weight, relative blendshape and armature transfer. Existing cached voxel results are regenerated under the new policy when untouched.
+- Very low triangle targets can still distort appearance; no automatic retopology or texture rebaking is claimed.

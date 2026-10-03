@@ -93,7 +93,7 @@ Select a supported mesh in Object Mode.
 
 Press **One-Click Remesh** to create a separate `_Remesh` copy. The source object is preserved.
 
-The tool selects remesh detail from mesh dimensions and enforces the triangle target. Supported armature bindings, weight groups and relative shape keys are transferred onto the final topology in neutral space. LOD continues to reject deformation-sensitive inputs.
+The button uses surface-preserving triangle reduction instead of voxel reconstruction. It retains UV layers and material assignments, keeps separate surfaces separate, and enforces the triangle target. A mesh already below the target is copied without unnecessary reconstruction. Supported armature bindings, weight groups and relative shape keys are transferred onto the final topology in neutral space. LOD continues to reject deformation-sensitive inputs.
 
 ### LOD Generation
 
@@ -136,6 +136,6 @@ No additional button is required. One-Click Remesh automatically transfers all v
 
 The transfer projects each new vertex onto a source triangle and interpolates its weights and basis-relative shape displacement. It is approximate: close facial surfaces, fingers and thin details can receive data from the wrong nearby surface after aggressive remeshing. Test facial expressions and poses before using the result. The result reports the maximum projection distance in local units.
 
-Absolute/time-based shape keys, shape-key NLA stacks, missing armature bindings and deformation meshes with non-armature modifiers are rejected before changes. Unsupported driver modifier properties cause the output to be removed rather than silently discarding animation. Apply non-armature modifiers on a separate copy first. Remesh does not claim to preserve the original UV layout or exact deformation quality.
+Absolute/time-based shape keys, shape-key NLA stacks, missing armature bindings and deformation meshes with non-armature modifiers are rejected before changes. Unsupported driver modifier properties cause the output to be removed rather than silently discarding animation. Apply non-armature modifiers on a separate copy first. UV layers and material assignments are retained through surface reduction. Aggressive reduction can still distort texture interpolation, silhouettes and deformation; it cannot invent missing detail or guarantee production retopology.
 
 LOD remains static-only in this update. Deformation data participates in incremental history, so changing weights or shape coordinates triggers a fresh remesh while edited generated results remain protected.

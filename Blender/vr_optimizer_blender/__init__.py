@@ -80,7 +80,7 @@ _TRANSLATIONS = {
         'KO': '리메시',
     },
     'remesh_desc': {
-        'EN': 'Create a remeshed copy with supported weight and shape transfer.',
+        'EN': 'Reduce triangles while retaining the surface, UVs and materials.',
         'JA': '自動リメッシュした別コピーを作成します。',
         'ZH': '创建一个单独的自动重网格副本。',
         'KO': '자동 리메시된 별도 복사본을 만듭니다.',
@@ -473,7 +473,7 @@ class FISHHWB_OT_reset_history(bpy.types.Operator):
 class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
     bl_idname = "fishhwb.one_click_remesh"
     bl_label = "One-Click Remesh"
-    bl_description = "Create a separate remeshed copy using an automatic voxel size"
+    bl_description = "Create a surface-preserving reduced copy with UVs and materials"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -496,7 +496,7 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
         copy = None
 
         try:
-            policy = 'remesh-deformation-v0755:' + str(context.scene.fishhwb_triangle_target)
+            policy = 'remesh-surface-v0755:' + str(context.scene.fishhwb_triangle_target)
             try:
                 cached = _cached_outputs(source, context, 'remesh', policy)
             except ValueError as exc:
@@ -512,37 +512,23 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
                 deform_transfer.prepare_neutral_copy(source, copy, context)
             before = triangle_count(copy.data)
 
-            max_dimension = max(abs(value) for value in copy.dimensions)
-            if max_dimension <= 0:
-                raise ValueError("The selected mesh has no usable size.")
-
-            modifier = copy.modifiers.new("One Click Remesh", 'REMESH')
-            try:
-                modifier.mode = 'VOXEL'
-            except (TypeError, ValueError):
-                modifier.mode = 'SMOOTH'
-
-            if hasattr(modifier, "voxel_size"):
-                modifier.voxel_size = max(max_dimension / 96.0, 0.0001)
-            if hasattr(modifier, "octree_depth"):
-                modifier.octree_depth = 6
-            if hasattr(modifier, "use_smooth_shade"):
-                modifier.use_smooth_shade = True
-
-            result = _evaluated_mesh_copy(copy, context)
-            after = triangle_count(result)
-            if after < 1:
-                bpy.data.meshes.remove(result)
-                raise ValueError("Remesh produced no triangles.")
-
-            old_mesh = copy.data
-            copy.modifiers.clear()
-            copy.data = result
-            copy.data.name = copy.name
-            if old_mesh.users == 0:
-                bpy.data.meshes.remove(old_mesh)
-
+            # Voxel reconstruction discards UV loops and merges nearby clothing,
+            # hair and facial surfaces. Retain the existing surface instead.
+            # Evaluate existing static modifiers once, even below the budget.
+            if copy.modifiers:
+                result = _evaluated_mesh_copy(copy, context)
+                old_mesh = copy.data
+                copy.modifiers.clear()
+                copy.data = result
+                if old_mesh.users == 0:
+                    bpy.data.meshes.remove(old_mesh)
+            uv_names = {layer.name for layer in copy.data.uv_layers}
             after = _reduce_copy_to_limit(copy, context.scene.fishhwb_triangle_target, context)
+            if after < 1:
+                raise ValueError("The optimized surface contains no triangles.")
+            if not uv_names.issubset({layer.name for layer in copy.data.uv_layers}):
+                raise ValueError("Surface reduction lost a UV layer; output discarded.")
+            copy.data.name = copy.name
             transfer_detail = ""
             if transfer_deformation:
                 groups, shapes, distance = deform_transfer.transfer(source, copy)
@@ -552,7 +538,7 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
             _action_report(
                 self,
                 context,
-                f"Remeshed copy created: {before:,} -> {after:,} triangles. Original object preserved." + transfer_detail,
+                f"Surface-preserving copy created: {before:,} -> {after:,} triangles. UVs and material assignments retained. Original object preserved." + transfer_detail,
                 changed=1,
             )
             return {'FINISHED'}

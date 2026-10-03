@@ -58,6 +58,72 @@ class RemeshLodTests(unittest.TestCase):
         obj.data.name = name
         return obj
 
+    def textured_layers(self):
+        # Two close, disconnected sheets mimic clothing over skin. Each has a
+        # separate material and UV island; voxel reconstruction merges them.
+        vertices, faces = [], []
+        n = 8
+        for sheet in range(2):
+            base = len(vertices)
+            vertices.extend((x / n, y / n, sheet * 0.01)
+                            for y in range(n + 1) for x in range(n + 1))
+            for y in range(n):
+                for x in range(n):
+                    a = base + y * (n + 1) + x
+                    faces.append((a, a + 1, a + n + 2, a + n + 1))
+        mesh = bpy.data.meshes.new("TexturedSheets")
+        mesh.from_pydata(vertices, [], faces)
+        for name in ("Skin", "Coat"):
+            material = bpy.data.materials.new(name)
+            material.use_nodes = True
+            mesh.materials.append(material)
+        uv = mesh.uv_layers.new(name="UVMap")
+        secondary = mesh.uv_layers.new(name="DetailUV")
+        for face in mesh.polygons:
+            sheet = face.index // (n * n)
+            face.material_index = sheet
+            for loop_index in face.loop_indices:
+                co = mesh.vertices[mesh.loops[loop_index].vertex_index].co
+                uv.data[loop_index].uv = (co.x + sheet * 2, co.y)
+                secondary.data[loop_index].uv = (co.x * 0.5, co.y * 0.5)
+        obj = bpy.data.objects.new("TexturedSheets", mesh)
+        bpy.context.collection.objects.link(obj)
+        addon._select_only(bpy.context, obj)
+        return obj
+
+    def test_remesh_preserves_uv_materials_and_close_surfaces(self):
+        source = self.textured_layers()
+        original = snapshot(source.data)
+        original_uv = tuple(tuple(item.uv) for item in source.data.uv_layers[0].data)
+        bpy.context.scene.fishhwb_triangle_target = 100
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
+        output = bpy.context.active_object
+        self.assertLessEqual(addon.triangle_count(output.data), 100)
+        self.assertEqual(list(output.data.materials), list(source.data.materials))
+        self.assertEqual(set(f.material_index for f in output.data.polygons), {0, 1})
+        self.assertEqual(set(l.name for l in output.data.uv_layers), {"UVMap", "DetailUV"})
+        for face in output.data.polygons:
+            for index in face.loop_indices:
+                co = output.data.vertices[output.data.loops[index].vertex_index].co
+                self.assertAlmostEqual(co.z, face.material_index * 0.01, places=5)
+                uv = output.data.uv_layers["UVMap"].data[index].uv
+                self.assertAlmostEqual(uv.x, co.x + face.material_index * 2, places=4)
+                self.assertAlmostEqual(uv.y, co.y, places=4)
+                detail = output.data.uv_layers["DetailUV"].data[index].uv
+                self.assertAlmostEqual(detail.x, co.x * 0.5, places=4)
+                self.assertAlmostEqual(detail.y, co.y * 0.5, places=4)
+        self.assertEqual(original, snapshot(source.data))
+        self.assertEqual(original_uv, tuple(tuple(item.uv) for item in source.data.uv_layers[0].data))
+
+    def test_remesh_below_budget_keeps_surface_and_uv_exactly(self):
+        source = self.textured_layers()
+        original = snapshot(source.data)
+        original_uv = tuple(tuple(item.uv) for item in source.data.uv_layers[0].data)
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
+        output = bpy.context.active_object
+        self.assertEqual(original, snapshot(output.data))
+        self.assertEqual(original_uv, tuple(tuple(item.uv) for item in output.data.uv_layers[0].data))
+
     def test_language_switch(self):
         bpy.context.scene.fishhwb_language = "JA"
         self.assertEqual(addon.tr(bpy.context, "language"), "言語")
