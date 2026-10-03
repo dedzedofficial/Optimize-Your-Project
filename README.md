@@ -245,3 +245,33 @@ Optimize Your Project remains free. The Unity/general repository code is MIT-lic
 ### Owning-button rule for v0.7.55
 
 Related operations belong to their existing action. Optimize Textures includes recognized texture import repair alongside size/compression. Optimize Model Imports includes vertex/polygon import optimization alongside compression. Material fixes use the combined action. Reviews remain diagnostic and do not introduce competing fix buttons. Model topology is preserved; Blender handles actual remesh and LOD generation.
+
+
+## v0.7.55 additions: smarter owning buttons
+
+These additions stay in v0.7.55 and extend existing actions rather than introducing another optimization dashboard.
+
+| Capability | Supported scope | Behavior |
+| --- | --- | --- |
+| Finish Lighting Setup | Unity loaded saved scenes and supported imported static models | Generate secondary UVs only where the mesh lacks UV1, then prepare static lighting and request a bake. Existing UVs are not repacked. Unsupported/protected or manually edited imports are skipped. |
+| Optimize New Changes | Unity texture/model/lighting-UV import jobs | Persistent per-project source/settings history skips accepted unchanged work and preserves later manual importer edits. |
+| Optimize New Changes | Blender Remesh/LOD | Reuse verified generated copies when source geometry/settings are unchanged; replace only untouched owned outputs after a successful source update. Preserve edited/protected outputs. |
+| Protect Important Detail | Unity texture/model assets and Blender source objects | Explicit protection opts assets out of importer/UV changes or topology-changing jobs. No automatic guessing about faces, signs or hero objects. |
+| Test and Keep Improvements | Optional Unity texture/model import trial | Compare sampled native texture/mesh asset memory before/after. Restore a changed trial when no saving is measured or measurement is unavailable. |
+| Restore Last Import Batch | Unity recorded importer batches | Restore metadata only if the source and current importer state still match the recorded output. Preserve later edits and report conflicts. |
+
+### Using the compact controls
+
+Unity: expand an action's existing settings and open **Batch options**. Select texture/model assets, a material, or a scene hierarchy to protect its referenced textures/models. Removing protection does not remove manual-edit protection; **Reset history for selection** explicitly makes current import settings the next baseline. **Restore last import batch** restores the most recent batch that actually changed imports, including lighting UV preparation.
+
+Blender: **Protect detail** is beside the selected object. Repeated actions on the original source reuse outputs. Reset history on the original source only when you deliberately want fresh copies while preserving previous outputs. Changed sources replace verified untouched generated sets after successful generation. History is stored as object metadata; geometry remains preserved. Renaming/duplicating a source may create a fresh set rather than taking ownership of another source's copies.
+
+### Limits and verification
+
+- The memory trial is an editor asset-memory experiment, not an FPS benchmark or an appearance check. It does not prove a visual change is acceptable. Model compression may help disk/build size without reducing sampled native memory; the trial can therefore reject it even when normal optimization is useful.
+- Play-mode frame-time, player-build and rendered-image comparisons remain future work. Do not advertise automatic whole-project performance certification in v0.7.55.
+- Unity importer history lives in ProjectSettings/OptimizeYourProjectHistory.asset. Keep it with project backups; missing history means a new baseline. Import source files are preserved. Source changes or unrecognized metadata changes can require review.
+- Scene lights/flags use native Undo; generated bake files are outside importer restore. Existing scene settings and known dynamic geometry still require the restrictions documented above.
+- UV readiness checks channel presence, not full chart overlap/distortion quality. Generated UVs use Unity's importer defaults. Custom/procedural geometry and unsupported importers are reported, not silently rebuilt.
+- Unity Edit Mode regression tests for caching, manual edits, protection, rollback, restoration and memory-trial rejection are in Editor/Tests. Enable package tests with Unity Test Framework to run them. Unity editor compilation and bake validation are still required before tagging.
+- Blender runtime regression checks include unchanged reuse, output rename, source updates, manual-edit preservation and detail protection on supported CI versions.

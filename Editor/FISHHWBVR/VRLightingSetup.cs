@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -29,8 +30,34 @@ namespace FISHHWB.VROptimizer
             int group = Undo.GetCurrentGroup();
             Undo.SetCurrentGroupName("Optimize Lighting Setup");
             int lights = 0, meshes = 0, skipped = 0;
+            var uvBatch = new VRImportBatch();
+            int uvChanged = 0, uvUnsupported = 0;
             try
             {
+                var models = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var renderer in VRProjectScanner.SceneObjects<MeshRenderer>())
+                {
+                    if (Dynamic(renderer.transform)) continue;
+                    var filter = renderer.GetComponent<MeshFilter>();
+                    if (!filter || !filter.sharedMesh || filter.sharedMesh.HasVertexAttribute(VertexAttribute.TexCoord1)) continue;
+                    string path = AssetDatabase.GetAssetPath(filter.sharedMesh);
+                    if (!path.StartsWith("Assets/", StringComparison.Ordinal) || !(AssetImporter.GetAtPath(path) is ModelImporter))
+                    { uvUnsupported++; continue; }
+                    models.Add(path);
+                }
+                foreach (var path in models)
+                {
+                    var outcome = uvBatch.Apply(path, "lighting-uv", "secondary-uv-v0755", () =>
+                    {
+                        var importer = AssetImporter.GetAtPath(path) as ModelImporter;
+                        if (!importer) return VRActionOutcome.Unsupported;
+                        if (importer.generateSecondaryUV) return VRActionOutcome.Unchanged;
+                        importer.generateSecondaryUV = true;
+                        importer.SaveAndReimport();
+                        return VRActionOutcome.Changed;
+                    });
+                    if (outcome == VRActionOutcome.Changed) uvChanged++;
+                }
                 for (int i = 0; i < SceneManager.sceneCount; i++)
                 {
                     var scene = SceneManager.GetSceneAt(i);
@@ -49,7 +76,8 @@ namespace FISHHWB.VROptimizer
                         foreach (var renderer in root.GetComponentsInChildren<MeshRenderer>(true))
                         {
                             var filter = renderer.GetComponent<MeshFilter>();
-                            if (!filter || !filter.sharedMesh || Dynamic(renderer.transform)) { skipped++; continue; }
+                            if (!filter || !filter.sharedMesh || Dynamic(renderer.transform) ||
+                                !filter.sharedMesh.HasVertexAttribute(VertexAttribute.TexCoord1)) { skipped++; continue; }
                             var go = renderer.gameObject;
                             var flags = GameObjectUtility.GetStaticEditorFlags(go);
                             var desired = flags | StaticEditorFlags.ContributeGI | StaticEditorFlags.BatchingStatic;
@@ -79,14 +107,15 @@ namespace FISHHWB.VROptimizer
                 }
                 bool started = Lightmapping.BakeAsync();
                 return "Lighting setup: " + lights + " lights changed, " + meshes + " meshes changed, " + skipped +
-                    " dynamic/unsupported meshes skipped. " + (started ? "Bake started; check Unity Lighting for completion." :
+                    " dynamic/unsupported meshes skipped. Lightmap UV imports changed: " + uvChanged +
+                    "; unsupported UV sources: " + uvUnsupported + ". " + (started ? "Bake started; check Unity Lighting for completion." :
                     "Bake did not start; inspect Unity Console and Lighting settings.") +
-                    " Setup supports Undo; baked files do not. Custom scripted movement must be reviewed.";
+                    " Setup supports Undo; UV importer changes use Restore Last Import Batch. Baked files do not support setup Undo. Custom scripted movement must be reviewed." + uvBatch.Details();
             }
             catch (Exception ex)
             {
                 Undo.RevertAllDownToGroup(group);
-                return "Lighting setup failed and setup changes were reverted: " + ex.Message;
+                return "Lighting setup failed; scene setup reverted. Any completed UV imports remain recoverable via Restore Last Import Batch: " + ex.Message;
             }
             finally { Undo.CollapseUndoOperations(group); }
         }

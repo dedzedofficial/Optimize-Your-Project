@@ -89,3 +89,9 @@ The Unity footer uses four states: current, one-patch update available, two-or-m
 ## Compatibility principle
 
 Historical package IDs and internal class names are kept when changing them would break installations. User-facing naming, documentation and future features use the broader **Optimize Your Project** identity.
+
+## v0.7.55 importer state and Blender copy ownership
+
+VRImportHistory stores source/metadata fingerprints, per-job policies, explicit protection and recoverable last-batch metadata in a project-local ScriptableSingleton. VRImportBatch is the shared transactional entry point for texture, model and UV importer changes. Own changes update the known metadata state for other jobs on the same GUID; unknown later edits are preserved. A memory trial retains only positive sampled native asset-memory savings and does not certify runtime performance or appearance.
+
+Blender source objects record evaluated-geometry fingerprints and generated-output identifiers. Unchanged jobs reuse their outputs. Source updates replace only verified untouched generated objects after their replacements succeed; manually edited or protected outputs require an explicit history reset to produce additional copies. Linked libraries are excluded.

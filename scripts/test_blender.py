@@ -117,6 +117,75 @@ class RemeshLodTests(unittest.TestCase):
         self.assertIn("Changed: 1", bpy.context.scene.fishhwb_last_result)
         self.assertIn("Original object preserved", bpy.context.scene.fishhwb_last_result)
 
+    def test_repeat_from_selected_generated_output_reuses_source(self):
+        self.simple_mesh("RepeatSource")
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
+        output = bpy.context.active_object
+        count = len(bpy.data.objects)
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
+        self.assertEqual(output, bpy.context.active_object)
+        self.assertEqual(count, len(bpy.data.objects))
+        self.assertIn("Unchanged: 1", bpy.context.scene.fishhwb_last_result)
+
+    def test_unchanged_remesh_reuses_output(self):
+        source = self.simple_mesh("CachedRemesh")
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
+        output = bpy.context.active_object
+        count = len(bpy.data.objects)
+        addon._select_only(bpy.context, source)
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
+        self.assertEqual(count, len(bpy.data.objects))
+        self.assertEqual(output, bpy.context.active_object)
+        self.assertIn("Unchanged: 1", bpy.context.scene.fishhwb_last_result)
+
+    def test_changed_lod_source_replaces_only_owned_outputs(self):
+        source = self.dense_mesh("ChangedLOD")
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {"FINISHED"})
+        count = len(bpy.data.objects)
+        source.data.vertices[0].co.x += 0.1
+        source.data.update()
+        addon._select_only(bpy.context, source)
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {"FINISHED"})
+        self.assertEqual(count, len(bpy.data.objects))
+        self.assertIn("Changed: 1", bpy.context.scene.fishhwb_last_result)
+
+    def test_unchanged_lod_reuses_outputs_after_rename(self):
+        source = self.dense_mesh("CachedLOD")
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {"FINISHED"})
+        output = bpy.context.active_object
+        output.name = "RenamedLOD"
+        count = len(bpy.data.objects)
+        addon._select_only(bpy.context, source)
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {"FINISHED"})
+        self.assertEqual(count, len(bpy.data.objects))
+        self.assertIn("Unchanged: 1", bpy.context.scene.fishhwb_last_result)
+
+    def test_manual_lod_output_edits_are_preserved(self):
+        source = self.dense_mesh("ManualLOD")
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {"FINISHED"})
+        output = bpy.context.active_object
+        output.data.vertices[0].co.x += 0.2
+        output.data.update()
+        edited = snapshot(output.data)
+        count = len(bpy.data.objects)
+        addon._select_only(bpy.context, source)
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {"CANCELLED"})
+        self.assertEqual(edited, snapshot(output.data))
+        self.assertEqual(count, len(bpy.data.objects))
+        self.assertEqual(bpy.ops.fishhwb.reset_optimization_history(), {"FINISHED"})
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {"FINISHED"})
+        self.assertEqual(edited, snapshot(output.data))
+
+    def test_detail_protection_blocks_topology_changes(self):
+        source = self.dense_mesh("Protected")
+        source.fishhwb_protect_detail = True
+        before = snapshot(source.data)
+        count = len(bpy.data.objects)
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"CANCELLED"})
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {"CANCELLED"})
+        self.assertEqual(before, snapshot(source.data))
+        self.assertEqual(count, len(bpy.data.objects))
+
     def test_remesh_triangle_budget_preserves_source(self):
         source = self.dense_mesh("BudgetSource")
         before = snapshot(source.data)

@@ -28,6 +28,8 @@ namespace FISHHWB.VROptimizer
         bool showParticleControls;
         bool showReview;
         bool showTextureSettings;
+        bool showMeshSettings;
+        bool testImportedMemory;
 
         GUIStyle cardStyle;
         GUIStyle cardTitleStyle;
@@ -322,6 +324,7 @@ namespace FISHHWB.VROptimizer
                 settings.pc = SizeField(T("pc"), settings.pc);
                 settings.android = SizeField(T("android"), settings.android);
                 settings.ios = SizeField(T("ios"), settings.ios);
+                DrawImportOptions(true);
             }
 
             if (EditorGUI.EndChangeCheck())
@@ -392,7 +395,10 @@ namespace FISHHWB.VROptimizer
                 return;
             }
 
+            var batch = new VRImportBatch();
+            string policy = "textures-v0755:" + settings.pc + ":" + settings.android + ":" + settings.ios + ":" + testImportedMemory;
             var result = VRActionSummary.Run("Textures", textures, item => item.Path, item =>
+                batch.Apply(item.Path, "textures", policy, () =>
             {
                 var importer = AssetImporter.GetAtPath(item.Path) as TextureImporter;
                 if (!importer || importer.textureShape != TextureImporterShape.Texture2D ||
@@ -403,8 +409,8 @@ namespace FISHHWB.VROptimizer
                 byPath.TryGetValue(item.Path, out var entries);
                 bool optimized = VRTextureOptimizer.OptimizeWithCompression(item.Path, settings, entries, repaired);
                 return repaired || optimized ? VRActionOutcome.Changed : VRActionOutcome.Unchanged;
-            }, unsupported);
-            summary = result.Format("Textures");
+            }, testImportedMemory), unsupported);
+            summary = result.Format("Textures") + batch.Details(testImportedMemory);
         }
 
         void ParticleCard(GameObject root)
@@ -417,10 +423,10 @@ namespace FISHHWB.VROptimizer
             showParticleControls = EditorGUILayout.Foldout(showParticleControls, T("more_particles"), true);
             if (showParticleControls)
             {
-            settings.capParticles = EditorGUILayout.Toggle(T("cap_particles"), settings.capParticles);
+                settings.capParticles = EditorGUILayout.Toggle(T("cap_particles"), settings.capParticles);
 
-            if (settings.capParticles)
-                settings.maxParticles = EditorGUILayout.IntField(T("max_particles"), settings.maxParticles);
+                if (settings.capParticles)
+                    settings.maxParticles = EditorGUILayout.IntField(T("max_particles"), settings.maxParticles);
 
                 settings.capLifetime = EditorGUILayout.Toggle(T("cap_lifetime"), settings.capLifetime);
                 if (settings.capLifetime)
@@ -476,7 +482,12 @@ namespace FISHHWB.VROptimizer
                 T("mesh_imports"),
                 root ? T("mesh_avatar") : T("mesh_project"));
 
-            meshLevel = (ModelImporterMeshCompression)EditorGUILayout.EnumPopup(T("compression"), meshLevel);
+            showMeshSettings = EditorGUILayout.Foldout(showMeshSettings, T("compression"), true);
+            if (showMeshSettings)
+            {
+                meshLevel = (ModelImporterMeshCompression)EditorGUILayout.EnumPopup(T("compression"), meshLevel);
+                DrawImportOptions(true);
+            }
 
             if (ActionButton(T("compress_meshes")))
             {
@@ -493,7 +504,9 @@ namespace FISHHWB.VROptimizer
                     summary = new VRActionSummary { Cancelled = true, Skipped = meshes.Count, Unsupported = unsupported }.Format("Imported meshes");
                 else
                 {
+                    var batch = new VRImportBatch();
                     var result = VRActionSummary.Run("Imported meshes", meshes, item => item.Path, item =>
+                        batch.Apply(item.Path, "models", "models-v0755:" + meshLevel + ":" + testImportedMemory, () =>
                     {
                         var importer = AssetImporter.GetAtPath(item.Path) as ModelImporter;
                         if (!importer) return VRActionOutcome.Unsupported;
@@ -504,8 +517,8 @@ namespace FISHHWB.VROptimizer
                         importer.optimizeMeshPolygons = true;
                         importer.SaveAndReimport();
                         return VRActionOutcome.Changed;
-                    }, unsupported);
-                    summary = result.Format("Imported meshes");
+                    }, testImportedMemory), unsupported);
+                    summary = result.Format("Imported meshes") + batch.Details(testImportedMemory);
                 }
             }
 
@@ -588,6 +601,7 @@ namespace FISHHWB.VROptimizer
 
             if (!root)
             {
+                DrawImportOptions(false);
                 using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode || Lightmapping.isRunning))
                     if (ActionButton(T("optimize_lighting")))
                         summary = VRLightingSetup.Optimize();
@@ -655,6 +669,24 @@ namespace FISHHWB.VROptimizer
             }
 
             EndCard();
+        }
+
+        void DrawImportOptions(bool allowTrial)
+        {
+            if (!GUILayout.Button(T("batch_options"), EditorStyles.miniButton)) return;
+            var menu = new GenericMenu();
+            if (allowTrial)
+                menu.AddItem(new GUIContent(T("test_import_memory")), testImportedMemory,
+                    () => { testImportedMemory = !testImportedMemory; Repaint(); });
+            menu.AddItem(new GUIContent(T("protect_detail")), false,
+                () => { VRImportHistory.instance.SetProtection(VRImportHistory.SelectedPaths(), true); summary = T("detail_protected"); Repaint(); });
+            menu.AddItem(new GUIContent(T("allow_detail")), false,
+                () => { VRImportHistory.instance.SetProtection(VRImportHistory.SelectedPaths(), false); summary = T("detail_allowed"); Repaint(); });
+            menu.AddItem(new GUIContent(T("reset_selected_history")), false,
+                () => { VRImportHistory.instance.Forget(VRImportHistory.SelectedPaths()); summary = T("history_reset"); Repaint(); });
+            menu.AddItem(new GUIContent(T("restore_import_batch")), false,
+                () => { summary = VRImportHistory.instance.RestoreLastBatch(); Repaint(); });
+            menu.ShowAsContext();
         }
 
         void DrawLanguageAndSearch()

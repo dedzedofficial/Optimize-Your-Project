@@ -10,6 +10,10 @@ bl_info = {
 }
 
 from pathlib import Path
+import hashlib
+import json
+import struct
+import uuid
 
 import bpy
 import bpy.utils.previews
@@ -26,6 +30,14 @@ LANGUAGE_ITEMS = (
 )
 
 _TRANSLATIONS = {
+    'reset_history': {
+        'EN': 'Reset history', 'JA': '履歴をリセット',
+        'ZH': '重置历史', 'KO': '기록 초기화',
+    },
+    'protect_detail': {
+        'EN': 'Protect detail', 'JA': 'ディテールを保護',
+        'ZH': '保护细节', 'KO': '디테일 보호',
+    },
     'triangle_target': {
         'EN': 'Triangle target', 'JA': '三角形の上限',
         'ZH': '三角面目标', 'KO': '삼각형 목표',
@@ -128,9 +140,10 @@ def triangle_count(mesh):
     return len(mesh.loop_triangles)
 
 
-def _action_report(operator, context, detail, changed=0, unsupported=0, failed=0):
+def _action_report(operator, context, detail, changed=0, unsupported=0, failed=0, unchanged=0):
     parts = [
         f"Changed: {changed}",
+        f"Unchanged: {unchanged}",
         f"Unsupported: {unsupported}",
         f"Failed: {failed}",
     ]
@@ -168,6 +181,10 @@ def _remove_object_and_mesh(obj):
 def _static_mesh_reason(source):
     if not source or source.type != 'MESH' or not source.data:
         return "Select a mesh object."
+    if source.fishhwb_protect_detail:
+        return "Detail protection enabled. Original geometry will not be optimized."
+    if source.library or source.data.library:
+        return 'Linked library meshes require a local copy before optimization.'
     if source.data.shape_keys:
         return "Shape keys are not supported because Remesh and LOD generation change topology."
     if source.vertex_groups:
@@ -258,8 +275,14 @@ def _create_lod_set(source, context, apply_modifiers):
     if source.modifiers and not apply_modifiers:
         raise ValueError("Enable Apply Existing Modifiers or use a mesh with no modifiers.")
 
+    policy = 'lod-v0755:' + str(apply_modifiers)
+    cached = _cached_outputs(source, context, 'lod', policy)
+    source['fishhwb_lod_reused'] = bool(cached)
+    if cached:
+        return cached[0].users_collection[0], cached
     collection = bpy.data.collections.new(source.name + "_LODs")
     context.scene.collection.children.link(collection)
+    collection["fishhwb_generated_lod"] = True
     created = []
 
     try:
@@ -300,6 +323,7 @@ def _create_lod_set(source, context, apply_modifiers):
             copy['fishhwb_triangle_result'] = actual
             copy.hide_set(True)
 
+        _remember_outputs(source, context, "lod", policy, created)
         return collection, created
     except Exception:
         for obj in list(created):
@@ -307,6 +331,136 @@ def _create_lod_set(source, context, apply_modifiers):
         if collection.name in bpy.data.collections:
             bpy.data.collections.remove(collection)
         raise
+
+
+def _object_signature(obj, context):
+    mesh = _evaluated_mesh_copy(obj, context)
+    try:
+        digest = hashlib.sha256()
+        digest.update(repr(tuple(tuple(row) for row in obj.matrix_world)).encode())
+        for vertex in mesh.vertices:
+            digest.update(struct.pack('<3f', *vertex.co))
+        for edge in mesh.edges:
+            digest.update(struct.pack('<2I', *edge.vertices))
+        for face in mesh.polygons:
+            digest.update(repr((tuple(face.vertices), face.material_index, face.use_smooth)).encode())
+        for layer in mesh.uv_layers:
+            digest.update(layer.name.encode())
+            for item in layer.data:
+                digest.update(struct.pack('<2f', *item.uv))
+        for attribute in mesh.attributes:
+            if attribute.name.startswith('.') or attribute.data_type == 'STRING':
+                continue
+            digest.update(repr((attribute.name, attribute.domain, attribute.data_type)).encode())
+            for item in attribute.data:
+                for field in ('value', 'vector', 'color', 'uv'):
+                    if hasattr(item, field):
+                        value = getattr(item, field)
+                        digest.update(repr(tuple(value) if hasattr(value, '__len__') else value).encode())
+                        break
+        digest.update(repr(tuple(material.name_full if material else '' for material in mesh.materials)).encode())
+        return digest.hexdigest()
+    finally:
+        bpy.data.meshes.remove(mesh)
+
+
+def _resolve_source(obj, job):
+    if not obj or obj.get('fishhwb_generated_job') != job:
+        return obj
+    output_id = obj.get('fishhwb_output_id')
+    if output_id:
+        for candidate in bpy.data.objects:
+            raw = candidate.get('fishhwb_' + job + '_history')
+            if not raw:
+                continue
+            try:
+                record = json.loads(raw)
+                if record.get('owner') == candidate.name_full and any(item.get('id') == output_id for item in record['outputs']):
+                    return candidate
+            except (ValueError, KeyError, TypeError):
+                continue
+    return obj
+
+
+def _cached_outputs(source, context, job, policy):
+    if source.get('fishhwb_generated_job') == job:
+        raise ValueError("Select the original source for this action; this object is already its generated output.")
+    raw = source.get('fishhwb_' + job + '_history')
+    if not raw:
+        return None
+    try:
+        record = json.loads(raw)
+    except (ValueError, TypeError):
+        return None
+    if record.get('owner') != source.name_full:
+        return None
+    outputs = [_history_object(item) for item in record['outputs']]
+    for obj, item in zip(outputs, record['outputs']):
+        if obj and obj.fishhwb_protect_detail:
+            raise ValueError('Generated output is protected; preserved. Reset source history to create a fresh set.')
+        if obj and _object_signature(obj, context) != item['signature']:
+            raise ValueError("Generated output has manual edits; preserved. Clear source history to explicitly create new outputs.")
+    if all(outputs) and record['source'] == _object_signature(source, context) and record['policy'] == policy:
+        return outputs
+    return None
+
+
+def _history_object(item):
+    if not item.get('id'):
+        return None
+    return next((obj for obj in bpy.data.objects if obj.get('fishhwb_output_id') == item.get('id')), None)
+
+
+def _remember_outputs(source, context, job, policy, outputs):
+    key = 'fishhwb_' + job + '_history'
+    raw = source.get(key)
+    try:
+        previous = json.loads(raw) if raw else None
+    except (ValueError, TypeError):
+        previous = None
+    if previous and previous.get('owner') != source.name_full:
+        previous = None
+    for output in outputs:
+        for old_job in ('remesh', 'lod'):
+            old_key = 'fishhwb_' + old_job + '_history'
+            if old_key in output:
+                del output[old_key]
+        output['fishhwb_generated_job'] = job
+        output['fishhwb_output_id'] = uuid.uuid4().hex
+    record = json.dumps({
+        'owner': source.name_full, 'source': _object_signature(source, context), 'policy': policy,
+        'outputs': [{'id': obj['fishhwb_output_id'], 'signature': _object_signature(obj, context)} for obj in outputs],
+    })
+    # Replace only verified, untouched generated outputs after the replacement has succeeded.
+    if previous:
+        for item in previous['outputs']:
+            old = _history_object(item)
+            if old and old not in outputs and not old.fishhwb_protect_detail and _object_signature(old, context) == item['signature']:
+                collections = list(old.users_collection)
+                _remove_object_and_mesh(old)
+                for collection in collections:
+                    if collection.get('fishhwb_generated_lod') and not collection.objects:
+                        bpy.data.collections.remove(collection)
+    source[key] = record
+
+
+class FISHHWB_OT_reset_history(bpy.types.Operator):
+    bl_idname = "fishhwb.reset_optimization_history"
+    bl_label = "Reset Optimization History"
+    bl_description = "Preserve current outputs and allow the original source to create a fresh set next time"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        source = context.active_object
+        if not source or source.type != 'MESH':
+            return {'CANCELLED'}
+        for job in ('remesh', 'lod'):
+            key = 'fishhwb_' + job + '_history'
+            if key in source:
+                del source[key]
+        _action_report(self, context, "History reset. Existing outputs preserved; the next action creates fresh copies.")
+        return {'FINISHED'}
+
 
 
 class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
@@ -324,17 +478,27 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
         )
 
     def execute(self, context):
-        source = context.active_object
+        source = _resolve_source(context.active_object, 'remesh')
         reason = _static_mesh_reason(source)
         if reason:
             _action_report(self, context, reason, unsupported=1)
             return {'CANCELLED'}
 
         original_selection = list(context.selected_objects)
-        original_active = source
+        original_active = context.view_layer.objects.active
         copy = None
 
         try:
+            policy = 'remesh-v0755:' + str(context.scene.fishhwb_triangle_target)
+            try:
+                cached = _cached_outputs(source, context, 'remesh', policy)
+            except ValueError as exc:
+                _action_report(self, context, str(exc), unsupported=1)
+                return {'CANCELLED'}
+            if cached:
+                _select_only(context, cached[0])
+                _action_report(self, context, "Unchanged source/settings: existing remesh reused.", unchanged=1)
+                return {'FINISHED'}
             copy = _copy_mesh_object(source, context, "_Remesh")
             before = triangle_count(copy.data)
 
@@ -369,6 +533,7 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
                 bpy.data.meshes.remove(old_mesh)
 
             after = _reduce_copy_to_limit(copy, context.scene.fishhwb_triangle_target, context)
+            _remember_outputs(source, context, "remesh", policy, [copy])
             _select_only(context, copy)
             _action_report(
                 self,
@@ -404,9 +569,9 @@ class FISHHWB_OT_create_lods(bpy.types.Operator):
         )
 
     def execute(self, context):
-        source = context.active_object
+        source = _resolve_source(context.active_object, 'lod')
         original_selection = list(context.selected_objects)
-        original_active = source
+        original_active = context.view_layer.objects.active
 
         try:
             _, created = _create_lod_set(
@@ -421,8 +586,9 @@ class FISHHWB_OT_create_lods(bpy.types.Operator):
             _action_report(
                 self,
                 context,
-                f"LOD set created from {base:,} triangles: LOD1 {lod1:,}, LOD2 {lod2:,}. Original object preserved.",
-                changed=1,
+                f"LOD set from {base:,} triangles: LOD1 {lod1:,}, LOD2 {lod2:,}. Original object preserved.",
+                changed=0 if source.get("fishhwb_lod_reused") else 1,
+                unchanged=1 if source.get("fishhwb_lod_reused") else 0,
             )
             return {'FINISHED'}
         except ValueError as exc:
@@ -459,11 +625,12 @@ class FISHHWB_OT_create_lods_selected(bpy.types.Operator):
         )
 
     def execute(self, context):
-        sources = [obj for obj in context.selected_objects if obj.type == 'MESH']
+        sources = list(dict.fromkeys(_resolve_source(obj, 'lod') for obj in context.selected_objects if obj.type == 'MESH'))
         original_selection = list(context.selected_objects)
         original_active = context.view_layer.objects.active
         outputs = []
         changed = 0
+        unchanged = 0
         unsupported = 0
         failed = 0
 
@@ -475,7 +642,10 @@ class FISHHWB_OT_create_lods_selected(bpy.types.Operator):
                     context.scene.fishhwb_apply_modifiers,
                 )
                 outputs.append(created[0])
-                changed += 1
+                if source.get("fishhwb_lod_reused"):
+                    unchanged += 1
+                else:
+                    changed += 1
             except ValueError:
                 unsupported += 1
             except Exception:
@@ -498,12 +668,13 @@ class FISHHWB_OT_create_lods_selected(bpy.types.Operator):
         _action_report(
             self,
             context,
-            f"Created LOD sets for {changed} of {len(sources)} selected meshes. Originals preserved.",
+            f"LOD sets: {changed} created, {unchanged} reused across {len(sources)} sources. Originals preserved.",
             changed=changed,
+            unchanged=unchanged,
             unsupported=unsupported,
             failed=failed,
         )
-        return {'FINISHED'} if changed else {'CANCELLED'}
+        return {'FINISHED'} if changed or unchanged else {'CANCELLED'}
 
 
 class FISHHWB_PT_optimizer(bpy.types.Panel):
@@ -532,6 +703,9 @@ class FISHHWB_PT_optimizer(bpy.types.Panel):
         selected.label(text=tr(context, 'selection'), icon='MESH_DATA')
         if obj and obj.type == 'MESH':
             selected.label(text=obj.name)
+            selected.prop(obj, 'fishhwb_protect_detail', text=tr(context, 'protect_detail'))
+            if obj.get('fishhwb_remesh_history') or obj.get('fishhwb_lod_history'):
+                selected.operator('fishhwb.reset_optimization_history', text=tr(context, 'reset_history'), icon='FILE_REFRESH')
             stats = selected.row(align=True)
             stats.label(text=f"Triangles: {triangle_count(obj.data):,}")
             stats.label(text=f"Vertices: {len(obj.data.vertices):,}")
@@ -574,6 +748,7 @@ class FISHHWB_PT_optimizer(bpy.types.Panel):
 
 
 classes = (
+    FISHHWB_OT_reset_history,
     FISHHWB_OT_one_click_remesh,
     FISHHWB_OT_create_lods,
     FISHHWB_OT_create_lods_selected,
@@ -593,6 +768,10 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
+    bpy.types.Object.fishhwb_protect_detail = BoolProperty(
+        name="Protect detail", default=False,
+        description="Skip this object's Remesh and LOD actions to preserve important geometry",
+    )
     bpy.types.Scene.fishhwb_triangle_target = IntProperty(
         name="Triangle target", default=10000, min=4, max=10000000,
         soft_min=100, soft_max=100000,
@@ -615,6 +794,8 @@ def register():
 def unregister():
     global _brand_preview
 
+    if hasattr(bpy.types.Object, "fishhwb_protect_detail"):
+        del bpy.types.Object.fishhwb_protect_detail
     if hasattr(bpy.types.Scene, "fishhwb_triangle_target"):
         del bpy.types.Scene.fishhwb_triangle_target
     if hasattr(bpy.types.Scene, "fishhwb_last_result"):

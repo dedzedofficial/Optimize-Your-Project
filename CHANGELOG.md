@@ -57,6 +57,13 @@ The product is now positioned as a **general developer optimization toolkit**. T
 
 ## 0.7.55
 
+- Extended Optimize Lighting with guarded missing secondary-UV generation for imported static models.
+- Added persistent source/import-setting history and preservation of later manual edits to owning importer jobs.
+- Added explicit Unity asset and Blender object detail protection.
+- Added optional native asset-memory trials with rollback when savings are absent/unavailable, plus conflict-checked last-import-batch restore.
+- Added Blender output reuse, stable output identifiers, guarded replacement and manual-output protection.
+- Added Unity Edit Mode regression tests and Blender history/protection runtime checks. Unity testing remains pending; no FPS or visual-quality certification is claimed.
+
 - Added Unity Optimize Lighting: sets loaded scene lights to Baked, prepares eligible static mesh renderers for GI/lightmaps, enables baked GI and requests an asynchronous bake.
 - Skips known animated and physics-driven meshes; blocks play mode, existing bakes, prefab editing and unsaved scenes. Custom scripted movement requires review.
 - Consolidated material fixes into the combined action and removed duplicate window handlers.
