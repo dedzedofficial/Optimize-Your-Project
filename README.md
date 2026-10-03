@@ -163,18 +163,20 @@ Unity importer jobs work on unique assets. Blender copy-based jobs keep the sour
 
 The [version-by-version development roadmap](Documentation/Roadmap.md) tracks the path toward v1.0.
 
-The v1.0 goal remains at least **90% of identified, safely automatable optimization tasks** available through one action for each declared stable integration and target.
+The revised direction prioritizes distinct, useful one-click workflows and consolidates overlapping controls before expanding.
 
 Planned work includes:
 
-- deeper material consolidation and draw-call tooling beyond the safe automatic fixes in v0.7.4,
-- lighting and effects preparation,
-- physics and collider helpers,
-- build-size and dependency review,
-- safer restore and compare workflows,
-- Godot and Unreal integrations,
-- more language support,
-- searchable help that can find, explain and route directly to supported fixes.
+- one primary route for material fixes, model imports and selection-aware Blender LOD generation,
+- recoverable batches and shared processing,
+- UI rendering, animation data, shader build-size and asset-loading improvements,
+- collider proxies and verified instancing support,
+- one selection-based optimization pass using the existing task implementations,
+- measured results and removal of redundant or unproven tools.
+
+Additional engines will be evaluated after the Unity and Blender workflows are reliable, and only where they add meaningful automation beyond native tools. More remesh, LOD and image-compression variants are deferred.
+
+The v1.0 goal remains **90% of the published, safely automatable task inventory** for each declared stable integration and target. Reports, helper buttons and duplicate routes do not count toward that coverage.
 
 Roadmap items are future plans. Only implemented and tested behavior counts as current support.
 
