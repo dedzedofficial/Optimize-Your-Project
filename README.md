@@ -33,16 +33,12 @@ https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.55
 
 ### Blender
 
-The Blender build now produces two real ZIP packages:
+Download the installable v0.7.55 package directly:
 
-- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.55.zip`
-- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.55.zip`
+- [**Blender 4.2+ extension ZIP**](https://github.com/dedzedofficial/Optimize-Your-Project/raw/refs/heads/main/Blender/Downloads/optimize-your-project-blender-extension-0.7.55.zip)
+- [**Blender 3.6 legacy add-on ZIP**](https://github.com/dedzedofficial/Optimize-Your-Project/raw/refs/heads/main/Blender/Downloads/optimize-your-project-blender-0.7.55.zip)
 
-[![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
-
-Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.55` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
-
-The legacy ZIP also remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) when a matching Blender release is published.
+Install the downloaded ZIP directly using **Install from Disk**. Do not extract it. These packages include surface/UV preservation and the latest blendshape correspondence fix. Restart Blender after replacing an older installation of the same version.
 
 ### VRChat Creator Companion / VCC
 
