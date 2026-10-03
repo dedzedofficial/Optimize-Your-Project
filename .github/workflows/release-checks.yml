@@ -18,10 +18,10 @@ jobs:
       - name: Upload Blender ZIP packages
         uses: actions/upload-artifact@v4
         with:
-          name: optimize-your-project-blender-0.7.4
+          name: optimize-your-project-blender-0.7.55
           path: |
-            dist/optimize-your-project-blender-extension-0.7.4.zip
-            dist/optimize-your-project-blender-0.7.4.zip
+            dist/optimize-your-project-blender-extension-0.7.55.zip
+            dist/optimize-your-project-blender-0.7.55.zip
           if-no-files-found: error
           retention-days: 90
   blender-runtime:
@@ -44,10 +44,10 @@ jobs:
           curl --fail --location --retry 3 "https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${BLENDER_VERSION}-linux-x64.tar.xz" -o "$RUNNER_TEMP/blender.tar.xz"
           mkdir -p "$RUNNER_TEMP/blender"
           tar -xf "$RUNNER_TEMP/blender.tar.xz" -C "$RUNNER_TEMP/blender" --strip-components=1
-      - name: Test cleanup and existing quick actions
+      - name: Test remesh triangle budgets and LOD workflows
         run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender.py'
       - name: Validate Blender extension package
         if: matrix.blender.series == '4.2'
         run: |
           python3 scripts/build_blender_extension.py
-          "$RUNNER_TEMP/blender/blender" --background --factory-startup --command extension validate dist/optimize-your-project-blender-extension-0.7.4.zip
+          "$RUNNER_TEMP/blender/blender" --background --factory-startup --command extension validate dist/optimize-your-project-blender-extension-0.7.55.zip

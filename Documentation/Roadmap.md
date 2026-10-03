@@ -25,22 +25,22 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For the fixed v0.7.4 release:
+For the fixed v0.7.55 release:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.55
 ```
 
 ### Blender
 
 The Blender build now produces two real ZIP packages:
 
-- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.4.zip`
-- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.4.zip`
+- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.55.zip`
+- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.55.zip`
 
 [![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
 
-Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.4` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
+Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.55` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
 
 The legacy ZIP also remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) when a matching Blender release is published.
 
@@ -53,7 +53,7 @@ Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedze
 > **New here?** Start with the [Overview](../README.md). You can read the complete documentation directly on GitHub before installing anything.
 
 
-**Current implementation: v0.7.4. Revised direction: 3 October 2026. All future milestones are plans, not shipped features.**
+**Current code: v0.7.55; editor runtime verification pending. Revised direction: 3 October 2026. All future milestones are plans, not shipped features.**
 
 ## Direction
 
@@ -77,11 +77,23 @@ Unity and Blender remain the supported integrations. Stabilize these before addi
 
 Review helpers are useful but do not count as automated optimizations. Remesh changes topology, LOD creates alternate meshes, and importer compression changes stored data; do not merge them as though they were interchangeable.
 
+## Today's cleanup: v0.7.55 | Implemented in code, runtime verification pending
+
+- One button should finish a useful setup job, not make the user repeat inspector edits.
+- Unity **Optimize Lighting** prepares all loaded saved scenes: lights become Baked, eligible static meshes contribute GI and receive lightmaps, baked GI is enabled and Unity's bake is started.
+- Moving/animated/physics-driven meshes are excluded. Custom scripted motion cannot be inferred. Lighting and batching static flags are set; navigation and occlusion flags are not blindly enabled.
+- Keep existing bake-quality settings. Do not guess light-probe placement, reflection layout or custom UV requirements.
+- Preserve rigs and geometry. Use Undo for setup; baked output is managed by Unity and is not covered by setup Undo.
+- Blender stays Remesh + LOD: triangle target slider, remesh copy, one selection-aware LOD action. No additional cleanup panel.
+- Material cleanup has one combined action; texture sizing and asset reviews stay collapsed.
+- Finish Unity bake/Undo tests and Blender runtime triangle-budget tests before tagging v0.7.55.
+- Model-import fixes are consolidated into the owning mesh button. Further roadmap work remains planned.
+
 ## v0.7.5: consolidate before expanding | Planned
 
 - **Materials:** make the existing combined safe material fix the primary action. Move its two component actions into optional details; keep one implementation for each operation. Preserve duplicate assets and intentional extra material passes.
 - **Model imports:** replace competing compression and oversized-import entry points with one primary **Optimize Model Imports** workflow. Retain compression-only access in details. Describe exactly what changes; never suggest that compression removes triangles.
-- **Blender LODs:** expose one **Create LODs** button that uses the active object or selected supported objects automatically. Reuse the existing guarded implementation and preserve sources.
+- **Blender LODs (UI consolidated in v0.7.55):** expose one **Create LODs** button that uses the active object or selected supported objects automatically. Reuse the existing guarded implementation and preserve sources.
 - **Textures:** retain compression/size and import correction as distinct operations inside one compact section. They solve different problems; avoid a second generic image-compression feature.
 - **Reviews:** put largest textures, readable memory and heavy meshes behind **Review** or the existing search. Reuse project and character findings rather than adding parallel report panels.
 - Remove superseded controls, obsolete help and localization entries after checking callers, tests and compatibility. Keep old operator identifiers only where saved workflows need compatibility.
@@ -222,3 +234,7 @@ Review helpers are useful but do not count as automated optimizations. Remesh ch
 - Match package, add-on, update feed and release tag versions only for actual releases.
 - Preserve historical package/type names where compatibility requires them.
 - This update changes the roadmap and public future-development description. Runtime consolidation and new tools require implementation in their planned milestones.
+
+### Owning-button rule for v0.7.55
+
+Related operations belong to their existing action. Optimize Textures includes recognized texture import repair alongside size/compression. Optimize Model Imports includes vertex/polygon import optimization alongside compression. Material fixes use the combined action. Reviews remain diagnostic and do not introduce competing fix buttons. Model topology is preserved; Blender handles actual remesh and LOD generation.

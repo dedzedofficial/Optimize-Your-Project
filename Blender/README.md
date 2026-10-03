@@ -1,4 +1,4 @@
-# Optimize Your Project for Blender: v0.7.4
+# Optimize Your Project for Blender: v0.7.55
 
 <img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="112">
 
@@ -25,22 +25,22 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For the fixed v0.7.4 release:
+For the fixed v0.7.55 release:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.55
 ```
 
 ### Blender
 
 The Blender build now produces two real ZIP packages:
 
-- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.4.zip`
-- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.4.zip`
+- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.55.zip`
+- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.55.zip`
 
 [![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
 
-Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.4` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
+Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.55` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
 
 The legacy ZIP also remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) when a matching Blender release is published.
 
@@ -53,7 +53,7 @@ Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedze
 > **New here?** Start with the [Overview](../README.md). You can read the complete documentation directly on GitHub before installing anything.
 
 
-Blender v0.7.4 is intentionally focused on **Remesh and LOD generation only**. Earlier experimental cleanup, Game-Ready, merge, heavy-mesh, triangle-limit, join/atlas and related controls were removed because they were not reliable or useful enough to keep presenting as supported features. The compact sidebar still supports English, Japanese, Simplified Chinese and Korean.
+Blender v0.7.55 is intentionally focused on **Remesh and LOD generation only**. Earlier experimental cleanup, Game-Ready, merge, heavy-mesh, triangle-limit, join/atlas and related controls were removed because they were not reliable or useful enough to keep presenting as supported features. The compact sidebar still supports English, Japanese, Simplified Chinese and Korean.
 
 ## Install
 
@@ -62,10 +62,10 @@ Blender v0.7.4 is intentionally focused on **Remesh and LOD generation only**. E
 The package intended for Blender 4.2+ and `extensions.blender.org` is:
 
 ```text
-optimize-your-project-blender-extension-0.7.4.zip
+optimize-your-project-blender-extension-0.7.55.zip
 ```
 
-Download the `optimize-your-project-blender-0.7.4` artifact from the latest successful [Check release packages](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml) run. The artifact contains the extension ZIP above plus the Blender 3.6 legacy ZIP.
+Download the `optimize-your-project-blender-0.7.55` artifact from the latest successful [Check release packages](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml) run. The artifact contains the extension ZIP above plus the Blender 3.6 legacy ZIP.
 
 For a local install in Blender 4.2+, use **Edit > Preferences > Get Extensions > Install from Disk** and choose the extension ZIP.
 
@@ -74,7 +74,7 @@ For a local install in Blender 4.2+, use **Edit > Preferences > Get Extensions >
 Use:
 
 ```text
-optimize-your-project-blender-0.7.4.zip
+optimize-your-project-blender-0.7.55.zip
 ```
 
 Then use **Edit > Preferences > Add-ons > Install...**, enable **Optimize Your Project for Blender**, press **N** in the 3D Viewport and open the **FISHHWB** tab.
@@ -85,7 +85,7 @@ The final GitHub install button will point directly to the official Blender Exte
 
 The Blender extension package is licensed under **GPL-3.0-or-later**, as required for add-ons submitted to Blender Extensions. The repository's non-Blender portions retain their existing licensing.
 
-## Supported Blender tools in v0.7.4
+## Supported Blender tools in v0.7.55
 
 Select a supported static mesh in Object Mode.
 
@@ -109,15 +109,23 @@ Enable **Apply Existing Modifiers** if supported non-armature modifiers should b
 
 ### Removed experimental tools
 
-The following Blender tools are not part of the supported v0.7.4 UI anymore: mesh cleanup, Game-Ready copy, duplicate-vertex merge, heavy-mesh finder, triangle-limit copy, mesh joining and texture atlas tools.
+The following Blender tools are not part of the supported v0.7.55 UI anymore: mesh cleanup, Game-Ready copy, duplicate-vertex merge, heavy-mesh finder, triangle-limit copy, mesh joining and texture atlas tools.
 
 They were removed from this version because they did not provide a reliable enough result or enough practical benefit to justify the extra UI.
 
 
 ## Interface languages
 
-Use the **Language** control at the top of the sidebar. v0.7.4 includes English, Japanese, Simplified Chinese and Korean for the main Blender workflow. Future language additions are tracked in the project roadmap.
+Use the **Language** control at the top of the sidebar. v0.7.55 includes English, Japanese, Simplified Chinese and Korean for the main Blender workflow. Future language additions are tracked in the project roadmap.
 
 ## Notes
 
-Blender v0.7.4 is early support. Test generated meshes before replacing production assets, especially before GLB/FBX export into Unity or another engine.
+Blender v0.7.55 is early support. Test generated meshes before replacing production assets, especially before GLB/FBX export into Unity or another engine.
+
+## v0.7.55 compact workflow
+
+Set the **Triangle target** slider and press **One-Click Remesh** to create a remeshed copy within that maximum triangle budget. A failed reduction removes its output and preserves the source.
+
+The single LOD button automatically uses the batch operator when multiple mesh objects are selected. LOD0 remains full detail; LOD1 and LOD2 use 66% and 33% of its triangles. The remesh target does not silently change LOD0.
+
+Blender runtime verification of the new target is pending; the CI regression suite covers budget enforcement and source preservation.

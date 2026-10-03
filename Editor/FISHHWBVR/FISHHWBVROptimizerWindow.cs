@@ -26,6 +26,8 @@ namespace FISHHWB.VROptimizer
         ModelImporterMeshCompression meshLevel = ModelImporterMeshCompression.Medium;
         string summary;
         bool showParticleControls;
+        bool showReview;
+        bool showTextureSettings;
 
         GUIStyle cardStyle;
         GUIStyle cardTitleStyle;
@@ -253,10 +255,11 @@ namespace FISHHWB.VROptimizer
             if (MatchesAction("material duplicate unused expensive draw call"))
                 MaterialCard(null, projectFolder, valid);
 
-            if (MatchesAction("light shadow"))
+            if (MatchesAction("light lighting bake shadow"))
                 LightCard(null);
 
-            if (MatchesAction("memory texture mesh heavy oversized review"))
+            showReview = EditorGUILayout.Foldout(showReview, T("insights"), true);
+            if (showReview && MatchesAction("memory texture mesh heavy oversized review"))
             {
                 using (new EditorGUI.DisabledScope(!valid))
                     InsightsCard(null, projectFolder);
@@ -301,9 +304,9 @@ namespace FISHHWB.VROptimizer
                     MeshCard(avatar);
                 if (MatchesAction("material unused expensive draw call"))
                     MaterialCard(avatar, "Assets", false);
-                if (MatchesAction("light shadow"))
+                if (MatchesAction("light lighting bake shadow"))
                     LightCard(avatar);
-                if (MatchesAction("mesh heavy oversized review"))
+                if (showReview && MatchesAction("mesh heavy oversized review"))
                     InsightsCard(avatar, "Assets");
             }
         }
@@ -313,9 +316,13 @@ namespace FISHHWB.VROptimizer
             BeginCard(title, scope);
 
             EditorGUI.BeginChangeCheck();
-            settings.pc = SizeField(T("pc"), settings.pc);
-            settings.android = SizeField(T("android"), settings.android);
-            settings.ios = SizeField(T("ios"), settings.ios);
+            showTextureSettings = EditorGUILayout.Foldout(showTextureSettings, T("compression"), true);
+            if (showTextureSettings)
+            {
+                settings.pc = SizeField(T("pc"), settings.pc);
+                settings.android = SizeField(T("android"), settings.android);
+                settings.ios = SizeField(T("ios"), settings.ios);
+            }
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -325,9 +332,6 @@ namespace FISHHWB.VROptimizer
 
             if (ActionButton(T("compress_textures")))
                 OptimizeTextures(root, folder);
-
-            if (!root && GUILayout.Button(T("fix_texture_imports"), compactButtonStyle))
-                FixTextureImports(folder);
 
             EndCard();
         }
@@ -357,6 +361,10 @@ namespace FISHHWB.VROptimizer
                 return;
             }
 
+            var importFixes = new Dictionary<string, VRTextureImportFix>(StringComparer.Ordinal);
+            foreach (var fix in VRProjectMaintenance.CollectTextureImportFixes(folder))
+                importFixes[fix.Path] = fix;
+
             var byPath = new Dictionary<string, List<VRCompressionChange>>(StringComparer.Ordinal);
             foreach (var item in compression)
             {
@@ -376,7 +384,7 @@ namespace FISHHWB.VROptimizer
 
             if (!EditorUtility.DisplayDialog(
                 "Optimize textures",
-                "Optimize " + textures.Count + " supported textures? Existing explicit formats and stricter size caps are preserved.",
+                "Optimize " + textures.Count + " supported textures? Recognized normal/data imports are repaired. Existing explicit formats and stricter size caps are preserved.",
                 "Optimize",
                 "Cancel"))
             {
@@ -390,38 +398,13 @@ namespace FISHHWB.VROptimizer
                 if (!importer || importer.textureShape != TextureImporterShape.Texture2D ||
                     (importer.textureType != TextureImporterType.Default && importer.textureType != TextureImporterType.NormalMap))
                     return VRActionOutcome.Unsupported;
+                bool repaired = importFixes.TryGetValue(item.Path, out var fix) &&
+                    VRProjectMaintenance.ApplyTextureImportFix(fix, false) == VRActionOutcome.Changed;
                 byPath.TryGetValue(item.Path, out var entries);
-                return VRTextureOptimizer.OptimizeWithCompression(item.Path, settings, entries)
-                    ? VRActionOutcome.Changed : VRActionOutcome.Unchanged;
+                bool optimized = VRTextureOptimizer.OptimizeWithCompression(item.Path, settings, entries, repaired);
+                return repaired || optimized ? VRActionOutcome.Changed : VRActionOutcome.Unchanged;
             }, unsupported);
             summary = result.Format("Textures");
-        }
-
-        void FixTextureImports(string folder)
-        {
-            var fixes = VRProjectMaintenance.CollectTextureImportFixes(folder);
-            if (fixes.Count == 0)
-            {
-                summary = "Texture import review complete: no conservative filename-based fixes found.";
-                return;
-            }
-
-            if (!EditorUtility.DisplayDialog(
-                "Fix texture import settings",
-                "Apply " + fixes.Count + " conservative import fixes? Recognized normal-map filenames are imported as Normal Maps and recognized mask/data textures use linear color space. Other import settings are preserved.",
-                "Fix Imports",
-                "Cancel"))
-            {
-                summary = new VRActionSummary { Cancelled = true, Skipped = fixes.Count }.Format("Texture import fixes");
-                return;
-            }
-
-            var result = VRActionSummary.Run(
-                "Texture import fixes",
-                fixes,
-                item => item.Path,
-                VRProjectMaintenance.ApplyTextureImportFix);
-            summary = result.Format("Texture import fixes");
         }
 
         void ParticleCard(GameObject root)
@@ -431,14 +414,14 @@ namespace FISHHWB.VROptimizer
                 root ? T("particles_avatar") : T("particles_project"));
 
             EditorGUI.BeginChangeCheck();
+            showParticleControls = EditorGUILayout.Foldout(showParticleControls, T("more_particles"), true);
+            if (showParticleControls)
+            {
             settings.capParticles = EditorGUILayout.Toggle(T("cap_particles"), settings.capParticles);
 
             if (settings.capParticles)
                 settings.maxParticles = EditorGUILayout.IntField(T("max_particles"), settings.maxParticles);
 
-            showParticleControls = EditorGUILayout.Foldout(showParticleControls, T("more_particles"), true);
-            if (showParticleControls)
-            {
                 settings.capLifetime = EditorGUILayout.Toggle(T("cap_lifetime"), settings.capLifetime);
                 if (settings.capLifetime)
                     settings.maxLifetime = EditorGUILayout.FloatField(T("max_lifetime"), settings.maxLifetime);
@@ -500,7 +483,8 @@ namespace FISHHWB.VROptimizer
                 var meshes = VRMeshCompression.Collect(root, out int unsupported);
                 int pending = 0;
                 foreach (var mesh in meshes)
-                    if (mesh.Current != meshLevel) pending++;
+                    if (mesh.Current != meshLevel || !(AssetImporter.GetAtPath(mesh.Path) is ModelImporter model) ||
+                        !model.optimizeMeshVertices || !model.optimizeMeshPolygons) pending++;
 
                 if (pending == 0)
                     summary = new VRActionSummary { Unchanged = meshes.Count, Unsupported = unsupported }.Format("Imported meshes");
@@ -513,8 +497,11 @@ namespace FISHHWB.VROptimizer
                     {
                         var importer = AssetImporter.GetAtPath(item.Path) as ModelImporter;
                         if (!importer) return VRActionOutcome.Unsupported;
-                        if (importer.meshCompression == meshLevel) return VRActionOutcome.Unchanged;
+                        if (importer.meshCompression == meshLevel && importer.optimizeMeshVertices && importer.optimizeMeshPolygons)
+                            return VRActionOutcome.Unchanged;
                         importer.meshCompression = meshLevel;
+                        importer.optimizeMeshVertices = true;
+                        importer.optimizeMeshPolygons = true;
                         importer.SaveAndReimport();
                         return VRActionOutcome.Changed;
                     }, unsupported);
@@ -532,103 +519,10 @@ namespace FISHHWB.VROptimizer
                 root ? T("materials_avatar") : T("materials_project"));
 
             using (new EditorGUI.DisabledScope(!root && !folderValid))
-            {
-                if (GUILayout.Button(T("duplicate_materials"), compactButtonStyle))
-                    FixDuplicateMaterials(root, folder);
-            }
-
-            if (GUILayout.Button(T("unused_material_slots"), compactButtonStyle))
-                FixUnusedMaterialSlots(root);
-
-            using (new EditorGUI.DisabledScope(!root && !folderValid))
-            {
-                if (GUILayout.Button(T("expensive_materials"), compactButtonStyle))
+                if (ActionButton(T("expensive_materials")))
                     FixExpensiveMaterialSetups(root, folder);
-            }
 
             EndCard();
-        }
-
-        void FixDuplicateMaterials(GameObject root, string folder)
-        {
-            var fixes = VRProjectMaintenance.CollectDuplicateMaterialFixes(root, folder);
-            int replacements = 0;
-            foreach (var fix in fixes) replacements += fix.ReplacementCount;
-
-            if (fixes.Count == 0)
-            {
-                summary = "Duplicate material fix: no exact duplicate references need remapping in this loaded scope.";
-                issues = null;
-                return;
-            }
-
-            if (!EditorUtility.DisplayDialog(
-                "Fix duplicate materials",
-                "Remap " + replacements + " material references on " + fixes.Count +
-                " renderers to one exact matching material asset? Duplicate material files are preserved and Unity Undo is available.",
-                "Fix Materials",
-                "Cancel"))
-            {
-                summary = new VRActionSummary { Cancelled = true, Skipped = fixes.Count }.Format("Duplicate materials");
-                return;
-            }
-
-            Undo.IncrementCurrentGroup();
-            int group = Undo.GetCurrentGroup();
-            Undo.SetCurrentGroupName("Fix Duplicate Materials");
-            try
-            {
-                var result = VRActionSummary.Run(
-                    "Duplicate materials",
-                    fixes,
-                    item => item.Renderer ? item.Renderer.name : "Missing renderer",
-                    VRProjectMaintenance.ApplyDuplicateMaterialFix);
-                summary = result.Format("Duplicate materials") +
-                          "\nRemapped references: " + replacements +
-                          ". Duplicate material assets were not deleted. Use Undo if needed.";
-                issues = null;
-            }
-            finally { Undo.CollapseUndoOperations(group); }
-        }
-
-        void FixUnusedMaterialSlots(GameObject root)
-        {
-            var fixes = VRProjectMaintenance.CollectUnusedMaterialSlots(root);
-            int remove = 0;
-            foreach (var fix in fixes) remove += fix.RemoveCount;
-
-            if (fixes.Count == 0)
-            {
-                summary = "Unused material slot cleanup: no safe trailing empty slots found.";
-                issues = null;
-                return;
-            }
-
-            if (!EditorUtility.DisplayDialog(
-                "Clean unused material slots",
-                "Remove " + remove + " trailing empty material slots from " + fixes.Count +
-                " renderers? Non-empty extra materials are preserved. Unity Undo is available.",
-                "Clean Slots",
-                "Cancel"))
-            {
-                summary = new VRActionSummary { Cancelled = true, Skipped = fixes.Count }.Format("Material slots");
-                return;
-            }
-
-            Undo.IncrementCurrentGroup();
-            int group = Undo.GetCurrentGroup();
-            Undo.SetCurrentGroupName("Clean Unused Material Slots");
-            try
-            {
-                var result = VRActionSummary.Run(
-                    "Material slots",
-                    fixes,
-                    item => item.Renderer ? item.Renderer.name : "Missing renderer",
-                    VRProjectMaintenance.ApplyUnusedMaterialSlotFix);
-                summary = result.Format("Material slots") + "\nUse Undo if needed.";
-                issues = null;
-            }
-            finally { Undo.CollapseUndoOperations(group); }
         }
 
         void FixExpensiveMaterialSetups(GameObject root, string folder)
@@ -689,8 +583,17 @@ namespace FISHHWB.VROptimizer
         void LightCard(GameObject root)
         {
             BeginCard(
-                T("lights"),
-                root ? T("lights_avatar") : T("lights_project"));
+                root ? T("lights") : T("optimize_lighting"),
+                root ? T("lights_avatar") : T("baked_lighting_desc"));
+
+            if (!root)
+            {
+                using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode || Lightmapping.isRunning))
+                    if (ActionButton(T("optimize_lighting")))
+                        summary = VRLightingSetup.Optimize();
+                EndCard();
+                return;
+            }
 
             if (ActionButton(T("disable_shadows")))
             {
@@ -745,44 +648,13 @@ namespace FISHHWB.VROptimizer
                 summary = "Read/Write review: " + issues.Count + " candidates.";
             }
 
-            if (GUILayout.Button(T("oversized_meshes"), compactButtonStyle))
-                FixOversizedMeshImports(root);
+            if (GUILayout.Button(T("heavy_meshes"), compactButtonStyle))
+            {
+                issues = VRProjectInsights.OversizedMeshes(root);
+                summary = "Heavy mesh review: " + issues.Count + " candidates. Model import changes belong to Optimize Model Imports.";
+            }
 
             EndCard();
-        }
-
-        void FixOversizedMeshImports(GameObject root)
-        {
-            var fixes = VRProjectMaintenance.CollectOversizedMeshImportFixes(root);
-            if (fixes.Count == 0)
-            {
-                summary = "Oversized mesh import fix: no supported high-triangle imported model assets need importer changes.";
-                issues = null;
-                return;
-            }
-
-            if (!EditorUtility.DisplayDialog(
-                "Fix oversized mesh imports",
-                "Optimize " + fixes.Count +
-                " high-triangle imported model assets using Medium mesh compression plus Unity mesh vertex/polygon optimization? " +
-                "This improves importer/runtime mesh overhead without changing triangle topology.",
-                "Fix Imports",
-                "Cancel"))
-            {
-                summary = new VRActionSummary { Cancelled = true, Skipped = fixes.Count }.Format("Oversized mesh imports");
-                return;
-            }
-
-            var result = VRActionSummary.Run(
-                "Oversized mesh imports",
-                fixes,
-                item => item.Path,
-                VRProjectMaintenance.ApplyOversizedMeshImportFix);
-
-            summary = result.Format("Oversized mesh imports") +
-                      "\nApplied importer-side optimization only; triangle topology is preserved. " +
-                      "Use Blender LOD or reduced-copy tools when actual polygon reduction is required.";
-            issues = null;
         }
 
         void DrawLanguageAndSearch()

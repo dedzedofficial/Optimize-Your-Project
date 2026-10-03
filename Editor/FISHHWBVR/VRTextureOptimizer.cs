@@ -21,14 +21,14 @@ namespace FISHHWB.VROptimizer
             return changed;
         }
 
-        public static bool OptimizeWithCompression(string path, VRSettings settings, System.Collections.Generic.IList<VRCompressionChange> candidates)
+        public static bool OptimizeWithCompression(string path, VRSettings settings, System.Collections.Generic.IList<VRCompressionChange> candidates, bool importChanged = false)
         {
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
             if (importer == null || !path.StartsWith("Assets/", StringComparison.Ordinal) ||
                 importer.textureShape != TextureImporterShape.Texture2D ||
                 (importer.textureType != TextureImporterType.Default && importer.textureType != TextureImporterType.NormalMap)) return false;
             settings.Sanitize();
-            bool changed = false;
+            bool changed = importChanged;
             if (candidates != null)
                 foreach (var item in candidates)
                 {

@@ -25,22 +25,22 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For the fixed v0.7.4 release:
+After the v0.7.55 tag is published:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.55
 ```
 
 ### Blender
 
 The Blender build now produces two real ZIP packages:
 
-- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.4.zip`
-- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.4.zip`
+- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.55.zip`
+- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.55.zip`
 
 [![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
 
-Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.4` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
+Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.55` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
 
 The legacy ZIP also remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) when a matching Blender release is published.
 
@@ -53,24 +53,34 @@ Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedze
 > **New here?** Start with the [Overview](README.md). You can read the complete documentation directly on GitHub before installing anything.
 
 
-**v0.7.4 · General developer optimization tools · Unity + Blender · FISHHWB | Ded Zed**
+**v0.7.55 · General developer optimization tools · Unity + Blender · FISHHWB | Ded Zed**
 
 Optimize Your Project is a free toolkit for developers building real-time projects. Its priority is removing repetitive optimization work through clear one-click and batch actions for games, mobile projects, VR titles, social experiences, prototypes and reusable asset packs.
 
-v0.7.4 is a major usability and workflow update. It adds searchable Unity actions, texture import repair, material-cost tools, richer mesh review, a deliberately focused Blender Remesh + LOD workflow, and interface language support for **English, Japanese, Simplified Chinese and Korean**.
+v0.7.4 introduced the multilingual workflow; v0.7.55 simplifies it and adds scene lighting setup. The toolkit includes searchable Unity actions, texture import repair, material-cost tools, richer mesh review, a deliberately focused Blender Remesh + LOD workflow, and interface language support for **English, Japanese, Simplified Chinese and Korean**.
+
+## v0.7.55 cleanup
+
+- **Optimize Lighting** is the Project lighting action: set loaded scene lights to Baked, prepare eligible meshes for static lighting, enable baked GI and start Unity's bake.
+- Save loaded scenes first. Known animated/physics-driven meshes are skipped; custom script movement needs review. Baked lights do not directly light moving objects; suitable probes remain the scene author's responsibility.
+- Only lighting/batching static flags are set. Existing quality settings are retained. Check lightmap UVs and the Lighting window for bake completion or errors.
+- Setup Undo restores light/mesh settings; it does not restore generated lightmap files.
+- Material fixes use one combined action. Texture size controls and Project Insights are collapsed.
+- Blender has a **Triangle target** slider for the remeshed copy and one LOD button that handles one or several selected meshes. LOD0 preserves the source detail; LOD1/LOD2 use the existing ratios.
+- This code update passes static package checks; Unity and Blender editor runtime verification is still pending.
 
 ## Quick install
 
 | Platform | Fastest install |
 | --- | --- |
 | **Unity** | Package Manager → **+** → **Add package from git URL** → paste `https://github.com/dedzedofficial/Optimize-Your-Project.git` |
-| **Blender 4.2+** | Download `optimize-your-project-blender-extension-0.7.4.zip` from the latest successful release-check artifact; this is the Blender Extensions submission ZIP |
+| **Blender 4.2+** | Download `optimize-your-project-blender-extension-0.7.55.zip` from the latest successful release-check artifact; this is the Blender Extensions submission ZIP |
 | **VRChat / VCC (optional)** | [Add the VPM repository](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the chosen project |
 
-For a fixed Unity release after the v0.7.4 tag is published:
+For a fixed Unity release after the v0.7.55 tag is published:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.55
 ```
 
 ## Languages
@@ -86,7 +96,7 @@ Unity stores the selected tool language as an Editor preference. Blender exposes
 
 Future language work is tracked in [Documentation/Roadmap.md](Documentation/Roadmap.md). Planned additions include Spanish, French, German, Brazilian Portuguese, Italian, Traditional Chinese, Polish, Turkish and Russian.
 
-## Unity v0.7.4
+## Unity tools
 
 Open **FISHHWB → Optimize Your Project**.
 
@@ -104,14 +114,13 @@ The Unity window keeps the two focused work pages:
 
 ### Project optimization buttons
 
-- **Compress & Size Textures** applies supported platform size caps and compression while preserving stricter existing limits and explicit formats.
-- **Fix Texture Import Settings** applies conservative filename-based fixes for recognized normal maps and non-color mask/data textures while preserving unrelated import settings.
+- **Optimize Textures** applies size/compression and recognized normal/data import repairs in one batch, preserving stricter existing limits and explicit formats.
 - **Optimize Particles** applies selected particle limits to loaded scenes or the chosen character hierarchy.
-- **Compress Imported Meshes** applies Unity model-importer mesh compression to model assets used in the current scope.
-- **Fix Duplicate Material References** remaps loaded renderers from exact duplicate material assets to one canonical exact match with Unity Undo. Duplicate asset files are preserved.
-- **Clean Unused Material Slots** removes only trailing empty renderer slots beyond the mesh's actual submesh count and supports Unity Undo. Non-empty extra materials are preserved.
+- **Optimize Model Imports** applies compression and vertex/polygon import optimization to scoped model assets without reducing triangle counts.
+- The combined material action remaps loaded renderers from exact duplicate material assets to one canonical exact match with Unity Undo. Duplicate asset files are preserved.
+- The combined material action removes only trailing empty renderer slots beyond the mesh's actual submesh count and supports Unity Undo. Non-empty extra materials are preserved.
 - **Fix Safe Material Cost Issues** combines exact duplicate-material remapping with safe trailing empty-slot cleanup. High submesh counts that require art or topology changes are left untouched.
-- **Disable Realtime Shadows** disables supported realtime light shadows with Unity Undo support.
+- **Optimize Lighting** prepares and starts baked scene lighting. Character / Avatar retains its scoped realtime-shadow action.
 - **Scan Entire Project** runs the heavier diagnostic pass and shows filterable Critical / Warning results.
 
 ### Project Insights
@@ -120,7 +129,6 @@ These buttons help find expensive assets without changing project files:
 
 - **Show Largest Textures** lists the largest source textures in the chosen Assets folder.
 - **Review Read/Write Memory** lists textures and imported models with CPU-readable copies enabled.
-- **Fix Oversized Mesh Imports** applies Medium mesh compression plus Unity vertex/polygon import optimization to supported high-triangle imported models without changing triangle topology.
 
 Read/Write review is intentionally diagnostic-only. CPU-readable copies can consume additional memory, but disabling them automatically can break scripts, runtime mesh access and other workflows that require readable data. Unity documents the extra CPU memory cost for readable texture and mesh data.
 
@@ -135,19 +143,19 @@ The footer shows the installed version and update state:
 
 Git-installed packages can use the footer update button directly. Embedded or VCC installs show the correct update route.
 
-## Blender v0.7.4
+## Blender v0.7.55
 
 The Blender add-on is under `Blender/vr_optimizer_blender/`.
 
 After installation, open the 3D Viewport sidebar with **N**, then open the **FISHHWB** tab.
 
-**Blender v0.7.4 intentionally supports only Remesh and LOD generation.** The earlier cleanup, Game-Ready, duplicate-vertex, heavy-mesh, triangle-limit, join/atlas and related experimental Blender tools were removed because they were not reliable or useful enough to keep presenting as supported optimization features.
+**Blender v0.7.55 intentionally supports only Remesh and LOD generation.** The earlier cleanup, Game-Ready, duplicate-vertex, heavy-mesh, triangle-limit, join/atlas and related experimental Blender tools were removed because they were not reliable or useful enough to keep presenting as supported optimization features.
 
 The simplified Blender UI now contains only:
 
 - **One-Click Remesh**: creates a separate automatically remeshed copy of the active supported static mesh.
 - **Create LOD0 / LOD1 / LOD2**: creates three LOD copies for the active supported static mesh while preserving the original.
-- **Create LODs for Selection**: appears when multiple meshes are selected and creates LOD sets for each supported static mesh.
+- The same LOD button processes selected meshes when several are selected, using the existing batch operator.
 - **Apply Existing Modifiers**: the only LOD option retained, allowing supported modifiers to be baked into LOD0 before lower LODs are generated.
 
 Remesh and LOD generation preserve the source object. Shape-key, vertex-group and armature-driven meshes are rejected rather than forced through topology-changing operations.
@@ -233,3 +241,7 @@ Optimize Your Project is indexed around: **Unity optimization, Blender add-on, o
 [Website](https://fishhwb.github.io/) · [Discord](https://discord.gg/wZGxxkk4Jg) · [Patreon](https://www.patreon.com/cw/DedZed)
 
 Optimize Your Project remains free. The Unity/general repository code is MIT-licensed; the Blender extension package is distributed under **GPL-3.0-or-later** to meet Blender Extensions requirements.
+
+### Owning-button rule for v0.7.55
+
+Related operations belong to their existing action. Optimize Textures includes recognized texture import repair alongside size/compression. Optimize Model Imports includes vertex/polygon import optimization alongside compression. Material fixes use the combined action. Reviews remain diagnostic and do not introduce competing fix buttons. Model topology is preserved; Blender handles actual remesh and LOD generation.

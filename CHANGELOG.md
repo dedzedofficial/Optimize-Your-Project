@@ -25,22 +25,22 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For the fixed v0.7.4 release:
+For the fixed v0.7.55 release:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.4
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.55
 ```
 
 ### Blender
 
 The Blender build now produces two real ZIP packages:
 
-- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.4.zip`
-- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.4.zip`
+- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.55.zip`
+- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.55.zip`
 
 [![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
 
-Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.4` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
+Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.55` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
 
 The legacy ZIP also remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) when a matching Blender release is published.
 
@@ -54,6 +54,16 @@ Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedze
 
 
 The product is now positioned as a **general developer optimization toolkit**. The historical Unity package ID `com.fishhwb.vr-optimizer` is retained for installation compatibility; it does not mean the tool is VR-only.
+
+## 0.7.55
+
+- Added Unity Optimize Lighting: sets loaded scene lights to Baked, prepares eligible static mesh renderers for GI/lightmaps, enables baked GI and requests an asynchronous bake.
+- Skips known animated and physics-driven meshes; blocks play mode, existing bakes, prefab editing and unsaved scenes. Custom scripted movement requires review.
+- Consolidated material fixes into the combined action and removed duplicate window handlers.
+- Collapsed texture size settings and project asset reviews.
+- Added a Blender remesh triangle-target slider and one selection-aware LOD button; originals and legacy operator IDs are preserved.
+- Synchronized package versions and build references.
+- Static release/package checks pass. Unity editor compilation/bake/Undo and Blender runtime checks are required before a release tag.
 
 ## 0.7.4
 
@@ -128,3 +138,7 @@ The product is now positioned as a **general developer optimization toolkit**. T
 ## 0.6.3
 
 - Added platform texture overrides, particle optimization, light/mesh diagnostics and Git URL package support.
+
+### Owning-button rule for v0.7.55
+
+Related operations belong to their existing action. Optimize Textures includes recognized texture import repair alongside size/compression. Optimize Model Imports includes vertex/polygon import optimization alongside compression. Material fixes use the combined action. Reviews remain diagnostic and do not introduce competing fix buttons. Model topology is preserved; Blender handles actual remesh and LOD generation.

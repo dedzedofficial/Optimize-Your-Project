@@ -26,6 +26,7 @@ class RemeshLodTests(unittest.TestCase):
             if collection.users == 0:
                 bpy.data.collections.remove(collection)
 
+        bpy.context.scene.fishhwb_triangle_target = 10000
         bpy.context.scene.fishhwb_apply_modifiers = True
         bpy.context.scene.fishhwb_language = "EN"
         bpy.context.scene.fishhwb_last_result = ""
@@ -115,6 +116,17 @@ class RemeshLodTests(unittest.TestCase):
         self.assertLessEqual(lod2_count, max(1, int(source_count * 0.33)))
         self.assertIn("Changed: 1", bpy.context.scene.fishhwb_last_result)
         self.assertIn("Original object preserved", bpy.context.scene.fishhwb_last_result)
+
+    def test_remesh_triangle_budget_preserves_source(self):
+        source = self.dense_mesh("BudgetSource")
+        before = snapshot(source.data)
+        bpy.context.scene.fishhwb_triangle_target = 200
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
+        output = bpy.context.active_object
+        self.assertIsNot(output, source)
+        self.assertGreater(addon.triangle_count(output.data), 0)
+        self.assertLessEqual(addon.triangle_count(output.data), 200)
+        self.assertEqual(before, snapshot(source.data))
 
     def test_lod_modifier_guard(self):
         source = self.dense_mesh("ModifierSource")

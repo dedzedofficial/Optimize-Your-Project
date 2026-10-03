@@ -16,7 +16,7 @@ versions = json.loads((root / "version.json").read_text(encoding="utf-8"))
 
 assert manifest["displayName"] == "Optimize Your Project"
 assert manifest["name"] == "com.fishhwb.vr-optimizer"  # historical compatibility ID
-assert manifest["version"] == "0.7.4"
+assert manifest["version"] == "0.7.55"
 for keyword in [
     "optimize-your-project", "one-click-optimization", "game-optimization",
     "unity", "blender", "blender-addon", "asset-optimization",
@@ -31,7 +31,7 @@ assert versions["unity_url"].endswith("/releases/tag/" + versions["unity_tag"])
 extension_manifest = tomllib.loads((root / "blender_manifest.toml").read_text(encoding="utf-8"))
 assert extension_manifest["schema_version"] == "1.0.0"
 assert extension_manifest["id"] == "optimize_your_project"
-assert extension_manifest["version"] == versions["blender"] == "0.7.4"
+assert extension_manifest["version"] == versions["blender"] == "0.7.55"
 assert extension_manifest["type"] == "add-on"
 assert extension_manifest["license"] == ["SPDX:GPL-3.0-or-later"]
 assert extension_manifest["blender_version_min"] == "4.2.0"
@@ -69,14 +69,10 @@ for required in [
     assert required in localization
 assert "VRProjectInsights.LargestTextures" in window
 assert "VRProjectInsights.ReadWriteReview" in window
-assert "FixDuplicateMaterials" in window
-assert "FixUnusedMaterialSlots" in window
 assert "FixExpensiveMaterialSetups" in window
-assert "FixOversizedMeshImports" in window
 assert "VRProjectMaintenance.CollectTextureImportFixes" in window
 assert "VRProjectMaintenance.CollectDuplicateMaterialFixes" in window
 assert "VRProjectMaintenance.CollectUnusedMaterialSlots" in window
-assert "VRProjectMaintenance.CollectOversizedMeshImportFixes" in window
 assert "DrawLanguageAndSearch" in window
 
 maintenance = (root / "Editor/FISHHWBVR/VRProjectMaintenance.cs").read_text(encoding="utf-8")
@@ -86,12 +82,9 @@ assert "CollectUnusedMaterialSlots" in maintenance
 assert "ApplyUnusedMaterialSlotFix" in maintenance
 assert "CollectDuplicateMaterialFixes" in maintenance
 assert "ApplyDuplicateMaterialFix" in maintenance
-assert "CollectOversizedMeshImportFixes" in maintenance
-assert "ApplyOversizedMeshImportFix" in maintenance
 assert "TextureImporterType.NormalMap" in maintenance
-assert "ModelImporterMeshCompression.Medium" in maintenance
-assert "optimizeMeshPolygons" in maintenance
-assert "optimizeMeshVertices" in maintenance
+assert "optimizeMeshPolygons" in window
+assert "optimizeMeshVertices" in window
 assert "mesh.subMeshCount" in maintenance
 
 project_scanner = (root / "Editor/FISHHWBVR/VRProjectScanner.cs").read_text(encoding="utf-8")
@@ -112,7 +105,7 @@ info = next(
     and any(isinstance(target, ast.Name) and target.id == "bl_info" for target in node.targets)
 )
 blender_version = ".".join(map(str, info["version"]))
-assert blender_version == versions["blender"] == "0.7.4"
+assert blender_version == versions["blender"] == "0.7.55"
 assert versions["blender_tag"] == "blender-v" + blender_version
 assert 'bl_idname = "fishhwb.one_click_remesh"' in source_text
 assert 'bl_idname = "fishhwb.create_lods"' in source_text
@@ -123,7 +116,7 @@ assert "FISHHWB_OT_create_lods_selected" in source_text.split("classes =", 1)[1]
 assert "LANGUAGE_ITEMS" in source_text
 for language_code in ["'EN'", "'JA'", "'ZH'", "'KO'"]:
     assert language_code in source_text
-assert "Blender v0.7.4: Remesh + LOD only" in source_text
+assert "Blender v0.7.55: Remesh + LOD only" in source_text
 assert "ONE-CLICK REMESH" in source_text
 assert "LOD GENERATION" in source_text
 for removed in [
@@ -169,8 +162,8 @@ for path in [
     assert "https://github.com/dedzedofficial/Optimize-Your-Project.git" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project/releases" in content, path
     assert "DOWNLOAD BLENDER ZIP BUILDS" in content, path
-    assert "optimize-your-project-blender-extension-0.7.4.zip" in content, path
-    assert "optimize-your-project-blender-0.7.4.zip" in content, path
+    assert "optimize-your-project-blender-extension-0.7.55.zip" in content, path
+    assert "optimize-your-project-blender-0.7.55.zip" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml" in content, path
     assert "Remesh" in content, path
     assert "LOD" in content, path
@@ -183,9 +176,9 @@ assert "general developer optimization" in readme.lower()
 assert "VRChat / VCC (optional)" in readme
 assert "## Keywords" in readme
 assert "FIX DUPLICATE MATERIAL REFERENCES" not in readme  # README uses friendly title case
-assert "Fix Duplicate Material References" in readme
-assert "optimize-your-project-blender-extension-0.7.4.zip" in readme
-assert "Blender v0.7.4 intentionally supports only" in readme
+assert "Optimize Lighting" in readme
+assert "optimize-your-project-blender-extension-0.7.55.zip" in readme
+assert "Blender v0.7.55 intentionally supports only" in readme
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
 
 assert "## " + manifest["version"] in (root / "CHANGELOG.md").read_text()
@@ -237,7 +230,7 @@ extension_built = subprocess.run(
     text=True,
 )
 extension_archive = Path(extension_built.stdout.strip())
-assert extension_archive.name == "optimize-your-project-blender-extension-0.7.4.zip"
+assert extension_archive.name == "optimize-your-project-blender-extension-0.7.55.zip"
 with ZipFile(extension_archive) as package:
     assert package.testzip() is None
     names = set(package.namelist())
@@ -248,4 +241,4 @@ with ZipFile(extension_archive) as package:
     assert "Blender/vr_optimizer_blender/__init__.py" in names
     assert "Blender/vr_optimizer_blender/optimize-your-project-logo.png" in names
 
-print("v0.7.4 static release checks passed; Unity and Blender runtime editor tests remain required.")
+print("v0.7.55 static release checks passed; Unity and Blender runtime editor tests remain required.")

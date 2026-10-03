@@ -2,7 +2,7 @@
 bl_info = {
     "name": "Optimize Your Project for Blender",
     "author": "FISHHWB | Ded Zed",
-    "version": (0, 7, 4),
+    "version": (0, 7, 55),
     "blender": (3, 6, 0),
     "location": "View3D > Sidebar > FISHHWB",
     "description": "Focused one-click Remesh and LOD tools for static Blender meshes",
@@ -13,7 +13,7 @@ from pathlib import Path
 
 import bpy
 import bpy.utils.previews
-from bpy.props import BoolProperty, EnumProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, StringProperty, IntProperty
 
 
 _brand_preview = None
@@ -26,6 +26,10 @@ LANGUAGE_ITEMS = (
 )
 
 _TRANSLATIONS = {
+    'triangle_target': {
+        'EN': 'Triangle target', 'JA': '三角形の上限',
+        'ZH': '三角面目标', 'KO': '삼각형 목표',
+    },
     'language': {
         'EN': 'Language',
         'JA': '言語',
@@ -39,10 +43,10 @@ _TRANSLATIONS = {
         'KO': '프로젝트 최적화',
     },
     'subtitle': {
-        'EN': 'Blender v0.7.4: Remesh + LOD only',
-        'JA': 'Blender v0.7.4: リメッシュ + LOD のみ',
-        'ZH': 'Blender v0.7.4：仅重网格 + LOD',
-        'KO': 'Blender v0.7.4: 리메시 + LOD 전용',
+        'EN': 'Blender v0.7.55: Remesh + LOD only',
+        'JA': 'Blender v0.7.55: リメッシュ + LOD のみ',
+        'ZH': 'Blender v0.7.55：仅重网格 + LOD',
+        'KO': 'Blender v0.7.55: 리메시 + LOD 전용',
     },
     'selection': {
         'EN': 'CURRENT SELECTION',
@@ -364,6 +368,7 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
             if old_mesh.users == 0:
                 bpy.data.meshes.remove(old_mesh)
 
+            after = _reduce_copy_to_limit(copy, context.scene.fishhwb_triangle_target, context)
             _select_only(context, copy)
             _action_report(
                 self,
@@ -538,6 +543,7 @@ class FISHHWB_PT_optimizer(bpy.types.Panel):
         remesh = layout.box()
         remesh.label(text=tr(context, 'remesh_title'), icon='MOD_REMESH')
         remesh.label(text=tr(context, 'remesh_desc'))
+        remesh.prop(context.scene, 'fishhwb_triangle_target', text=tr(context, 'triangle_target'), slider=True)
         row = remesh.row()
         row.scale_y = 1.4
         row.operator('fishhwb.one_click_remesh', text=tr(context, 'remesh'), icon='MOD_REMESH')
@@ -549,16 +555,10 @@ class FISHHWB_PT_optimizer(bpy.types.Panel):
 
         active_lod = lod.row()
         active_lod.scale_y = 1.35
-        active_lod.operator('fishhwb.create_lods', text=tr(context, 'create_lods'), icon='MOD_DECIM')
-
-        if len(selected_meshes) > 1:
-            batch_lod = lod.row()
-            batch_lod.scale_y = 1.35
-            batch_lod.operator(
-                'fishhwb.create_lods_selected',
-                text=tr(context, 'batch_lods'),
-                icon='MOD_DECIM',
-            )
+        active_lod.operator(
+            'fishhwb.create_lods_selected' if len(selected_meshes) > 1 else 'fishhwb.create_lods',
+            text=tr(context, 'create_lods'), icon='MOD_DECIM',
+        )
 
         if context.scene.fishhwb_last_result:
             result = layout.box()
@@ -593,6 +593,11 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
+    bpy.types.Scene.fishhwb_triangle_target = IntProperty(
+        name="Triangle target", default=10000, min=4, max=10000000,
+        soft_min=100, soft_max=100000,
+        description="Maximum triangle budget for the remeshed copy; preserves the original",
+    )
     bpy.types.Scene.fishhwb_last_result = StringProperty(options={'SKIP_SAVE'})
     bpy.types.Scene.fishhwb_language = EnumProperty(
         name="Language",
@@ -610,6 +615,8 @@ def register():
 def unregister():
     global _brand_preview
 
+    if hasattr(bpy.types.Scene, "fishhwb_triangle_target"):
+        del bpy.types.Scene.fishhwb_triangle_target
     if hasattr(bpy.types.Scene, "fishhwb_last_result"):
         del bpy.types.Scene.fishhwb_last_result
     if hasattr(bpy.types.Scene, "fishhwb_language"):

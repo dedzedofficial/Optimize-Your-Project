@@ -48,18 +48,6 @@ namespace FISHHWB.VROptimizer
         }
     }
 
-    internal sealed class VROversizedMeshImportFix
-    {
-        internal readonly string Path;
-        internal readonly int TriangleCount;
-
-        internal VROversizedMeshImportFix(string path, int triangleCount)
-        {
-            Path = path;
-            TriangleCount = triangleCount;
-        }
-    }
-
     internal static class VRProjectMaintenance
     {
         static readonly string[] NormalTokens =
@@ -99,7 +87,7 @@ namespace FISHHWB.VROptimizer
             return fixes;
         }
 
-        internal static VRActionOutcome ApplyTextureImportFix(VRTextureImportFix fix)
+        internal static VRActionOutcome ApplyTextureImportFix(VRTextureImportFix fix, bool reimport = true)
         {
             if (fix == null || string.IsNullOrEmpty(fix.Path))
                 return VRActionOutcome.Skipped;
@@ -121,7 +109,7 @@ namespace FISHHWB.VROptimizer
                 changed = true;
             }
 
-            if (changed)
+            if (changed && reimport)
                 importer.SaveAndReimport();
             return changed ? VRActionOutcome.Changed : VRActionOutcome.Unchanged;
         }
@@ -234,67 +222,6 @@ namespace FISHHWB.VROptimizer
             return VRActionOutcome.Changed;
         }
 
-        internal static List<VROversizedMeshImportFix> CollectOversizedMeshImportFixes(
-            GameObject root, int triangleThreshold = 100000)
-        {
-            var fixes = new List<VROversizedMeshImportFix>();
-            var seen = new HashSet<string>(StringComparer.Ordinal);
-
-            foreach (var renderer in CollectRenderers(root))
-            {
-                Mesh mesh = MeshFor(renderer);
-                if (!mesh) continue;
-
-                int triangles = TriangleCount(mesh);
-                if (triangles < triangleThreshold) continue;
-
-                string path = AssetDatabase.GetAssetPath(mesh);
-                if (string.IsNullOrEmpty(path) || !path.StartsWith("Assets/", StringComparison.Ordinal) ||
-                    !seen.Add(path))
-                    continue;
-
-                if (AssetImporter.GetAtPath(path) is ModelImporter)
-                    fixes.Add(new VROversizedMeshImportFix(path, triangles));
-            }
-
-            fixes.Sort((a, b) => b.TriangleCount.CompareTo(a.TriangleCount));
-            return fixes;
-        }
-
-        internal static VRActionOutcome ApplyOversizedMeshImportFix(VROversizedMeshImportFix fix)
-        {
-            if (fix == null || string.IsNullOrEmpty(fix.Path))
-                return VRActionOutcome.Skipped;
-
-            var importer = AssetImporter.GetAtPath(fix.Path) as ModelImporter;
-            if (importer == null)
-                return VRActionOutcome.Unsupported;
-
-            bool changed = false;
-            if (importer.meshCompression == ModelImporterMeshCompression.Off ||
-                importer.meshCompression == ModelImporterMeshCompression.Low)
-            {
-                importer.meshCompression = ModelImporterMeshCompression.Medium;
-                changed = true;
-            }
-
-            if (!importer.optimizeMeshPolygons)
-            {
-                importer.optimizeMeshPolygons = true;
-                changed = true;
-            }
-
-            if (!importer.optimizeMeshVertices)
-            {
-                importer.optimizeMeshVertices = true;
-                changed = true;
-            }
-
-            if (changed)
-                importer.SaveAndReimport();
-            return changed ? VRActionOutcome.Changed : VRActionOutcome.Unchanged;
-        }
-
         static List<Renderer> CollectRenderers(GameObject root)
         {
             var renderers = new List<Renderer>();
@@ -318,15 +245,6 @@ namespace FISHHWB.VROptimizer
                 return skinned.sharedMesh;
             var filter = renderer.GetComponent<MeshFilter>();
             return filter ? filter.sharedMesh : null;
-        }
-
-        static int TriangleCount(Mesh mesh)
-        {
-            int triangles = 0;
-            for (int i = 0; i < mesh.subMeshCount; i++)
-                if (mesh.GetTopology(i) == MeshTopology.Triangles)
-                    triangles += (int)(mesh.GetIndexCount(i) / 3);
-            return triangles;
         }
 
         static bool PersistentMaterial(Material material)

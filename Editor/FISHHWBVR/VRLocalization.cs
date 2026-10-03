@@ -18,6 +18,8 @@ namespace FISHHWB.VROptimizer
 
         static readonly Dictionary<string, string[]> Strings = new Dictionary<string, string[]>
         {
+            { "optimize_lighting", new[] { "OPTIMIZE LIGHTING", "ライティングを最適化", "优化灯光", "라이팅 최적화" } },
+            { "baked_lighting_desc", new[] { "Loaded scenes: set lights to Baked, prepare static mesh lighting and start a bake. Baked lights do not light moving objects directly. Known dynamic meshes are skipped. Undo restores setup, not baked files.", "読み込み済みシーンのライトをベイクに設定し、静的メッシュを準備してベイクを開始します。動的メッシュは除外。Undo は設定のみ復元します。", "将已加载场景灯光设为烘焙，准备静态网格并开始烘焙。跳过已知动态网格。撤销仅恢复设置，不恢复烘焙文件。", "로드된 씬의 라이트를 베이크로 설정하고 정적 메시를 준비한 뒤 베이크합니다. 동적 메시는 제외합니다. 실행 취소는 설정만 복원합니다." } },
             { "language", new[] { "Language", "言語", "语言", "언어" } },
             { "english", new[] { "English", "英語", "英语", "영어" } },
             { "japanese", new[] { "Japanese", "日本語", "日语", "일본어" } },
@@ -37,7 +39,7 @@ namespace FISHHWB.VROptimizer
             { "textures", new[] { "TEXTURES", "テクスチャ", "纹理", "텍스처" } },
             { "textures_desc_project", new[] { "Resize and compress supported textures in the selected Assets folder.", "選択した Assets フォルダー内の対応テクスチャをリサイズして圧縮します。", "调整并压缩所选 Assets 文件夹中的受支持纹理。", "선택한 Assets 폴더의 지원되는 텍스처 크기를 조정하고 압축합니다." } },
             { "textures_desc_avatar", new[] { "Resize and compress textures referenced by this character hierarchy.", "このキャラクター階層が参照するテクスチャをリサイズして圧縮します。", "调整并压缩此角色层级引用的纹理。", "이 캐릭터 계층이 참조하는 텍스처 크기를 조정하고 압축합니다." } },
-            { "compress_textures", new[] { "COMPRESS & SIZE TEXTURES", "テクスチャを圧縮・サイズ調整", "压缩并调整纹理尺寸", "텍스처 압축 및 크기 조정" } },
+            { "compress_textures", new[] { "OPTIMIZE TEXTURES", "テクスチャを最適化", "优化纹理", "텍스처 최적화" } },
             { "fix_texture_imports", new[] { "FIX TEXTURE IMPORT SETTINGS", "テクスチャインポート設定を修正", "修复纹理导入设置", "텍스처 임포트 설정 수정" } },
             { "particles", new[] { "PARTICLES", "パーティクル", "粒子", "파티클" } },
             { "particles_project", new[] { "Apply the selected limits to particle systems in loaded scenes.", "読み込み済みシーンのパーティクルシステムに選択した制限を適用します。", "将所选限制应用到已加载场景中的粒子系统。", "로드된 씬의 파티클 시스템에 선택한 제한을 적용합니다." } },
@@ -46,7 +48,7 @@ namespace FISHHWB.VROptimizer
             { "mesh_imports", new[] { "MESH IMPORTS", "メッシュインポート", "网格导入", "메시 임포트" } },
             { "mesh_project", new[] { "Apply Unity mesh compression to imported models used by loaded scenes.", "読み込み済みシーンで使用されるインポートモデルに Unity のメッシュ圧縮を適用します。", "对已加载场景使用的导入模型应用 Unity 网格压缩。", "로드된 씬에서 사용하는 임포트 모델에 Unity 메시 압축을 적용합니다." } },
             { "mesh_avatar", new[] { "Apply Unity mesh compression to imported models referenced by this character hierarchy.", "このキャラクター階層が参照するインポートモデルに Unity のメッシュ圧縮を適用します。", "对此角色层级引用的导入模型应用 Unity 网格压缩。", "이 캐릭터 계층이 참조하는 임포트 모델에 Unity 메시 압축을 적용합니다." } },
-            { "compress_meshes", new[] { "COMPRESS IMPORTED MESHES", "インポートメッシュを圧縮", "压缩导入网格", "임포트 메시 압축" } },
+            { "compress_meshes", new[] { "OPTIMIZE MODEL IMPORTS", "モデルインポートを最適化", "优化模型导入", "모델 임포트 최적화" } },
             { "materials", new[] { "MATERIALS & DRAW COST", "マテリアルと描画コスト", "材质与绘制开销", "머티리얼 및 드로우 비용" } },
             { "materials_project", new[] { "Automatically fix exact duplicate material references and safe material-slot cost issues in loaded scenes.", "完全一致する重複マテリアル参照と安全に修正できるマテリアルスロット問題を読み込み済みシーンで自動修正します。", "自动修复已加载场景中完全重复的材质引用和可安全处理的材质槽问题。", "로드된 씬에서 완전히 동일한 중복 머티리얼 참조와 안전하게 처리할 수 있는 머티리얼 슬롯 문제를 자동 수정합니다." } },
             { "materials_avatar", new[] { "Automatically fix exact duplicate material references and safe material-slot issues under this character hierarchy.", "このキャラクター階層内で完全一致する重複マテリアル参照と安全に修正できるスロット問題を自動修正します。", "自动修复此角色层级下完全重复的材质引用和可安全处理的材质槽问题。", "이 캐릭터 계층 아래에서 완전히 동일한 중복 머티리얼 참조와 안전하게 처리할 수 있는 슬롯 문제를 자동 수정합니다." } },
