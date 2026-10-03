@@ -124,6 +124,27 @@ class RemeshLodTests(unittest.TestCase):
         self.assertEqual(original, snapshot(output.data))
         self.assertEqual(original_uv, tuple(tuple(item.uv) for item in output.data.uv_layers[0].data))
 
+    def test_blendshapes_follow_coincident_surfaces_without_cross_transfer(self):
+        for budget in (10000, 100):
+            source = self.textured_layers()
+            # Exactly overlapping disconnected sheets defeat nearest-surface
+            # lookup, but must keep their opposite expression offsets.
+            for vertex in source.data.vertices:
+                vertex.co.z = 0
+            source.shape_key_add(name="Basis")
+            expression = source.shape_key_add(name="Expression")
+            for i, point in enumerate(expression.data):
+                point.co.z += 0.2 if i < 81 else -0.3
+            bpy.context.scene.fishhwb_triangle_target = budget
+            self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
+            output = bpy.context.active_object
+            key = output.data.shape_keys.key_blocks["Expression"]
+            for face in output.data.polygons:
+                expected = 0.2 if face.material_index == 0 else -0.3
+                for index in face.vertices:
+                    self.assertAlmostEqual(key.data[index].co.z, expected, places=5)
+            self.assertFalse(any(a.name.startswith("fishhwb_shape_") for a in output.data.attributes))
+
     def test_language_switch(self):
         bpy.context.scene.fishhwb_language = "JA"
         self.assertEqual(addon.tr(bpy.context, "language"), "言語")

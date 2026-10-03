@@ -496,7 +496,7 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
         copy = None
 
         try:
-            policy = 'remesh-surface-v0755:' + str(context.scene.fishhwb_triangle_target)
+            policy = 'remesh-correspondence-v0755:' + str(context.scene.fishhwb_triangle_target)
             try:
                 cached = _cached_outputs(source, context, 'remesh', policy)
             except ValueError as exc:
@@ -509,7 +509,7 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
             copy = _copy_mesh_object(source, context, "_Remesh")
             transfer_deformation = deform_transfer.has_deformation(source)
             if transfer_deformation:
-                deform_transfer.prepare_neutral_copy(source, copy, context)
+                shape_attributes = deform_transfer.prepare_neutral_copy(source, copy, context)
             before = triangle_count(copy.data)
 
             # Voxel reconstruction discards UV loops and merges nearby clothing,
@@ -531,8 +531,8 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
             copy.data.name = copy.name
             transfer_detail = ""
             if transfer_deformation:
-                groups, shapes, distance = deform_transfer.transfer(source, copy)
-                transfer_detail = f" Transferred {groups} weight groups, {shapes} relative blendshapes and armature bindings; max surface projection distance {distance:.5g} local units. Test deformation before replacing the source."
+                groups, shapes = deform_transfer.transfer(source, copy, shape_attributes)
+                transfer_detail = f" Transferred {groups} weight groups, {shapes} relative blendshapes and armature bindings through the same surface reduction. Test deformation before replacing the source."
             _remember_outputs(source, context, "remesh", policy, [copy])
             _select_only(context, copy)
             _action_report(

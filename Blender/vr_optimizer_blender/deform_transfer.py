@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Rest-space surface projection for remesh deformation data."""
+"""Topology-correspondent transfer of remesh deformation data."""
 import hashlib
 import struct
+import uuid
 
 import bpy
-from mathutils import Vector, geometry
-from mathutils.bvhtree import BVHTree
 
 
 def has_deformation(obj):
@@ -36,6 +35,17 @@ def prepare_neutral_copy(source, target, context):
     target.modifiers.clear()
     target.data.update()
     context.view_layer.update()
+    # Point attributes follow the same edge collapses as the neutral surface.
+    # This preserves correspondence even where lips/eyelids overlap.
+    attributes = []
+    if keys:
+        for block in list(keys.key_blocks)[1:]:
+            attribute = target.data.attributes.new(
+                name="fishhwb_shape_" + uuid.uuid4().hex, type='FLOAT_VECTOR', domain='POINT')
+            attribute.data.foreach_set('vector', [component for i, item in enumerate(block.data)
+                                                 for component in (item.co - basis[i])])
+            attributes.append(attribute.name)
+    return attributes
 
 
 def _copy_rna(source, target, excluded=()):
@@ -101,54 +111,33 @@ def _copy_key_animation(source_obj, target_obj):
         new_curve.update()
 
 
-def transfer(source, target):
-    """Interpolate weights and basis-relative offsets on the final reduced topology."""
+def transfer(source, target, attributes):
+    """Restore offsets carried through reduction, without nearest-surface guesses."""
     keys = source.data.shape_keys
-    basis = [item.co.copy() for item in keys.key_blocks[0].data] if keys else [v.co.copy() for v in source.data.vertices]
-    source.data.calc_loop_triangles()
-    triangles = [tuple(triangle.vertices) for triangle in source.data.loop_triangles
-                 if (basis[triangle.vertices[1]] - basis[triangle.vertices[0]]).cross(basis[triangle.vertices[2]] - basis[triangle.vertices[0]]).length_squared > 1e-20]
-    if not triangles:
-        raise ValueError('No usable source surface for deformation transfer.')
-    tree = BVHTree.FromPolygons(basis, triangles, all_triangles=True)
-    mapping = []
-    max_distance = 0.0
-    for vertex in target.data.vertices:
-        position, _, index, distance = tree.find_nearest(vertex.co)
-        if position is None or index is None:
-            raise ValueError('Unable to map a remeshed vertex to the source surface.')
-        indices = triangles[index]
-        weights = geometry.barycentric_transform(position, *(basis[i] for i in indices),
-            Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1)))
-        weights = [max(0.0, min(1.0, w)) for w in weights]
-        total = sum(weights)
-        if total <= 1e-12:
-            raise ValueError('Invalid source triangle interpolation.')
-        mapping.append((indices, [w / total for w in weights]))
-        max_distance = max(max_distance, distance)
-
-    target.vertex_groups.clear()
-    groups = [target.vertex_groups.new(name=group.name) for group in source.vertex_groups]
-    source_weights = [{entry.group: entry.weight for entry in vertex.groups} for vertex in source.data.vertices]
-    for vertex, (indices, weights) in zip(target.data.vertices, mapping):
-        mixed = {}
-        for index, factor in zip(indices, weights):
-            for group, weight in source_weights[index].items():
-                mixed[group] = mixed.get(group, 0.0) + factor * weight
-        for group, weight in mixed.items():
-            if weight > 1e-8:
-                groups[group].add([vertex.index], min(1.0, max(0.0, weight)), 'REPLACE')
+    expected = len(keys.key_blocks) - 1 if keys else 0
+    if len(attributes) != expected:
+        raise ValueError('Missing blendshape correspondence data.')
+    offsets = []
+    for name in attributes:
+        attribute = target.data.attributes.get(name)
+        if attribute is None or attribute.domain != 'POINT' or attribute.data_type != 'FLOAT_VECTOR':
+            raise ValueError('Reduction lost blendshape correspondence; output discarded.')
+        offsets.append([item.vector.copy() for item in attribute.data])
+    # Blender's collapse modifier already interpolates the original deform
+    # weights on the same topology. Do not overwrite them by surface projection.
+    groups = list(target.vertex_groups)
+    if [g.name for g in groups] != [g.name for g in source.vertex_groups]:
+        raise ValueError('Reduction lost vertex-group correspondence.')
     for original, copied in zip(source.vertex_groups, groups):
         copied.lock_weight = original.lock_weight
 
     if keys:
         blocks = {}
-        for original in keys.key_blocks:
+        for key_index, original in enumerate(keys.key_blocks):
             copied = target.shape_key_add(name=original.name, from_mix=False)
             blocks[original.name] = copied
             if original != keys.key_blocks[0]:
-                for vertex, (indices, weights) in zip(target.data.vertices, mapping):
-                    offset = sum(((original.data[i].co - basis[i]) * w for i, w in zip(indices, weights)), Vector((0, 0, 0)))
+                for vertex, offset in zip(target.data.vertices, offsets[key_index - 1]):
                     copied.data[vertex.index].co = vertex.co + offset
             copied.interpolation = original.interpolation
             copied.vertex_group = original.vertex_group
@@ -167,8 +156,10 @@ def transfer(source, target):
         if original.type == 'ARMATURE':
             copied = target.modifiers.new(original.name, 'ARMATURE')
             _copy_rna(original, copied, excluded=('name',))
+    for name in attributes:
+        target.data.attributes.remove(target.data.attributes[name])
     target.data.update()
-    return len(groups), len(keys.key_blocks) - 1 if keys else 0, max_distance
+    return len(groups), expected
 
 
 def signature(obj):

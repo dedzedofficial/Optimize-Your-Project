@@ -157,3 +157,8 @@ Related operations belong to their existing action. Optimize Textures includes r
 - Replaced destructive voxel reconstruction with surface-preserving triangle reduction under the existing Remesh button. Retains UV layers and material assignments and avoids fusing nearby surfaces.
 - Kept neutral-space weight, relative blendshape and armature transfer. Existing cached voxel results are regenerated under the new policy when untouched.
 - Very low triangle targets can still distort appearance; no automatic retopology or texture rebaking is claimed.
+
+### v0.7.55 blendshape correspondence fix
+
+- Carry relative shape offsets through the same edge collapses as the base mesh, replacing nearest-surface projection. Retain the reducer's interpolated weights.
+- Reject missing correspondence data and remove temporary attributes after transfer. Added overlapping-surface regression coverage.
