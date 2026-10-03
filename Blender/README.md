@@ -87,13 +87,13 @@ The Blender extension package is licensed under **GPL-3.0-or-later**, as require
 
 ## Supported Blender tools in v0.7.55
 
-Select a supported static mesh in Object Mode.
+Select a supported mesh in Object Mode.
 
 ### One-Click Remesh
 
 Press **One-Click Remesh** to create a separate `_Remesh` copy. The source object is preserved.
 
-The tool automatically selects a remesh detail level from the mesh dimensions. Shape-key, vertex-group and armature-driven meshes are skipped because remeshing changes topology.
+The tool selects remesh detail from mesh dimensions and enforces the triangle target. Supported armature bindings, weight groups and relative shape keys are transferred onto the final topology in neutral space. LOD continues to reject deformation-sensitive inputs.
 
 ### LOD Generation
 
@@ -129,3 +129,13 @@ Set the **Triangle target** slider and press **One-Click Remesh** to create a re
 The single LOD button automatically uses the batch operator when multiple mesh objects are selected. LOD0 remains full detail; LOD1 and LOD2 use 66% and 33% of its triangles. The remesh target does not silently change LOD0.
 
 Blender runtime verification of the new target is pending; the CI regression suite covers budget enforcement and source preservation.
+
+## v0.7.55: deformation transfer inside Remesh
+
+No additional button is required. One-Click Remesh automatically transfers all vertex-group names/locks and interpolated weights, relative shape-key names/offsets/relationships/masks/slider limits, supported shape-key actions/drivers, and armature modifier bindings/settings. Parenting and object transforms are retained. Remeshing occurs in the neutral basis before weights and shapes are restored; the source rig is never put into a different pose.
+
+The transfer projects each new vertex onto a source triangle and interpolates its weights and basis-relative shape displacement. It is approximate: close facial surfaces, fingers and thin details can receive data from the wrong nearby surface after aggressive remeshing. Test facial expressions and poses before using the result. The result reports the maximum projection distance in local units.
+
+Absolute/time-based shape keys, shape-key NLA stacks, missing armature bindings and deformation meshes with non-armature modifiers are rejected before changes. Unsupported driver modifier properties cause the output to be removed rather than silently discarding animation. Apply non-armature modifiers on a separate copy first. Remesh does not claim to preserve the original UV layout or exact deformation quality.
+
+LOD remains static-only in this update. Deformation data participates in incremental history, so changing weights or shape coordinates triggers a fresh remesh while edited generated results remain protected.

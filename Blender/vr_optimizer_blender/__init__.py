@@ -5,7 +5,7 @@ bl_info = {
     "version": (0, 7, 55),
     "blender": (3, 6, 0),
     "location": "View3D > Sidebar > FISHHWB",
-    "description": "Focused one-click Remesh and LOD tools for static Blender meshes",
+    "description": "Remesh with deformation transfer and static-mesh LOD tools",
     "category": "Mesh",
 }
 
@@ -14,6 +14,7 @@ import hashlib
 import json
 import struct
 import uuid
+from . import deform_transfer
 
 import bpy
 import bpy.utils.previews
@@ -67,7 +68,7 @@ _TRANSLATIONS = {
         'KO': '현재 선택',
     },
     'select_mesh': {
-        'EN': 'Select one or more static mesh objects.',
+        'EN': 'Select a mesh for Remesh; static meshes for LOD.',
         'JA': '1つ以上の静的メッシュを選択してください。',
         'ZH': '请选择一个或多个静态网格对象。',
         'KO': '하나 이상의 정적 메시 오브젝트를 선택하세요.',
@@ -79,7 +80,7 @@ _TRANSLATIONS = {
         'KO': '리메시',
     },
     'remesh_desc': {
-        'EN': 'Create a separate automatically remeshed copy.',
+        'EN': 'Create a remeshed copy with supported weight and shape transfer.',
         'JA': '自動リメッシュした別コピーを作成します。',
         'ZH': '创建一个单独的自动重网格副本。',
         'KO': '자동 리메시된 별도 복사본을 만듭니다.',
@@ -173,24 +174,29 @@ def _remove_object_and_mesh(obj):
     if obj is None or obj.name not in bpy.data.objects:
         return
     mesh = obj.data
+    keys = mesh.shape_keys if mesh else None
+    owned_action = keys.animation_data.action if keys and keys.animation_data and keys.animation_data.action and keys.animation_data.action.get("fishhwb_owned_transfer") else None
     bpy.data.objects.remove(obj, do_unlink=True)
     if mesh and mesh.users == 0:
         bpy.data.meshes.remove(mesh)
+    if owned_action and owned_action.users == 0:
+        bpy.data.actions.remove(owned_action)
 
 
-def _static_mesh_reason(source):
+def _static_mesh_reason(source, allow_deformation=False):
     if not source or source.type != 'MESH' or not source.data:
         return "Select a mesh object."
     if source.fishhwb_protect_detail:
         return "Detail protection enabled. Original geometry will not be optimized."
     if source.library or source.data.library:
         return 'Linked library meshes require a local copy before optimization.'
-    if source.data.shape_keys:
-        return "Shape keys are not supported because Remesh and LOD generation change topology."
-    if source.vertex_groups:
-        return "Vertex-group meshes are not supported because topology reduction can invalidate weights."
-    if any(modifier.type == 'ARMATURE' for modifier in source.modifiers):
-        return "Armature-driven meshes are not supported. Use a separate static copy."
+    if allow_deformation:
+        reason = deform_transfer.unsupported_reason(source)
+        if reason:
+            return reason
+    else:
+        if source.data.shape_keys or source.vertex_groups or any(m.type == 'ARMATURE' for m in source.modifiers):
+            return 'LOD remains static-mesh only. Remesh supports guarded deformation transfer.'
     if triangle_count(source.data) < 1:
         return "The selected mesh has no triangles."
     return None
@@ -334,7 +340,7 @@ def _create_lod_set(source, context, apply_modifiers):
 
 
 def _object_signature(obj, context):
-    mesh = _evaluated_mesh_copy(obj, context)
+    mesh = obj.data.copy() if deform_transfer.has_deformation(obj) else _evaluated_mesh_copy(obj, context)
     try:
         digest = hashlib.sha256()
         digest.update(repr(tuple(tuple(row) for row in obj.matrix_world)).encode())
@@ -359,6 +365,7 @@ def _object_signature(obj, context):
                         digest.update(repr(tuple(value) if hasattr(value, '__len__') else value).encode())
                         break
         digest.update(repr(tuple(material.name_full if material else '' for material in mesh.materials)).encode())
+        digest.update(deform_transfer.signature(obj))
         return digest.hexdigest()
     finally:
         bpy.data.meshes.remove(mesh)
@@ -479,7 +486,7 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
 
     def execute(self, context):
         source = _resolve_source(context.active_object, 'remesh')
-        reason = _static_mesh_reason(source)
+        reason = _static_mesh_reason(source, allow_deformation=True)
         if reason:
             _action_report(self, context, reason, unsupported=1)
             return {'CANCELLED'}
@@ -489,7 +496,7 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
         copy = None
 
         try:
-            policy = 'remesh-v0755:' + str(context.scene.fishhwb_triangle_target)
+            policy = 'remesh-deformation-v0755:' + str(context.scene.fishhwb_triangle_target)
             try:
                 cached = _cached_outputs(source, context, 'remesh', policy)
             except ValueError as exc:
@@ -500,6 +507,9 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
                 _action_report(self, context, "Unchanged source/settings: existing remesh reused.", unchanged=1)
                 return {'FINISHED'}
             copy = _copy_mesh_object(source, context, "_Remesh")
+            transfer_deformation = deform_transfer.has_deformation(source)
+            if transfer_deformation:
+                deform_transfer.prepare_neutral_copy(source, copy, context)
             before = triangle_count(copy.data)
 
             max_dimension = max(abs(value) for value in copy.dimensions)
@@ -533,12 +543,16 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
                 bpy.data.meshes.remove(old_mesh)
 
             after = _reduce_copy_to_limit(copy, context.scene.fishhwb_triangle_target, context)
+            transfer_detail = ""
+            if transfer_deformation:
+                groups, shapes, distance = deform_transfer.transfer(source, copy)
+                transfer_detail = f" Transferred {groups} weight groups, {shapes} relative blendshapes and armature bindings; max surface projection distance {distance:.5g} local units. Test deformation before replacing the source."
             _remember_outputs(source, context, "remesh", policy, [copy])
             _select_only(context, copy)
             _action_report(
                 self,
                 context,
-                f"Remeshed copy created: {before:,} -> {after:,} triangles. Original object preserved.",
+                f"Remeshed copy created: {before:,} -> {after:,} triangles. Original object preserved." + transfer_detail,
                 changed=1,
             )
             return {'FINISHED'}

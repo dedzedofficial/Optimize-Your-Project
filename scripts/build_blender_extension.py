@@ -14,6 +14,7 @@ required = [
     root / "Blender" / "__init__.py",
     root / "Blender" / "EXTENSION_LICENSE.txt",
     root / "Blender" / "vr_optimizer_blender" / "__init__.py",
+    root / "Blender" / "vr_optimizer_blender" / "deform_transfer.py",
     root / "Blender" / "vr_optimizer_blender" / "optimize-your-project-logo.png",
 ]
 for path in required:

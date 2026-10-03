@@ -153,12 +153,12 @@ After installation, open the 3D Viewport sidebar with **N**, then open the **FIS
 
 The simplified Blender UI now contains only:
 
-- **One-Click Remesh**: creates a separate automatically remeshed copy of the active supported static mesh.
+- **One-Click Remesh**: creates a separate automatically remeshed copy of the active supported mesh, transferring supported armature weights and relative shape keys.
 - **Create LOD0 / LOD1 / LOD2**: creates three LOD copies for the active supported static mesh while preserving the original.
 - The same LOD button processes selected meshes when several are selected, using the existing batch operator.
 - **Apply Existing Modifiers**: the only LOD option retained, allowing supported modifiers to be baked into LOD0 before lower LODs are generated.
 
-Remesh and LOD generation preserve the source object. Shape-key, vertex-group and armature-driven meshes are rejected rather than forced through topology-changing operations.
+Remesh and LOD preserve the original. Remesh transfers vertex weights, relative shape keys and armature bindings on supported inputs. LOD remains static-mesh only.
 
 
 ## Action results

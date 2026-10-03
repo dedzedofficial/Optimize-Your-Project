@@ -57,6 +57,8 @@ The product is now positioned as a **general developer optimization toolkit**. T
 
 ## 0.7.55
 
+- Added neutral-space Remesh transfer of supported armature bindings, vertex weights and relative blendshapes, with shape-key animation transfer and deformation-aware cache fingerprints. LOD remains static-only.
+
 - Extended Optimize Lighting with guarded missing secondary-UV generation for imported static models.
 - Added persistent source/import-setting history and preservation of later manual edits to owning importer jobs.
 - Added explicit Unity asset and Blender object detail protection.

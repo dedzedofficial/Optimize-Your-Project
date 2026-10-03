@@ -78,9 +78,10 @@ class RemeshLodTests(unittest.TestCase):
         self.assertIn("Changed: 1", bpy.context.scene.fishhwb_last_result)
         self.assertIn("Original object preserved", bpy.context.scene.fishhwb_last_result)
 
-    def test_remesh_rejects_shape_keys(self):
+    def test_remesh_rejects_absolute_shape_keys(self):
         source = self.simple_mesh("ShapeKeySource")
         source.shape_key_add(name="Basis")
+        source.data.shape_keys.use_relative = False
         before = snapshot(source.data)
         count_before = len(bpy.data.objects)
 
@@ -89,6 +90,122 @@ class RemeshLodTests(unittest.TestCase):
         self.assertEqual(before, snapshot(source.data))
         self.assertEqual(bpy.context.active_object, source)
         self.assertIn("Unsupported: 1", bpy.context.scene.fishhwb_last_result)
+
+    def test_remesh_transfers_relative_shapes_and_weights(self):
+        source = self.dense_mesh("DeformSource")
+        basis = source.shape_key_add(name="Basis")
+        smile = source.shape_key_add(name="Smile")
+        for vertex in smile.data:
+            vertex.co.z += 0.2
+        smile.value = 0.7
+        jaw = source.shape_key_add(name="Jaw")
+        for base, shaped in zip(smile.data, jaw.data):
+            shaped.co = base.co.copy()
+            shaped.co.y += 0.1
+        jaw.relative_key = smile
+        left = source.vertex_groups.new(name="Left")
+        right = source.vertex_groups.new(name="Right")
+        for vertex in source.data.vertices:
+            weight = (vertex.co.x + 1.0) / 2.0
+            left.add([vertex.index], weight, 'REPLACE')
+            right.add([vertex.index], 1.0 - weight, 'REPLACE')
+        left.lock_weight = True
+        before = snapshot(source.data)
+        original_shape = tuple(tuple(v.co) for v in smile.data)
+        bpy.context.scene.fishhwb_triangle_target = 200
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
+        output = bpy.context.active_object
+        self.assertLessEqual(addon.triangle_count(output.data), 200)
+        self.assertEqual(before, snapshot(source.data))
+        self.assertEqual(original_shape, tuple(tuple(v.co) for v in smile.data))
+        self.assertAlmostEqual(smile.value, 0.7, places=5)
+        blocks = output.data.shape_keys.key_blocks
+        self.assertEqual([block.name for block in blocks], ["Basis", "Smile", "Jaw"])
+        self.assertEqual(blocks["Jaw"].relative_key, blocks["Smile"])
+        for smile_point, jaw_point in zip(blocks["Smile"].data, blocks["Jaw"].data):
+            self.assertAlmostEqual(jaw_point.co.y - smile_point.co.y, 0.1, places=5)
+        for base, shaped in zip(blocks[0].data, blocks[1].data):
+            self.assertAlmostEqual(shaped.co.z - base.co.z, 0.2, places=5)
+        for vertex in output.data.vertices:
+            self.assertAlmostEqual(sum(weight.weight for weight in vertex.groups), 1.0, places=5)
+        self.assertEqual([group.name for group in output.vertex_groups], ["Left", "Right"])
+        self.assertTrue(output.vertex_groups["Left"].lock_weight)
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
+        self.assertIn("Unchanged: 1", bpy.context.scene.fishhwb_last_result)
+
+    def test_remesh_keeps_armature_and_does_not_bake_pose(self):
+        bpy.ops.object.armature_add()
+        rig = bpy.context.active_object
+        rig.pose.bones[0].location.x = 2.0
+        source = self.simple_mesh("RiggedSource")
+        group = source.vertex_groups.new(name=rig.data.bones[0].name)
+        group.add(list(range(len(source.data.vertices))), 1.0, 'REPLACE')
+        modifier = source.modifiers.new("Rig", 'ARMATURE')
+        modifier.object = rig
+        modifier.use_deform_preserve_volume = True
+        source.shape_key_add(name="Basis")
+        smile = source.shape_key_add(name="Smile")
+        for item in smile.data:
+            item.co.z += 0.2
+        curve = smile.driver_add('value')
+        rig['SmileControl'] = 0.5
+        variable = curve.driver.variables.new()
+        variable.name = 'strength'
+        variable.type = 'SINGLE_PROP'
+        variable.targets[0].id = rig
+        variable.targets[0].data_path = '["SmileControl"]'
+        curve.driver.expression = 'strength'
+        before = snapshot(source.data)
+        bpy.context.scene.fishhwb_triangle_target = 200
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
+        output = bpy.context.active_object
+        self.assertEqual(before, snapshot(source.data))
+        self.assertEqual(rig.pose.bones[0].location.x, 2.0)
+        self.assertEqual(output.modifiers[0].object, rig)
+        self.assertTrue(output.modifiers[0].use_deform_preserve_volume)
+        self.assertLess(max(v.co.x for v in output.data.vertices), 1.2)
+        self.assertGreater(min(v.co.x for v in output.data.vertices), -1.2)
+        self.assertEqual(output.data.shape_keys.animation_data.drivers[0].driver.expression, 'strength')
+        self.assertEqual(output.data.shape_keys.animation_data.drivers[0].driver.variables[0].targets[0].id, rig)
+        self.assertEqual(source.modifiers[0].object, rig)
+
+    def test_remesh_copies_shape_key_action(self):
+        source = self.simple_mesh("AnimatedShape")
+        source.shape_key_add(name="Basis")
+        key = source.shape_key_add(name="Smile")
+        for item in key.data:
+            item.co.z += 0.2
+        key.value = 0.1
+        key.keyframe_insert('value', frame=1)
+        key.value = 0.8
+        key.keyframe_insert('value', frame=10)
+        action = source.data.shape_keys.animation_data.action
+        bpy.context.scene.fishhwb_triangle_target = 200
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
+        copied = bpy.context.active_object.data.shape_keys.animation_data.action
+        self.assertIsNot(copied, action)
+        self.assertEqual(len(copied.fcurves[0].keyframe_points), 2)
+        self.assertEqual(copied.fcurves[0].data_path, action.fcurves[0].data_path)
+        self.assertEqual(source.data.shape_keys.animation_data.action, action)
+
+    def test_remesh_rejects_unsupported_deformation_modifier_stack(self):
+        source = self.simple_mesh("ModifierShape")
+        source.shape_key_add(name="Basis")
+        source.shape_key_add(name="Smile")
+        source.modifiers.new("Mirror", 'MIRROR')
+        before = snapshot(source.data)
+        count = len(bpy.data.objects)
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"CANCELLED"})
+        self.assertEqual(before, snapshot(source.data))
+        self.assertEqual(count, len(bpy.data.objects))
+
+    def test_lod_still_rejects_deformation_mesh(self):
+        source = self.simple_mesh("LODShapeSource")
+        source.shape_key_add(name="Basis")
+        source.shape_key_add(name="Smile")
+        count = len(bpy.data.objects)
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {"CANCELLED"})
+        self.assertEqual(count, len(bpy.data.objects))
 
     def test_active_lod_generation_preserves_source(self):
         source = self.dense_mesh("LODSource")

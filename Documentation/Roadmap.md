@@ -268,3 +268,7 @@ Blender: **Protect detail** is beside the selected object. Repeated actions on t
 - UV readiness checks channel presence, not full chart overlap/distortion quality. Generated UVs use Unity's importer defaults. Custom/procedural geometry and unsupported importers are reported, not silently rebuilt.
 - Unity Edit Mode regression tests for caching, manual edits, protection, rollback, restoration and memory-trial rejection are in Editor/Tests. Enable package tests with Unity Test Framework to run them. Unity editor compilation and bake validation are still required before tagging.
 - Blender runtime regression checks include unchanged reuse, output rename, source updates, manual-edit preservation and detail protection on supported CI versions.
+
+### v0.7.55 Remesh deformation transfer
+
+Implemented under the existing Remesh button: neutral-basis remeshing, nearest-triangle interpolation of vertex weights and relative shape displacements, armature reconnection, supported key animation/driver transfer and deformation-aware incremental records. The source is preserved. Relative blendshapes are supported; absolute keys, NLA shape stacks and incompatible modifier stacks remain unsupported. LOD deformation transfer is separate future work. Surface projection requires visual pose/expression checks and is not an exact preservation guarantee.

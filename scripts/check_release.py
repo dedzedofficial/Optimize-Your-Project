@@ -236,6 +236,7 @@ with ZipFile(extension_archive) as package:
     names = set(package.namelist())
     assert "blender_manifest.toml" in names
     assert "__init__.py" in names
+    assert "Blender/vr_optimizer_blender/deform_transfer.py" in names
     assert "Blender/__init__.py" in names
     assert "Blender/EXTENSION_LICENSE.txt" in names
     assert "Blender/vr_optimizer_blender/__init__.py" in names
