@@ -16,7 +16,7 @@ versions = json.loads((root / "version.json").read_text(encoding="utf-8"))
 
 assert manifest["displayName"] == "Optimize Your Project"
 assert manifest["name"] == "com.fishhwb.vr-optimizer"  # historical compatibility ID
-assert manifest["version"] == "0.7.55"
+assert manifest["version"] == "0.7.60"
 for keyword in [
     "optimize-your-project", "one-click-optimization", "game-optimization",
     "unity", "blender", "blender-addon", "asset-optimization",
@@ -47,33 +47,42 @@ assert "Icons/Optimize-Your-Project.png" in window
 assert 'new[] { T("project"), T("avatar") }' in window
 assert '"WORLD"' not in window
 assert '"UPDATES"' not in window
-assert "DrawUpdateFooter();" in window
+assert "DrawFooter();" in window
 assert "VRUpdateHealth.FarBehind" in window
 assert 'T("android")' in window
 assert "FISHHWB VR Optimizer" not in window
 assert 'T("support")' in window
-assert 'T("support_button")' in window
 assert "https://www.patreon.com/cw/DedZed" in window
-assert "BeginCard(" in window
+assert "panelStyle" in window
+assert "DrawTopBar" in window
+assert "VRMissingScriptCleaner.Clean" in window
+assert 'T("clean_missing_scripts")' in window
 
-localization = (root / "Editor/FISHHWBVR/VRLocalization.cs").read_text(encoding="utf-8")
+legacy_localization = (root / "Editor/FISHHWBVR/VRLocalization.cs").read_text(encoding="utf-8")
 for language in ["English", "Japanese", "SimplifiedChinese", "Korean"]:
+    assert language in legacy_localization
+
+localization = (root / "Editor/FISHHWBVR/OYPLocalization.cs").read_text(encoding="utf-8")
+for language in [
+    "Auto", "English", "Japanese", "SimplifiedChinese", "TraditionalChinese", "Korean",
+    "Spanish", "French", "German", "Portuguese", "Russian", "Italian",
+]:
     assert language in localization
 for required in [
-    "日本語", "简体中文", "한국어", "PROJECT INSIGHTS",
-    "SHOW LARGEST TEXTURES", "REVIEW READ/WRITE MEMORY", "SHOW HEAVY MESHES",
-    "FIX TEXTURE IMPORT SETTINGS", "FIX DUPLICATE MATERIAL REFERENCES",
-    "CLEAN UNUSED MATERIAL SLOTS", "FIX SAFE MATERIAL COST ISSUES",
-    "FIX OVERSIZED MESH IMPORTS",
+    "Application.systemLanguage", "SystemLanguage.Japanese", "SystemLanguage.ChineseSimplified",
+    "SystemLanguage.ChineseTraditional", "SystemLanguage.Korean", "SystemLanguage.Spanish",
+    "SystemLanguage.French", "SystemLanguage.German", "SystemLanguage.Portuguese",
+    "SystemLanguage.Russian", "SystemLanguage.Italian", "Auto (",
+    "Español", "Français", "Deutsch", "Português", "Русский", "Italiano",
 ]:
-    assert required in localization
+    assert required in localization, required
+
 assert "VRProjectInsights.LargestTextures" in window
 assert "VRProjectInsights.ReadWriteReview" in window
 assert "FixExpensiveMaterialSetups" in window
 assert "VRProjectMaintenance.CollectTextureImportFixes" in window
 assert "VRProjectMaintenance.CollectDuplicateMaterialFixes" in window
 assert "VRProjectMaintenance.CollectUnusedMaterialSlots" in window
-assert "DrawLanguageAndSearch" in window
 
 maintenance = (root / "Editor/FISHHWBVR/VRProjectMaintenance.cs").read_text(encoding="utf-8")
 assert "CollectTextureImportFixes" in maintenance
@@ -86,6 +95,11 @@ assert "TextureImporterType.NormalMap" in maintenance
 assert "optimizeMeshPolygons" in window
 assert "optimizeMeshVertices" in window
 assert "mesh.subMeshCount" in maintenance
+
+cleaner = (root / "Editor/FISHHWBVR/VRMissingScriptCleaner.cs").read_text(encoding="utf-8")
+assert "GetMonoBehavioursWithMissingScriptCount" in cleaner
+assert "RemoveMonoBehavioursWithMissingScript" in cleaner
+assert "Undo.RegisterCompleteObjectUndo" in cleaner
 
 project_scanner = (root / "Editor/FISHHWBVR/VRProjectScanner.cs").read_text(encoding="utf-8")
 assert '"Optimize Your Project"' in project_scanner
@@ -175,8 +189,9 @@ readme = (root / "README.md").read_text(encoding="utf-8")
 assert "general developer optimization" in readme.lower()
 assert "VRChat / VCC (optional)" in readme
 assert "## Keywords" in readme
-assert "FIX DUPLICATE MATERIAL REFERENCES" not in readme  # README uses friendly title case
 assert "Optimize Lighting" in readme
+assert "Clean Missing Scripts" in readme
+assert "auto-detect" in readme.lower()
 assert "optimize-your-project-blender-extension-0.7.55.zip" in readme
 assert "Blender v0.7.55 intentionally supports only" in readme
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
@@ -203,6 +218,8 @@ subprocess.run([sys.executable, "scripts/build_vpm.py"], cwd=root, env=env, chec
 with ZipFile(root / "dist" / f"{manifest['name']}-{manifest['version']}.zip") as package:
     assert package.testzip() is None
     assert "Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" in package.namelist()
+    assert "Editor/FISHHWBVR/VRMissingScriptCleaner.cs" in package.namelist()
+    assert "Editor/FISHHWBVR/OYPLocalization.cs" in package.namelist()
 
 listing = json.loads((root / "dist/index.json").read_text(encoding="utf-8"))
 assert "Optimize-Your-Project/index.json" in listing["url"]
@@ -242,4 +259,4 @@ with ZipFile(extension_archive) as package:
     assert "Blender/vr_optimizer_blender/__init__.py" in names
     assert "Blender/vr_optimizer_blender/optimize-your-project-logo.png" in names
 
-print("v0.7.55 static release checks passed; Unity and Blender runtime editor tests remain required.")
+print("v0.7.60 static release checks passed; Unity and Blender runtime editor tests remain required.")
