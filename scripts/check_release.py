@@ -14,18 +14,21 @@ unity_manifest = json.loads((root / "package.json").read_text(encoding="utf-8"))
 versions = json.loads((root / "version.json").read_text(encoding="utf-8"))
 extension_manifest = tomllib.loads((root / "blender_manifest.toml").read_text(encoding="utf-8"))
 
+# 0.7.61 is a single project release across Unity and Blender.
+assert versions["version"] == "0.7.61"
 assert unity_manifest["displayName"] == "Optimize Your Project"
 assert unity_manifest["name"] == "com.fishhwb.vr-optimizer"
-assert unity_manifest["version"] == versions["unity"] == "0.7.60"
-assert versions["unity_tag"] == "v" + versions["unity"]
+assert unity_manifest["version"] == versions["unity"] == versions["blender"] == versions["version"]
+assert versions["unity_tag"] == versions["blender_tag"] == "v" + versions["version"]
 assert versions["unity_url"].endswith("/releases/tag/" + versions["unity_tag"])
-assert (root / "Editor/FISHHWBVR/VRUpdateChecker.cs").read_text().find('"' + versions["unity"] + '"') >= 0
 
-assert versions["blender"] == "0.7.61"
-assert versions["blender_tag"] == "blender-v0.7.61"
+update_checker = (root / "Editor/FISHHWBVR/VRUpdateChecker.cs").read_text(encoding="utf-8")
+assert '"0.7.61"' in update_checker
+assert "feed.version" in update_checker
+
 assert extension_manifest["schema_version"] == "1.0.0"
 assert extension_manifest["id"] == "optimize_your_project"
-assert extension_manifest["version"] == versions["blender"]
+assert extension_manifest["version"] == versions["version"]
 assert extension_manifest["type"] == "add-on"
 assert extension_manifest["license"] == ["SPDX:GPL-3.0-or-later"]
 assert extension_manifest["blender_version_min"] == "4.2.0"
@@ -43,6 +46,17 @@ for required in [
 ]:
     assert required in window, required
 assert "FISHHWB VR Optimizer" not in window
+
+# Existing Unity actions receive 0.7.61 safety/quality updates without extra buttons.
+texture_optimizer = (root / "Editor/FISHHWBVR/VRTextureOptimizer.cs").read_text(encoding="utf-8")
+assert "importer.maxTextureSize <= maximum" in texture_optimizer
+assert "Never increase an existing stricter limit" in texture_optimizer
+particle_optimizer = (root / "Editor/FISHHWBVR/VRParticleOptimizer.cs").read_text(encoding="utf-8")
+assert "ParticleSystemCurveMode.TwoConstants" in particle_optimizer
+assert "Curve-based lifetime data is intentionally preserved" in particle_optimizer
+light_optimizer = (root / "Editor/FISHHWBVR/VRLightOptimizer.cs").read_text(encoding="utf-8")
+assert "LightmapBakeType.Realtime" in light_optimizer
+assert "RecordPrefabInstancePropertyModifications" in light_optimizer
 
 core = (root / "Blender/vr_optimizer_blender/__init__.py").read_text(encoding="utf-8")
 for required in [
@@ -102,10 +116,12 @@ for path in [root / "README.md", root / "Blender/README.md"]:
     assert "Smart UV Project" not in text, path
 
 readme = (root / "README.md").read_text(encoding="utf-8")
+assert "**v0.7.61" in readme
 assert "general developer optimization" in readme.lower()
 assert "VRChat / VCC (optional)" in readme
 assert "Optimize UI Raycasts" in readme
 assert "collision proxy" in readme.lower()
+assert "independent release versions" not in readme
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
 
 for relative in subprocess.check_output(
@@ -121,7 +137,7 @@ for relative in subprocess.check_output(
 env = dict(os.environ)
 env["GITHUB_REF_NAME"] = versions["unity_tag"]
 subprocess.run([sys.executable, "scripts/build_vpm.py"], cwd=root, env=env, check=True)
-with ZipFile(root / "dist" / f"{unity_manifest['name']}-{versions['unity']}.zip") as package:
+with ZipFile(root / "dist" / f"{unity_manifest['name']}-{versions['version']}.zip") as package:
     assert package.testzip() is None
     assert "Editor/FISHHWBVR/VRUIRaycastOptimizer.cs" in package.namelist()
 
@@ -146,4 +162,4 @@ with ZipFile(extension_archive) as package:
     ]:
         assert required in names, required
 
-print("Unity v0.7.60 and Blender v0.7.61 static release checks passed.")
+print("Optimize Your Project v0.7.61 unified release checks passed.")
