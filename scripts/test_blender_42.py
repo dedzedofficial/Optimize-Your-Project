@@ -78,6 +78,20 @@ class Blender42ToolsTests(unittest.TestCase):
             self.assertGreaterEqual(min(uv), -0.0001)
             self.assertLessEqual(max(uv), 1.0001)
 
+        face_bounds = []
+        layer = source.data.uv_layers["LightmapUV"]
+        for face in source.data.polygons:
+            coords = [layer.data[index].uv for index in face.loop_indices]
+            face_bounds.append((
+                min(value.x for value in coords), max(value.x for value in coords),
+                min(value.y for value in coords), max(value.y for value in coords),
+            ))
+        for index, first in enumerate(face_bounds):
+            for second in face_bounds[index + 1:]:
+                overlap_x = min(first[1], second[1]) > max(first[0], second[0])
+                overlap_y = min(first[3], second[3]) > max(first[2], second[2])
+                self.assertFalse(overlap_x and overlap_y)
+
         self.assertEqual(bpy.ops.fishhwb.generate_lightmap_uv(), {"FINISHED"})
         self.assertEqual(len(source.data.uv_layers), 2)
         self.assertIn("Unchanged: 1", bpy.context.scene.fishhwb_last_result)
@@ -147,6 +161,31 @@ class Blender42ToolsTests(unittest.TestCase):
         bpy.context.view_layer.objects.active = first
         self.assertEqual(bpy.ops.fishhwb.link_identical_mesh_data(), {"CANCELLED"})
         self.assertIn("Unsupported: 2", bpy.context.scene.fishhwb_last_result)
+
+    def test_strip_collider_render_data_preserves_geometry(self):
+        collider = self.cube("ColliderProxy")
+        collider["fishhwb_collision_proxy"] = True
+        collider.data.materials.append(bpy.data.materials.new("ColliderMaterial"))
+        collider.data.color_attributes.new(name="Color", type="FLOAT_COLOR", domain="CORNER")
+        before = snapshot(collider.data)
+
+        self.assertEqual(bpy.ops.fishhwb.strip_collider_render_data(), {"FINISHED"})
+        self.assertEqual(before, snapshot(collider.data))
+        self.assertEqual(len(collider.data.materials), 0)
+        self.assertEqual(len(collider.data.uv_layers), 0)
+        self.assertEqual(len(collider.data.color_attributes), 0)
+        self.assertTrue(collider.data.get("fishhwb_collider_render_data_stripped"))
+        self.assertIn("Changed: 1", bpy.context.scene.fishhwb_last_result)
+
+        self.assertEqual(bpy.ops.fishhwb.strip_collider_render_data(), {"FINISHED"})
+        self.assertIn("Unchanged: 1", bpy.context.scene.fishhwb_last_result)
+
+    def test_strip_collider_render_data_rejects_normal_mesh(self):
+        source = self.cube("NormalMesh")
+        before_uv = len(source.data.uv_layers)
+        self.assertEqual(bpy.ops.fishhwb.strip_collider_render_data(), {"CANCELLED"})
+        self.assertEqual(len(source.data.uv_layers), before_uv)
+        self.assertIn("Unsupported: 1", bpy.context.scene.fishhwb_last_result)
 
 
 addon.register()
