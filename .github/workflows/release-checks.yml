@@ -49,7 +49,11 @@ jobs:
           mkdir -p "$RUNNER_TEMP/blender"
           tar -xf "$RUNNER_TEMP/blender.tar.xz" -C "$RUNNER_TEMP/blender" --strip-components=1
       - name: Test Remesh, LOD and collision workflows
+        if: matrix.blender.series != '5.2'
         run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender.py'
+      - name: Test Remesh, LOD and Blender 5.2 slotted Actions
+        if: matrix.blender.series == '5.2'
+        run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender_52.py'
       - name: Test Blender 4.2+ optimization tools
         run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender_42.py'
       - name: Validate Blender Extensions package
