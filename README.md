@@ -41,7 +41,7 @@ Release history: [GitHub Releases](https://github.com/dedzedofficial/Optimize-Yo
 
 Install the downloaded ZIP directly using **Install from Disk**. Do not extract it.
 
-### VRChat Creator Companion / VCC
+### VRChat / VCC (optional)
 
 Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the chosen project.
 
