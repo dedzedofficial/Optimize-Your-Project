@@ -35,8 +35,6 @@ def prepare_neutral_copy(source, target, context):
     target.modifiers.clear()
     target.data.update()
     context.view_layer.update()
-    # Point attributes follow the same edge collapses as the neutral surface.
-    # This preserves correspondence even where lips/eyelids overlap.
     attributes = []
     if keys:
         for block in list(keys.key_blocks)[1:]:
@@ -59,6 +57,42 @@ def _copy_rna(source, target, excluded=()):
         setattr(target, name, list(value) if getattr(prop, "is_array", False) else value)
 
 
+def _action_fcurves(animation):
+    """Return action curves on Blender 4.2 legacy actions or 4.4+ slotted actions."""
+    action = animation.action if animation else None
+    if not action:
+        return []
+    if hasattr(action, 'fcurves'):
+        return list(action.fcurves)
+
+    slot = getattr(animation, 'action_slot', None)
+    if slot is None:
+        return []
+    try:
+        from bpy_extras import anim_utils
+        channelbag = anim_utils.action_get_channelbag_for_slot(action, slot)
+    except (ImportError, AttributeError, RuntimeError):
+        channelbag = None
+    return list(channelbag.fcurves) if channelbag else []
+
+
+def _restore_copied_action_slot(source_animation, destination_animation):
+    """Keep a copied slotted Action bound to the corresponding copied slot."""
+    source_slot = getattr(source_animation, 'action_slot', None)
+    copied_action = destination_animation.action
+    if source_slot is None or not copied_action or not hasattr(destination_animation, 'action_slot'):
+        return
+    slots = getattr(copied_action, 'slots', None)
+    if slots is None:
+        return
+    copied_slot = next(
+        (slot for slot in slots if getattr(slot, 'identifier', None) == getattr(source_slot, 'identifier', None)),
+        None,
+    )
+    if copied_slot is not None:
+        destination_animation.action_slot = copied_slot
+
+
 def _copy_key_animation(source_obj, target_obj):
     source = source_obj.data.shape_keys
     target = target_obj.data.shape_keys
@@ -70,9 +104,9 @@ def _copy_key_animation(source_obj, target_obj):
         return
     destination = target.animation_data_create()
     if animation.action:
-        # Same named shape paths, independent editable action.
         destination.action = animation.action.copy()
         destination.action['fishhwb_owned_transfer'] = True
+        _restore_copied_action_slot(animation, destination)
     for name in ('action_blend_type', 'action_extrapolation', 'action_influence', 'use_nla'):
         setattr(destination, name, getattr(animation, name))
     for curve in animation.drivers:
@@ -123,8 +157,6 @@ def transfer(source, target, attributes):
         if attribute is None or attribute.domain != 'POINT' or attribute.data_type != 'FLOAT_VECTOR':
             raise ValueError('Reduction lost blendshape correspondence; output discarded.')
         offsets.append([item.vector.copy() for item in attribute.data])
-    # Blender's collapse modifier already interpolates the original deform
-    # weights on the same topology. Do not overwrite them by surface projection.
     groups = list(target.vertex_groups)
     if [g.name for g in groups] != [g.name for g in source.vertex_groups]:
         raise ValueError('Reduction lost vertex-group correspondence.')
@@ -142,8 +174,6 @@ def transfer(source, target, attributes):
             copied.interpolation = original.interpolation
             copied.vertex_group = original.vertex_group
             copied.mute = original.mute
-            copied.slider_min = min(copied.slider_min, original.slider_min)
-            copied.slider_max = max(copied.slider_max, original.slider_max)
             copied.slider_min = original.slider_min
             copied.slider_max = original.slider_max
             copied.value = original.value
@@ -181,15 +211,25 @@ def signature(obj):
                 digest.update(struct.pack('<3f', *point.co))
         animation = keys.animation_data
         if animation:
-            digest.update(repr((animation.action.name_full if animation.action else '', animation.action_blend_type, animation.action_influence, animation.action_extrapolation, animation.use_nla)).encode())
-            curves = list(animation.drivers) + (list(animation.action.fcurves) if animation.action else [])
+            slot = getattr(animation, 'action_slot', None)
+            digest.update(repr((
+                animation.action.name_full if animation.action else '',
+                getattr(slot, 'identifier', ''),
+                animation.action_blend_type,
+                animation.action_influence,
+                animation.action_extrapolation,
+                animation.use_nla,
+            )).encode())
+            drivers = list(animation.drivers)
+            driver_pointers = {curve.as_pointer() for curve in drivers}
+            curves = drivers + _action_fcurves(animation)
             for curve in curves:
                 digest.update(repr((curve.data_path, curve.array_index, curve.mute, curve.extrapolation)).encode())
                 for point in curve.keyframe_points:
                     digest.update(repr((tuple(point.co), tuple(point.handle_left), tuple(point.handle_right), point.interpolation, point.handle_left_type, point.handle_right_type, point.easing, point.amplitude, point.back, point.period)).encode())
                 for modifier in curve.modifiers:
                     digest.update(repr([(prop.identifier, repr(getattr(modifier, prop.identifier))) for prop in modifier.bl_rna.properties if prop.identifier != "rna_type" and not prop.is_readonly]).encode())
-                if curve in animation.drivers[:]:
+                if curve.as_pointer() in driver_pointers:
                     digest.update(repr((curve.driver.type, curve.driver.expression, curve.driver.use_self)).encode())
                     for variable in curve.driver.variables:
                         digest.update(repr((variable.name, variable.type)).encode())
