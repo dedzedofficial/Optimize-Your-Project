@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Read Blender version
+        id: versions
+        run: echo "blender=$(python3 -c 'import json; print(json.load(open(\"version.json\"))[\"blender\"])')" >> "$GITHUB_OUTPUT"
       - name: Validate versions, logos and packages
         run: python3 scripts/check_release.py
       - name: Build Blender extension ZIP
@@ -18,10 +21,10 @@ jobs:
       - name: Upload Blender ZIP packages
         uses: actions/upload-artifact@v4
         with:
-          name: optimize-your-project-blender-0.7.55
+          name: optimize-your-project-blender-${{ steps.versions.outputs.blender }}
           path: |
-            dist/optimize-your-project-blender-extension-0.7.55.zip
-            dist/optimize-your-project-blender-0.7.55.zip
+            dist/optimize-your-project-blender-extension-${{ steps.versions.outputs.blender }}.zip
+            dist/optimize-your-project-blender-${{ steps.versions.outputs.blender }}.zip
           if-no-files-found: error
           retention-days: 90
   blender-runtime:
@@ -50,4 +53,5 @@ jobs:
         if: matrix.blender.series == '4.2'
         run: |
           python3 scripts/build_blender_extension.py
-          "$RUNNER_TEMP/blender/blender" --background --factory-startup --command extension validate dist/optimize-your-project-blender-extension-0.7.55.zip
+          BLENDER_PACKAGE="dist/optimize-your-project-blender-extension-$(python3 -c 'import json; print(json.load(open(\"version.json\"))[\"blender\"])').zip"
+          "$RUNNER_TEMP/blender/blender" --background --factory-startup --command extension validate "$BLENDER_PACKAGE"
