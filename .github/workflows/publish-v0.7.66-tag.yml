@@ -1,0 +1,36 @@
+name: Publish v0.7.66 tag
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-v0.7.66-tag.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create v0.7.66 tag on validated release commit
+        env:
+          RELEASE_SHA: d3ff2a9aed24e8b6be7d588b2459f7c971f227b1
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          if git rev-parse -q --verify refs/tags/v0.7.66 >/dev/null; then
+            EXISTING_SHA="$(git rev-list -n 1 v0.7.66)"
+            if [ "$EXISTING_SHA" != "$RELEASE_SHA" ]; then
+              echo "v0.7.66 already exists at $EXISTING_SHA, expected $RELEASE_SHA"
+              exit 1
+            fi
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a v0.7.66 "$RELEASE_SHA" -m "Optimize Your Project v0.7.66"
+          git push origin refs/tags/v0.7.66
