@@ -28,6 +28,7 @@ class RemeshLodTests(unittest.TestCase):
 
         bpy.context.scene.fishhwb_triangle_target = 10000
         bpy.context.scene.fishhwb_apply_modifiers = True
+        bpy.context.scene.fishhwb_create_collision_proxy = False
         bpy.context.scene.fishhwb_language = "EN"
         bpy.context.scene.fishhwb_last_result = ""
 
@@ -59,8 +60,6 @@ class RemeshLodTests(unittest.TestCase):
         return obj
 
     def textured_layers(self):
-        # Two close, disconnected sheets mimic clothing over skin. Each has a
-        # separate material and UV island; voxel reconstruction merges them.
         vertices, faces = [], []
         n = 8
         for sheet in range(2):
@@ -127,8 +126,6 @@ class RemeshLodTests(unittest.TestCase):
     def test_blendshapes_follow_coincident_surfaces_without_cross_transfer(self):
         for budget in (10000, 100):
             source = self.textured_layers()
-            # Exactly overlapping disconnected sheets defeat nearest-surface
-            # lookup, but must keep their opposite expression offsets.
             for vertex in source.data.vertices:
                 vertex.co.z = 0
             source.shape_key_add(name="Basis")
@@ -150,14 +147,13 @@ class RemeshLodTests(unittest.TestCase):
         self.assertEqual(addon.tr(bpy.context, "language"), "言語")
         self.assertEqual(addon.tr(bpy.context, "remesh"), "ワンクリックリメッシュ")
         self.assertEqual(addon.tr(bpy.context, "lod_title"), "LOD 生成")
+        self.assertEqual(addon.tr(bpy.context, "collision_proxy"), "LOD2 からコライダー代理を作成")
 
     def test_one_click_remesh_preserves_source(self):
         source = self.simple_mesh("RemeshSource")
         before = snapshot(source.data)
-
         self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"FINISHED"})
         output = bpy.context.active_object
-
         self.assertTrue(output.name.startswith("RemeshSource_Remesh"))
         self.assertIsNot(output.data, source.data)
         self.assertGreater(addon.triangle_count(output.data), 0)
@@ -171,7 +167,6 @@ class RemeshLodTests(unittest.TestCase):
         source.data.shape_keys.use_relative = False
         before = snapshot(source.data)
         count_before = len(bpy.data.objects)
-
         self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {"CANCELLED"})
         self.assertEqual(count_before, len(bpy.data.objects))
         self.assertEqual(before, snapshot(source.data))
@@ -180,7 +175,7 @@ class RemeshLodTests(unittest.TestCase):
 
     def test_remesh_transfers_relative_shapes_and_weights(self):
         source = self.dense_mesh("DeformSource")
-        basis = source.shape_key_add(name="Basis")
+        source.shape_key_add(name="Basis")
         smile = source.shape_key_add(name="Smile")
         for vertex in smile.data:
             vertex.co.z += 0.2
@@ -298,28 +293,42 @@ class RemeshLodTests(unittest.TestCase):
         source = self.dense_mesh("LODSource")
         before = snapshot(source.data)
         source_count = addon.triangle_count(source.data)
-
         self.assertEqual(bpy.ops.fishhwb.create_lods(), {"FINISHED"})
         lod0 = bpy.context.active_object
-
         self.assertTrue(lod0.name.startswith("LODSource_LOD0"))
         self.assertEqual(before, snapshot(source.data))
         self.assertEqual(source_count, addon.triangle_count(lod0.data))
-
-        collection = next(
-            collection
-            for collection in bpy.data.collections
-            if collection.name.startswith("LODSource_LODs")
-        )
+        collection = next(collection for collection in bpy.data.collections if collection.name.startswith("LODSource_LODs"))
         created = {obj.get("fishhwb_lod_level"): obj for obj in collection.objects}
         self.assertEqual(set(created), {0, 1, 2})
-
         lod1_count = addon.triangle_count(created[1].data)
         lod2_count = addon.triangle_count(created[2].data)
         self.assertLessEqual(lod1_count, max(1, int(source_count * 0.66)))
         self.assertLessEqual(lod2_count, max(1, int(source_count * 0.33)))
         self.assertIn("Changed: 1", bpy.context.scene.fishhwb_last_result)
         self.assertIn("Original object preserved", bpy.context.scene.fishhwb_last_result)
+
+    def test_optional_collision_proxy_reuses_lod2_and_preserves_source(self):
+        source = self.dense_mesh("ColliderSource")
+        before = snapshot(source.data)
+        bpy.context.scene.fishhwb_create_collision_proxy = True
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {"FINISHED"})
+        collection = next(collection for collection in bpy.data.collections if collection.name.startswith("ColliderSource_LODs"))
+        proxy = next(obj for obj in collection.objects if obj.get("fishhwb_collision_proxy"))
+        lod2 = next(obj for obj in collection.objects if obj.get("fishhwb_lod_level") == 2)
+        self.assertTrue(proxy.name.startswith("ColliderSource_COLLIDER"))
+        self.assertIsNot(proxy.data, lod2.data)
+        self.assertEqual(snapshot(proxy.data), snapshot(lod2.data))
+        self.assertEqual(addon.triangle_count(proxy.data), addon.triangle_count(lod2.data))
+        self.assertTrue(proxy.hide_render)
+        self.assertEqual(proxy.display_type, 'WIRE')
+        self.assertEqual(before, snapshot(source.data))
+        self.assertIn("Collision proxy created from LOD2", bpy.context.scene.fishhwb_last_result)
+        count = len(bpy.data.objects)
+        addon._select_only(bpy.context, source)
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {"FINISHED"})
+        self.assertEqual(count, len(bpy.data.objects))
+        self.assertIn("Unchanged: 1", bpy.context.scene.fishhwb_last_result)
 
     def test_repeat_from_selected_generated_output_reuses_source(self):
         self.simple_mesh("RepeatSource")
@@ -407,7 +416,6 @@ class RemeshLodTests(unittest.TestCase):
         bpy.context.scene.fishhwb_apply_modifiers = False
         before = snapshot(source.data)
         count_before = len(bpy.data.objects)
-
         self.assertEqual(bpy.ops.fishhwb.create_lods(), {"CANCELLED"})
         self.assertEqual(count_before, len(bpy.data.objects))
         self.assertEqual(before, snapshot(source.data))
@@ -419,16 +427,13 @@ class RemeshLodTests(unittest.TestCase):
         second = self.dense_mesh("BatchB")
         first_before = snapshot(first.data)
         second_before = snapshot(second.data)
-
         first.select_set(True)
         second.select_set(True)
         bpy.context.view_layer.objects.active = first
-
         self.assertEqual(bpy.ops.fishhwb.create_lods_selected(), {"FINISHED"})
         self.assertEqual(first_before, snapshot(first.data))
         self.assertEqual(second_before, snapshot(second.data))
         self.assertIn("Changed: 2", bpy.context.scene.fishhwb_last_result)
-
         lod0_names = {obj.name for obj in bpy.context.selected_objects}
         self.assertTrue(any(name.startswith("BatchA_LOD0") for name in lod0_names))
         self.assertTrue(any(name.startswith("BatchB_LOD0") for name in lod0_names))
@@ -445,7 +450,6 @@ finally:
 if not result.wasSuccessful():
     raise RuntimeError("Blender Remesh/LOD regression checks failed")
 
-# Verify the repository-root Blender extension proxy still registers the focused add-on.
 repo_root = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
     "optimize_your_project",
@@ -461,5 +465,7 @@ try:
         raise RuntimeError("Blender extension proxy did not register the add-on")
     if not hasattr(bpy.types.Scene, "fishhwb_apply_modifiers"):
         raise RuntimeError("Blender extension proxy did not register LOD settings")
+    if not hasattr(bpy.types.Scene, "fishhwb_create_collision_proxy"):
+        raise RuntimeError("Blender extension proxy did not register collision proxy settings")
 finally:
     extension.unregister()

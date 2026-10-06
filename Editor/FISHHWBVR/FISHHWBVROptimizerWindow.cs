@@ -198,8 +198,10 @@ namespace FISHHWB.VROptimizer
             EditorGUILayout.BeginHorizontal();
             using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode || Lightmapping.isRunning))
                 if (Primary(T("optimize_lighting"))) summary = VRLightingSetup.Optimize();
-            if (Primary(T("clean_missing_scripts"))) summary = VRMissingScriptCleaner.Clean(null);
+            if (Primary(T("optimize_ui_raycasts"))) summary = VRUIRaycastOptimizer.Optimize(null);
             EditorGUILayout.EndHorizontal();
+
+            if (Primary(T("clean_missing_scripts"))) summary = VRMissingScriptCleaner.Clean(null);
 
             DrawAdvancedSettings();
             EditorGUILayout.EndVertical();
@@ -291,8 +293,10 @@ namespace FISHHWB.VROptimizer
 
                 EditorGUILayout.BeginHorizontal();
                 if (Primary(T("disable_shadows"))) DisableRealtimeShadows(avatar);
-                if (Primary(T("clean_missing_scripts"))) summary = VRMissingScriptCleaner.Clean(avatar);
+                if (Primary(T("optimize_ui_raycasts"))) summary = VRUIRaycastOptimizer.Optimize(avatar);
                 EditorGUILayout.EndHorizontal();
+
+                if (Primary(T("clean_missing_scripts"))) summary = VRMissingScriptCleaner.Clean(avatar);
 
                 DrawAdvancedSettings();
                 EditorGUILayout.EndVertical();

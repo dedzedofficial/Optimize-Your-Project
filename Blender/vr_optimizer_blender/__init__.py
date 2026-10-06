@@ -2,10 +2,10 @@
 bl_info = {
     "name": "Optimize Your Project for Blender",
     "author": "FISHHWB | Ded Zed",
-    "version": (0, 7, 55),
+    "version": (0, 7, 60),
     "blender": (3, 6, 0),
     "location": "View3D > Sidebar > FISHHWB",
-    "description": "Remesh with deformation transfer and static-mesh LOD tools",
+    "description": "Remesh, LOD and optional collision proxy tools",
     "category": "Mesh",
 }
 
@@ -56,10 +56,10 @@ _TRANSLATIONS = {
         'KO': '프로젝트 최적화',
     },
     'subtitle': {
-        'EN': 'Blender v0.7.55: Remesh + LOD only',
-        'JA': 'Blender v0.7.55: リメッシュ + LOD のみ',
-        'ZH': 'Blender v0.7.55：仅重网格 + LOD',
-        'KO': 'Blender v0.7.55: 리메시 + LOD 전용',
+        'EN': 'Blender v0.7.60: Remesh + LOD + Collider',
+        'JA': 'Blender v0.7.60: リメッシュ + LOD + コライダー',
+        'ZH': 'Blender v0.7.60：重网格 + LOD + 碰撞代理',
+        'KO': 'Blender v0.7.60: 리메시 + LOD + 콜라이더',
     },
     'selection': {
         'EN': 'CURRENT SELECTION',
@@ -98,16 +98,22 @@ _TRANSLATIONS = {
         'KO': 'LOD 생성',
     },
     'lod_desc': {
-        'EN': 'Create LOD0, LOD1 and LOD2 copies while preserving the source.',
-        'JA': '元データを保持したまま LOD0、LOD1、LOD2 を作成します。',
-        'ZH': '保留源对象并创建 LOD0、LOD1 和 LOD2 副本。',
-        'KO': '원본을 유지하면서 LOD0, LOD1, LOD2 복사본을 만듭니다.',
+        'EN': 'Create LOD0, LOD1 and LOD2; optionally add a collider proxy from LOD2.',
+        'JA': 'LOD0、LOD1、LOD2 を作成し、必要なら LOD2 からコライダー代理も作成します。',
+        'ZH': '创建 LOD0、LOD1 和 LOD2，并可从 LOD2 创建碰撞代理。',
+        'KO': 'LOD0, LOD1, LOD2를 만들고 선택적으로 LOD2에서 콜라이더 프록시를 만듭니다.',
     },
     'apply_modifiers': {
         'EN': 'Apply Existing Modifiers',
         'JA': '既存モディファイアを適用',
         'ZH': '应用现有修改器',
         'KO': '기존 모디파이어 적용',
+    },
+    'collision_proxy': {
+        'EN': 'Create Collision Proxy from LOD2',
+        'JA': 'LOD2 からコライダー代理を作成',
+        'ZH': '从 LOD2 创建碰撞代理',
+        'KO': 'LOD2에서 콜라이더 프록시 생성',
     },
     'create_lods': {
         'EN': 'CREATE LOD0 / LOD1 / LOD2',
@@ -274,14 +280,14 @@ def _reduce_copy_to_limit(obj, target, context):
     return count
 
 
-def _create_lod_set(source, context, apply_modifiers):
+def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=False):
     reason = _static_mesh_reason(source)
     if reason:
         raise ValueError(reason)
     if source.modifiers and not apply_modifiers:
         raise ValueError("Enable Apply Existing Modifiers or use a mesh with no modifiers.")
 
-    policy = 'lod-v0755:' + str(apply_modifiers)
+    policy = 'lod-v0760:' + str(apply_modifiers) + ':' + str(create_collision_proxy)
     cached = _cached_outputs(source, context, 'lod', policy)
     source['fishhwb_lod_reused'] = bool(cached)
     if cached:
@@ -328,6 +334,23 @@ def _create_lod_set(source, context, apply_modifiers):
             copy['fishhwb_triangle_target'] = target
             copy['fishhwb_triangle_result'] = actual
             copy.hide_set(True)
+
+        if create_collision_proxy:
+            lod2 = created[2]
+            collider = lod2.copy()
+            collider.data = lod2.data.copy()
+            collider.name = source.name + "_COLLIDER"
+            collider.data.name = collider.name
+            collider.matrix_world = source.matrix_world.copy()
+            collider.hide_render = True
+            collider.display_type = 'WIRE'
+            collider.show_in_front = True
+            collider['fishhwb_collision_proxy'] = True
+            collider['fishhwb_collision_source'] = lod2.name_full
+            collider['fishhwb_triangle_result'] = triangle_count(collider.data)
+            collection.objects.link(collider)
+            collider.hide_set(False)
+            created.append(collider)
 
         _remember_outputs(source, context, "lod", policy, created)
         return collection, created
@@ -438,7 +461,6 @@ def _remember_outputs(source, context, job, policy, outputs):
         'owner': source.name_full, 'source': _object_signature(source, context), 'policy': policy,
         'outputs': [{'id': obj['fishhwb_output_id'], 'signature': _object_signature(obj, context)} for obj in outputs],
     })
-    # Replace only verified, untouched generated outputs after the replacement has succeeded.
     if previous:
         for item in previous['outputs']:
             old = _history_object(item)
@@ -467,7 +489,6 @@ class FISHHWB_OT_reset_history(bpy.types.Operator):
                 del source[key]
         _action_report(self, context, "History reset. Existing outputs preserved; the next action creates fresh copies.")
         return {'FINISHED'}
-
 
 
 class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
@@ -512,9 +533,6 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
                 shape_attributes = deform_transfer.prepare_neutral_copy(source, copy, context)
             before = triangle_count(copy.data)
 
-            # Voxel reconstruction discards UV loops and merges nearby clothing,
-            # hair and facial surfaces. Retain the existing surface instead.
-            # Evaluate existing static modifiers once, even below the budget.
             if copy.modifiers:
                 result = _evaluated_mesh_copy(copy, context)
                 old_mesh = copy.data
@@ -557,7 +575,7 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
 class FISHHWB_OT_create_lods(bpy.types.Operator):
     bl_idname = "fishhwb.create_lods"
     bl_label = "Create LOD0 / LOD1 / LOD2"
-    bl_description = "Create LOD copies for the active static mesh while preserving the original"
+    bl_description = "Create LOD copies and an optional collision proxy while preserving the original"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -578,15 +596,17 @@ class FISHHWB_OT_create_lods(bpy.types.Operator):
                 source,
                 context,
                 context.scene.fishhwb_apply_modifiers,
+                context.scene.fishhwb_create_collision_proxy,
             )
             _select_only(context, created[0])
             base = triangle_count(created[0].data)
             lod1 = triangle_count(created[1].data)
             lod2 = triangle_count(created[2].data)
+            collider_detail = " Collision proxy created from LOD2." if len(created) > 3 and created[3].get('fishhwb_collision_proxy') else ""
             _action_report(
                 self,
                 context,
-                f"LOD set from {base:,} triangles: LOD1 {lod1:,}, LOD2 {lod2:,}. Original object preserved.",
+                f"LOD set from {base:,} triangles: LOD1 {lod1:,}, LOD2 {lod2:,}. Original object preserved." + collider_detail,
                 changed=0 if source.get("fishhwb_lod_reused") else 1,
                 unchanged=1 if source.get("fishhwb_lod_reused") else 0,
             )
@@ -614,7 +634,7 @@ class FISHHWB_OT_create_lods(bpy.types.Operator):
 class FISHHWB_OT_create_lods_selected(bpy.types.Operator):
     bl_idname = "fishhwb.create_lods_selected"
     bl_label = "Create LODs for Selection"
-    bl_description = "Create LOD0, LOD1 and LOD2 for each supported selected static mesh"
+    bl_description = "Create LOD0, LOD1 and LOD2 plus optional collider proxies for supported selected static meshes"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -640,6 +660,7 @@ class FISHHWB_OT_create_lods_selected(bpy.types.Operator):
                     source,
                     context,
                     context.scene.fishhwb_apply_modifiers,
+                    context.scene.fishhwb_create_collision_proxy,
                 )
                 outputs.append(created[0])
                 if source.get("fishhwb_lod_reused"):
@@ -665,10 +686,11 @@ class FISHHWB_OT_create_lods_selected(bpy.types.Operator):
                     item.select_set(True)
             context.view_layer.objects.active = original_active
 
+        proxy_text = " Collider proxies enabled." if context.scene.fishhwb_create_collision_proxy else ""
         _action_report(
             self,
             context,
-            f"LOD sets: {changed} created, {unchanged} reused across {len(sources)} sources. Originals preserved.",
+            f"LOD sets: {changed} created, {unchanged} reused across {len(sources)} sources. Originals preserved." + proxy_text,
             changed=changed,
             unchanged=unchanged,
             unsupported=unsupported,
@@ -726,6 +748,7 @@ class FISHHWB_PT_optimizer(bpy.types.Panel):
         lod.label(text=tr(context, 'lod_title'), icon='MOD_DECIM')
         lod.label(text=tr(context, 'lod_desc'))
         lod.prop(context.scene, 'fishhwb_apply_modifiers', text=tr(context, 'apply_modifiers'))
+        lod.prop(context.scene, 'fishhwb_create_collision_proxy', text=tr(context, 'collision_proxy'))
 
         active_lod = lod.row()
         active_lod.scale_y = 1.35
@@ -789,6 +812,11 @@ def register():
         default=True,
         description="Apply existing non-armature modifiers to generated LOD0 before making LOD1 and LOD2",
     )
+    bpy.types.Scene.fishhwb_create_collision_proxy = BoolProperty(
+        name="Create Collision Proxy from LOD2",
+        default=False,
+        description="Create a separate wireframe, render-disabled collider candidate copied from LOD2 while preserving the source",
+    )
 
 
 def unregister():
@@ -804,6 +832,8 @@ def unregister():
         del bpy.types.Scene.fishhwb_language
     if hasattr(bpy.types.Scene, "fishhwb_apply_modifiers"):
         del bpy.types.Scene.fishhwb_apply_modifiers
+    if hasattr(bpy.types.Scene, "fishhwb_create_collision_proxy"):
+        del bpy.types.Scene.fishhwb_create_collision_proxy
 
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

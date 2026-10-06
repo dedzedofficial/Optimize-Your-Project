@@ -15,7 +15,7 @@ manifest = json.loads((root / "package.json").read_text(encoding="utf-8"))
 versions = json.loads((root / "version.json").read_text(encoding="utf-8"))
 
 assert manifest["displayName"] == "Optimize Your Project"
-assert manifest["name"] == "com.fishhwb.vr-optimizer"  # historical compatibility ID
+assert manifest["name"] == "com.fishhwb.vr-optimizer"
 assert manifest["version"] == "0.7.60"
 for keyword in [
     "optimize-your-project", "one-click-optimization", "game-optimization",
@@ -31,7 +31,7 @@ assert versions["unity_url"].endswith("/releases/tag/" + versions["unity_tag"])
 extension_manifest = tomllib.loads((root / "blender_manifest.toml").read_text(encoding="utf-8"))
 assert extension_manifest["schema_version"] == "1.0.0"
 assert extension_manifest["id"] == "optimize_your_project"
-assert extension_manifest["version"] == versions["blender"] == "0.7.55"
+assert extension_manifest["version"] == versions["blender"] == "0.7.60"
 assert extension_manifest["type"] == "add-on"
 assert extension_manifest["license"] == ["SPDX:GPL-3.0-or-later"]
 assert extension_manifest["blender_version_min"] == "4.2.0"
@@ -57,6 +57,8 @@ assert "panelStyle" in window
 assert "DrawTopBar" in window
 assert "VRMissingScriptCleaner.Clean" in window
 assert 'T("clean_missing_scripts")' in window
+assert "VRUIRaycastOptimizer.Optimize" in window
+assert 'T("optimize_ui_raycasts")' in window
 
 legacy_localization = (root / "Editor/FISHHWBVR/VRLocalization.cs").read_text(encoding="utf-8")
 for language in ["English", "Japanese", "SimplifiedChinese", "Korean"]:
@@ -74,6 +76,7 @@ for required in [
     "SystemLanguage.French", "SystemLanguage.German", "SystemLanguage.Portuguese",
     "SystemLanguage.Russian", "SystemLanguage.Italian", "Auto (",
     "Español", "Français", "Deutsch", "Português", "Русский", "Italiano",
+    "optimize_ui_raycasts",
 ]:
     assert required in localization, required
 
@@ -101,6 +104,14 @@ assert "GetMonoBehavioursWithMissingScriptCount" in cleaner
 assert "RemoveMonoBehavioursWithMissingScript" in cleaner
 assert "Undo.RegisterCompleteObjectUndo" in cleaner
 
+raycasts = (root / "Editor/FISHHWBVR/VRUIRaycastOptimizer.cs").read_text(encoding="utf-8")
+assert 'FindProperty("m_RaycastTarget")' in raycasts
+assert "UnityEngine.UI.Graphic" in raycasts
+assert "UnityEngine.EventSystems" in raycasts
+assert "Undo.RecordObject" in raycasts
+assert "IPointerClickHandler" in raycasts
+assert "IUpdateSelectedHandler" in raycasts
+
 project_scanner = (root / "Editor/FISHHWBVR/VRProjectScanner.cs").read_text(encoding="utf-8")
 assert '"Optimize Your Project"' in project_scanner
 assert "FISHHWB VR Optimizer" not in project_scanner
@@ -119,7 +130,7 @@ info = next(
     and any(isinstance(target, ast.Name) and target.id == "bl_info" for target in node.targets)
 )
 blender_version = ".".join(map(str, info["version"]))
-assert blender_version == versions["blender"] == "0.7.55"
+assert blender_version == versions["blender"] == "0.7.60"
 assert versions["blender_tag"] == "blender-v" + blender_version
 assert 'bl_idname = "fishhwb.one_click_remesh"' in source_text
 assert 'bl_idname = "fishhwb.create_lods"' in source_text
@@ -130,9 +141,14 @@ assert "FISHHWB_OT_create_lods_selected" in source_text.split("classes =", 1)[1]
 assert "LANGUAGE_ITEMS" in source_text
 for language_code in ["'EN'", "'JA'", "'ZH'", "'KO'"]:
     assert language_code in source_text
-assert "Blender v0.7.55: Remesh + LOD only" in source_text
+assert "Blender v0.7.60: Remesh + LOD + Collider" in source_text
 assert "ONE-CLICK REMESH" in source_text
 assert "LOD GENERATION" in source_text
+assert "fishhwb_create_collision_proxy" in source_text
+assert "fishhwb_collision_proxy" in source_text
+assert "_COLLIDER" in source_text
+assert "hide_render = True" in source_text
+assert "display_type = 'WIRE'" in source_text
 for removed in [
     'fishhwb.clean_selected_mesh',
     'fishhwb.clean_selected_meshes',
@@ -174,8 +190,6 @@ for path in [
     assert "Architecture" in content, path
     assert "Changelog" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project.git" in content, path
-    assert "optimize-your-project-blender-extension-0.7.55.zip" in content, path
-    assert "optimize-your-project-blender-0.7.55.zip" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml" in content, path
     assert "Remesh" in content, path
     assert "LOD" in content, path
@@ -189,14 +203,13 @@ assert "VRChat / VCC (optional)" in readme
 assert "## Keywords" in readme
 assert "Optimize Lighting" in readme
 assert "Clean Missing Scripts" in readme
+assert "Optimize UI Raycasts" in readme
+assert "collision proxy" in readme.lower()
 assert "auto-detect" in readme.lower()
-assert "optimize-your-project-blender-extension-0.7.55.zip" in readme
-assert "Blender v0.7.55 intentionally supports only" in readme
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
 
 assert "## " + manifest["version"] in (root / "CHANGELOG.md").read_text()
 assert "v" + manifest["version"] in readme
-assert "v" + blender_version in (root / "Blender/README.md").read_text()
 for relative in subprocess.check_output(["git", "ls-files", "--cached", "--others", "--exclude-standard"], cwd=root, text=True).splitlines():
     path = root / relative
     try:
@@ -217,6 +230,7 @@ with ZipFile(root / "dist" / f"{manifest['name']}-{manifest['version']}.zip") as
     assert package.testzip() is None
     assert "Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" in package.namelist()
     assert "Editor/FISHHWBVR/VRMissingScriptCleaner.cs" in package.namelist()
+    assert "Editor/FISHHWBVR/VRUIRaycastOptimizer.cs" in package.namelist()
     assert "Editor/FISHHWBVR/OYPLocalization.cs" in package.namelist()
 
 listing = json.loads((root / "dist/index.json").read_text(encoding="utf-8"))
@@ -245,7 +259,7 @@ extension_built = subprocess.run(
     text=True,
 )
 extension_archive = Path(extension_built.stdout.strip())
-assert extension_archive.name == "optimize-your-project-blender-extension-0.7.55.zip"
+assert extension_archive.name == "optimize-your-project-blender-extension-0.7.60.zip"
 with ZipFile(extension_archive) as package:
     assert package.testzip() is None
     names = set(package.namelist())
@@ -257,4 +271,4 @@ with ZipFile(extension_archive) as package:
     assert "Blender/vr_optimizer_blender/__init__.py" in names
     assert "Blender/vr_optimizer_blender/optimize-your-project-logo.png" in names
 
-print("v0.7.60 static release checks passed; Unity and Blender runtime editor tests remain required.")
+print("v0.7.60 static release checks passed; Unity editor runtime verification remains required.")

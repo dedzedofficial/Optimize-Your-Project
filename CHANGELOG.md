@@ -25,7 +25,7 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For the fixed v0.7.60 release:
+For the fixed v0.7.60 release after the tag is published:
 
 ```text
 https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.60
@@ -33,16 +33,11 @@ https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.60
 
 ### Blender
 
-The Blender build produces two real ZIP packages:
-
-- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.55.zip`
-- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.55.zip`
+Blender v0.7.60 packages are built by the release workflow:
 
 [![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
 
-Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.55` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
-
-The legacy ZIP also remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) when a matching Blender release is published.
+The workflow produces the Blender 4.2+ extension ZIP and Blender 3.6 legacy add-on ZIP. Install the downloaded ZIP directly without extracting it.
 
 ### VRChat Creator Companion / VCC
 
@@ -50,124 +45,60 @@ Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedze
 
 </details>
 
-> **New here?** Start with the [Overview](README.md). You can read the complete documentation directly on GitHub before installing anything.
-
-
-The product is positioned as a **general developer optimization toolkit**. The historical Unity package ID `com.fishhwb.vr-optimizer` is retained for installation compatibility; it does not mean the tool is VR-only.
+The product is positioned as a **general developer optimization toolkit**. The historical Unity package ID `com.fishhwb.vr-optimizer` remains for compatibility and does not mean the tool is VR-only.
 
 ## 0.7.60
 
-- Rebuilt the Unity Editor window into a much smaller dashboard with one compact header, a top Project / Character toolbar, a collapsed Advanced settings area and a slim update/support footer.
-- Removed the old action search and stacked descriptive cards because the primary jobs now fit directly in the window.
-- Kept the main actions visible as one-click buttons: Optimize Textures, Optimize Model Imports, Optimize Particles, Fix Material Costs, Optimize Lighting or Disable Realtime Shadows, and Clean Missing Scripts.
-- Added **Clean Missing Scripts** for loaded scenes and selected character hierarchies. It removes only missing MonoBehaviour entries and records Unity Undo before changing an affected GameObject.
-- Added a new localization layer with **Auto** language mode using `Application.systemLanguage`.
-- Added Unity interface options for Traditional Chinese, Spanish, French, German, Portuguese, Russian and Italian while keeping English, Japanese, Simplified Chinese and Korean.
-- Added migration from the older Unity language preference and English fallback for untranslated low-level labels.
-- Kept existing importer history, detail protection, restore and memory-trial behavior under the compact Advanced settings menu.
-- Updated the Unity package/update feed and release checks to v0.7.60. Blender remains v0.7.55 because this release does not change the Blender add-on.
+### Unity
+
+- Rebuilt the Unity Editor window into a smaller action dashboard with Project and Character / Avatar pages, collapsed advanced settings and a slim update/support footer.
+- Removed the old action search and large stacked descriptive cards.
+- Added **Clean Missing Scripts** for loaded scenes and selected character hierarchies, removing only missing MonoBehaviour entries with Unity Undo support.
+- Added **Optimize UI Raycasts** as another one-click action for both Project and Character / Avatar scopes.
+- Optimize UI Raycasts disables `Raycast Target` only on detected decorative `UnityEngine.UI.Graphic` components that are not inside a detected EventSystem interaction hierarchy.
+- UI controls and hierarchies containing pointer, drag, scroll, select, submit, cancel, move or update-selected handlers are skipped.
+- The UI raycast optimizer uses serialized properties and type/interface discovery instead of taking a hard package reference on UGUI.
+- Added Auto language detection using `Application.systemLanguage`, plus Traditional Chinese, Spanish, French, German, Portuguese, Russian and Italian alongside the existing languages.
+- Kept manual language override, English fallback, importer history, detail protection, restore and optional memory trials.
+
+### Blender
+
+- Bumped the Blender add-on and extension metadata to v0.7.60 so the Blender behavior change is versioned with the rest of the milestone.
+- Kept the existing **Remesh** and **LOD** focused interface rather than adding another large tool panel.
+- Extended the existing LOD workflow with an optional **Create Collision Proxy from LOD2** setting.
+- When enabled, the LOD action creates a separate `<Source>_COLLIDER` mesh copied from LOD2, with independent mesh data, wireframe display and rendering disabled.
+- The collision proxy is source-preserving and participates in the same generated-output history, manual-edit protection and unchanged-result reuse as LOD0/LOD1/LOD2.
+- The collision proxy option defaults off, so the standard LOD action still creates only LOD0, LOD1 and LOD2 unless requested.
+- Added Blender 3.6 and 4.2 regression coverage for collision proxy generation, LOD2 equivalence, source preservation and unchanged second-pass reuse.
 
 ## 0.7.55
 
-- Added neutral-space Remesh transfer of supported armature bindings, vertex weights and relative blendshapes, with shape-key animation transfer and deformation-aware cache fingerprints. LOD remains static-only.
-- Extended Optimize Lighting with guarded missing secondary-UV generation for imported static models.
-- Added persistent source/import-setting history and preservation of later manual edits to owning importer jobs.
-- Added explicit Unity asset and Blender object detail protection.
-- Added optional native asset-memory trials with rollback when savings are absent/unavailable, plus conflict-checked last-import-batch restore.
-- Added Blender output reuse, stable output identifiers, guarded replacement and manual-output protection.
-- Added Unity Edit Mode regression tests and Blender history/protection runtime checks. Unity testing remains pending; no FPS or visual-quality certification is claimed.
-- Added Unity Optimize Lighting: sets loaded scene lights to Baked, prepares eligible static mesh renderers for GI/lightmaps, enables baked GI and requests an asynchronous bake.
-- Skips known animated and physics-driven meshes; blocks play mode, existing bakes, prefab editing and unsaved scenes. Custom scripted movement requires review.
-- Consolidated material fixes into the combined action and removed duplicate window handlers.
-- Collapsed texture size settings and project asset reviews.
-- Added a Blender remesh triangle-target slider and one selection-aware LOD button; originals and legacy operator IDs are preserved.
-- Synchronized package versions and build references.
-- Static release/package checks pass. Unity editor compilation/bake/Undo and Blender runtime checks are required before a release tag.
+- Added surface-preserving Blender Remesh with guarded transfer of supported armature bindings, vertex weights and relative blendshapes.
+- Added persistent generated-output history, detail protection and guarded replacement for Blender Remesh and LOD outputs.
+- Added Unity Optimize Lighting with guarded static-lighting preparation and optional missing secondary-UV generation for supported imported static models.
+- Added importer history, manual-edit protection, optional native asset-memory trials and conflict-checked Restore Last Import Batch.
+- Consolidated model-import and material actions into their owning buttons.
+- Simplified Blender to the reliable Remesh and LOD workflows and removed experimental cleanup, atlas, merge and Game-Ready controls.
 
 ## 0.7.4
 
-- Added interface language support for English, Japanese, Simplified Chinese and Korean across the main Unity and Blender workflows.
-- Added a persistent Unity language selector and a Blender language selector so creators can switch the tool UI without changing their project language.
-- Added Unity action search so common texture, mesh, particle, light, memory and scan tasks are easier to find.
-- Added **Use Current Selection** for Unity asset scope so a selected Project asset or folder can set the working folder directly.
-- Added Unity **Project Insights** with **Show Largest Textures**, **Review Read/Write Memory** and **Fix Oversized Mesh Imports** for supported high-triangle imported models.
-- Added **Fix Texture Import Settings** for conservative normal-map and mask/data texture import corrections.
-- Upgraded duplicate-material handling to **Fix Duplicate Material References**, remapping loaded renderer references to one exact matching material asset with Unity Undo while preserving duplicate asset files.
-- Added **Clean Unused Material Slots** for trailing empty renderer slots beyond the mesh submesh count, with Unity Undo support. Non-empty extra materials are preserved.
-- Upgraded material-cost handling to **Fix Safe Material Cost Issues**, combining exact duplicate remapping with safe trailing empty-slot cleanup while leaving topology-sensitive submesh changes untouched.
-- Kept Read/Write review diagnostic-only because disabling CPU access can break runtime scripts, non-uniform mesh lighting and other workflows that require readable data.
-- Added a dedicated `optimize-your-project-blender-extension-0.7.4.zip` package for Blender 4.2+ and Blender Extensions submission, while retaining the Blender 3.6 legacy ZIP.
-- Simplified Blender v0.7.4 to only **One-Click Remesh** and **LOD generation**, including **Create LODs for Selection** for supported static meshes.
-- Removed the experimental cleanup, Game-Ready, duplicate-vertex, heavy-mesh, triangle-limit, join/atlas and related Blender controls because they were not reliable or useful enough to keep presenting as supported features.
-- Reworked the Blender sidebar into a compact Remesh + LOD-only interface.
-- Focused Blender runtime regression tests on source-preserving Remesh and LOD behavior.
-- Added a staged language roadmap for future releases while keeping new translations reviewable and optional.
+- Added English, Japanese, Simplified Chinese and Korean interface support across the main Unity and Blender workflows.
+- Added Unity action search, selection-based asset scope, Project Insights and conservative texture/material import fixes.
+- Added Blender extension packaging for Blender 4.2+ while retaining the Blender 3.6 legacy add-on package.
+- Introduced the compact Blender Remesh and selection-aware LOD direction.
 
 ## 0.7.1
 
-- Added Blender **Clean Selected Mesh** as the first one-click action, producing a separate cleaned copy with unique output naming.
-- Added conservative static-mesh checks, exact-coordinate vertex merging, loose geometry and zero-area face cleanup, unused material slot cleanup, and closed-surface normal repair.
-- Preserved original meshes and added rollback if cleanup fails.
-- Added consistent changed, unchanged, skipped, unsupported and failed summaries to Unity batches and Blender quick actions, with persistent Blender sidebar results.
+- Added the first Blender one-click mesh workflow and source-preserving output model.
+- Added consistent changed, unchanged, skipped, unsupported and failed summaries.
 - Improved Unity batch cancellation and per-item failure handling.
-- Added Blender runtime regression checks and stronger release/version validation.
 
 ## 0.7.0
 
-- Polished the Unity and Blender interfaces with clearer cards, stronger section hierarchy, larger primary actions and cleaner footers.
-- Added a visible **Free for Developers** note explaining that the project is intended to help creators and newer developers without a paywall.
-- Added optional Patreon support buttons; donations help fund testing, documentation, new optimization tools and future integrations while the project remains free.
-- Collapsed Blender's advanced mesh controls behind an optional Advanced Tools section so one-click cleanup stays front and center.
 - Repositioned Optimize Your Project around general Unity, Blender and real-time development workflows rather than VR-only development.
-- Merged the old Unity World + Project split into one **PROJECT** page for ordinary Unity projects and loaded scenes.
-- Kept **AVATAR** as an optional character hierarchy workflow without requiring the VRChat SDK.
-- Removed the full Updates page and added a compact footer with green/current, orange/one-patch-behind, red/two-patches-or-newer-minor-behind, and grey/unknown status.
-- Added a platform-specific `version.json` feed so Blender releases cannot be mistaken for Unity package updates.
-- Added early Blender **One-Click Remesh** and **Merge Duplicate Vertices** actions.
-- Kept Blender triangle reduction, join/atlas and static LOD tools under a clearer Advanced Mesh Tools section.
-- Simplified installation and usage documentation around direct one-click jobs.
-- Expanded static release validation for version consistency, Blender syntax and v0.7 UI/action expectations.
+- Merged the older Unity World and Project views into one Project page and retained Character / Avatar as an optional scoped workflow.
+- Added early Blender integration, VPM/update work and simplified installation documentation.
 
-## 0.6.73
+## Earlier releases
 
-- Rebuilt World, Avatar and Project pages around direct action buttons; individual findings appear only after Scan Entire Project.
-- Combined texture size caps and eligible automatic compression into one action with a single reimport per changed texture.
-- Kept a dedicated Updates page and fixed package compiler and meta-file errors.
-
-## 0.6.7
-
-- Fixed ambiguous PackageInfo compiler reference in the update checker and completed Unity meta coverage.
-- Added project texture compression cleanup and update checks.
-
-## 0.6.6
-
-- Split the Editor into World and Avatar pages with focused issue buttons and filters.
-- Removed preset UI and added reviewed mesh compression.
-
-## 0.6.5
-
-- Added avatar inventory, avatar-scoped particle optimization and texture previews.
-- Added VPM release automation and Creator Companion repository support.
-
-## 0.6.4
-
-- Simplified texture size controls and narrowed scene checks.
-
-## 0.6.3
-
-- Added platform texture overrides, particle optimization, light/mesh diagnostics and Git URL package support.
-
-### Owning-button rule for v0.7.55
-
-Related operations belong to their existing action. Optimize Textures includes recognized texture import repair alongside size/compression. Optimize Model Imports includes vertex/polygon import optimization alongside compression. Material fixes use the combined action. Reviews remain diagnostic and do not introduce competing fix buttons. Model topology is preserved; Blender handles actual remesh and LOD generation.
-
-### v0.7.55 remesh appearance fix
-
-- Replaced destructive voxel reconstruction with surface-preserving triangle reduction under the existing Remesh button. Retains UV layers and material assignments and avoids fusing nearby surfaces.
-- Kept neutral-space weight, relative blendshape and armature transfer. Existing cached voxel results are regenerated under the new policy when untouched.
-- Very low triangle targets can still distort appearance; no automatic retopology or texture rebaking is claimed.
-
-### v0.7.55 blendshape correspondence fix
-
-- Carry relative shape offsets through the same edge collapses as the base mesh, replacing nearest-surface projection. Retain the reducer's interpolated weights.
-- Reject missing correspondence data and remove temporary attributes after transfer. Added overlapping-surface regression coverage.
+The 0.6.x line established texture, particle, light and mesh diagnostics, package installation, update checks, avatar scope and early optimization automation. The project has since consolidated those experiments into fewer owning actions and source-preserving workflows.

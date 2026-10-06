@@ -44,6 +44,7 @@ namespace FISHHWB.VROptimizer
             { "fix_materials", "Fix Material Costs" },
             { "optimize_lighting", "Optimize Lighting" },
             { "disable_shadows", "Disable Realtime Shadows" },
+            { "optimize_ui_raycasts", "Optimize UI Raycasts" },
             { "clean_missing_scripts", "Clean Missing Scripts" },
             { "advanced", "Advanced settings" },
             { "review", "REVIEW" },
@@ -104,7 +105,7 @@ namespace FISHHWB.VROptimizer
                     { "optimize_textures", "テクスチャを最適化" }, { "optimize_models", "モデルインポートを最適化" },
                     { "optimize_particles", "パーティクルを最適化" }, { "fix_materials", "マテリアル負荷を修正" },
                     { "optimize_lighting", "ライティングを最適化" }, { "disable_shadows", "リアルタイム影を無効化" },
-                    { "clean_missing_scripts", "欠落スクリプトを削除" }, { "advanced", "詳細設定" },
+                    { "optimize_ui_raycasts", "UI レイキャストを最適化" }, { "clean_missing_scripts", "欠落スクリプトを削除" }, { "advanced", "詳細設定" },
                     { "review", "確認" }, { "largest_textures", "最大テクスチャ" }, { "readwrite_review", "Read/Write メモリ" },
                     { "heavy_meshes", "重いメッシュ" }, { "scan_project", "プロジェクト全体をスキャン" },
                     { "last_result", "最後の結果" }, { "ready", "操作を選択してください。" }, { "support", "開発を支援" }
@@ -118,7 +119,7 @@ namespace FISHHWB.VROptimizer
                     { "optimize_textures", "优化纹理" }, { "optimize_models", "优化模型导入" },
                     { "optimize_particles", "优化粒子" }, { "fix_materials", "修复材质开销" },
                     { "optimize_lighting", "优化灯光" }, { "disable_shadows", "关闭实时阴影" },
-                    { "clean_missing_scripts", "清理缺失脚本" }, { "advanced", "高级设置" },
+                    { "optimize_ui_raycasts", "优化 UI 射线检测" }, { "clean_missing_scripts", "清理缺失脚本" }, { "advanced", "高级设置" },
                     { "review", "检查" }, { "largest_textures", "最大纹理" }, { "readwrite_review", "读写内存" },
                     { "heavy_meshes", "高开销网格" }, { "scan_project", "扫描整个项目" },
                     { "last_result", "上次结果" }, { "ready", "请选择一个操作。" }, { "support", "支持开发" }
@@ -132,7 +133,7 @@ namespace FISHHWB.VROptimizer
                     { "optimize_textures", "最佳化材質貼圖" }, { "optimize_models", "最佳化模型匯入" },
                     { "optimize_particles", "最佳化粒子" }, { "fix_materials", "修正材質成本" },
                     { "optimize_lighting", "最佳化燈光" }, { "disable_shadows", "停用即時陰影" },
-                    { "clean_missing_scripts", "清理遺失腳本" }, { "advanced", "進階設定" },
+                    { "optimize_ui_raycasts", "最佳化 UI 射線偵測" }, { "clean_missing_scripts", "清理遺失腳本" }, { "advanced", "進階設定" },
                     { "review", "檢查" }, { "largest_textures", "最大材質貼圖" }, { "readwrite_review", "Read/Write 記憶體" },
                     { "heavy_meshes", "高負載網格" }, { "scan_project", "掃描整個專案" },
                     { "last_result", "上次結果" }, { "ready", "請選擇一個操作。" }, { "support", "支持開發" }
@@ -146,7 +147,7 @@ namespace FISHHWB.VROptimizer
                     { "optimize_textures", "텍스처 최적화" }, { "optimize_models", "모델 임포트 최적화" },
                     { "optimize_particles", "파티클 최적화" }, { "fix_materials", "머티리얼 비용 수정" },
                     { "optimize_lighting", "라이팅 최적화" }, { "disable_shadows", "실시간 그림자 비활성화" },
-                    { "clean_missing_scripts", "누락 스크립트 정리" }, { "advanced", "고급 설정" },
+                    { "optimize_ui_raycasts", "UI 레이캐스트 최적화" }, { "clean_missing_scripts", "누락 스크립트 정리" }, { "advanced", "고급 설정" },
                     { "review", "검토" }, { "largest_textures", "가장 큰 텍스처" }, { "readwrite_review", "Read/Write 메모리" },
                     { "heavy_meshes", "무거운 메시" }, { "scan_project", "전체 프로젝트 스캔" },
                     { "last_result", "마지막 결과" }, { "ready", "작업을 선택하세요." }, { "support", "개발 후원" }
@@ -160,7 +161,7 @@ namespace FISHHWB.VROptimizer
                     { "optimize_textures", "Optimizar texturas" }, { "optimize_models", "Optimizar importación de modelos" },
                     { "optimize_particles", "Optimizar partículas" }, { "fix_materials", "Corregir coste de materiales" },
                     { "optimize_lighting", "Optimizar iluminación" }, { "disable_shadows", "Desactivar sombras en tiempo real" },
-                    { "clean_missing_scripts", "Limpiar scripts faltantes" }, { "advanced", "Ajustes avanzados" },
+                    { "optimize_ui_raycasts", "Optimizar raycasts de UI" }, { "clean_missing_scripts", "Limpiar scripts faltantes" }, { "advanced", "Ajustes avanzados" },
                     { "review", "REVISAR" }, { "largest_textures", "Texturas más grandes" }, { "readwrite_review", "Memoria Read/Write" },
                     { "heavy_meshes", "Mallas pesadas" }, { "scan_project", "Escanear proyecto completo" },
                     { "last_result", "Último resultado" }, { "ready", "Elige una acción." }, { "support", "Apoyar el desarrollo" }
@@ -174,7 +175,7 @@ namespace FISHHWB.VROptimizer
                     { "optimize_textures", "Optimiser les textures" }, { "optimize_models", "Optimiser l'import des modèles" },
                     { "optimize_particles", "Optimiser les particules" }, { "fix_materials", "Corriger le coût des matériaux" },
                     { "optimize_lighting", "Optimiser l'éclairage" }, { "disable_shadows", "Désactiver les ombres temps réel" },
-                    { "clean_missing_scripts", "Nettoyer les scripts manquants" }, { "advanced", "Paramètres avancés" },
+                    { "optimize_ui_raycasts", "Optimiser les raycasts UI" }, { "clean_missing_scripts", "Nettoyer les scripts manquants" }, { "advanced", "Paramètres avancés" },
                     { "review", "ANALYSE" }, { "largest_textures", "Textures les plus grandes" }, { "readwrite_review", "Mémoire Read/Write" },
                     { "heavy_meshes", "Maillages lourds" }, { "scan_project", "Analyser tout le projet" },
                     { "last_result", "Dernier résultat" }, { "ready", "Choisissez une action." }, { "support", "Soutenir le développement" }
@@ -188,7 +189,7 @@ namespace FISHHWB.VROptimizer
                     { "optimize_textures", "Texturen optimieren" }, { "optimize_models", "Modellimporte optimieren" },
                     { "optimize_particles", "Partikel optimieren" }, { "fix_materials", "Materialkosten beheben" },
                     { "optimize_lighting", "Beleuchtung optimieren" }, { "disable_shadows", "Echtzeitschatten deaktivieren" },
-                    { "clean_missing_scripts", "Fehlende Skripte bereinigen" }, { "advanced", "Erweiterte Einstellungen" },
+                    { "optimize_ui_raycasts", "UI-Raycasts optimieren" }, { "clean_missing_scripts", "Fehlende Skripte bereinigen" }, { "advanced", "Erweiterte Einstellungen" },
                     { "review", "PRÜFEN" }, { "largest_textures", "Größte Texturen" }, { "readwrite_review", "Read/Write-Speicher" },
                     { "heavy_meshes", "Schwere Meshes" }, { "scan_project", "Gesamtes Projekt scannen" },
                     { "last_result", "Letztes Ergebnis" }, { "ready", "Aktion auswählen." }, { "support", "Entwicklung unterstützen" }
@@ -202,7 +203,7 @@ namespace FISHHWB.VROptimizer
                     { "optimize_textures", "Otimizar texturas" }, { "optimize_models", "Otimizar importação de modelos" },
                     { "optimize_particles", "Otimizar partículas" }, { "fix_materials", "Corrigir custo de materiais" },
                     { "optimize_lighting", "Otimizar iluminação" }, { "disable_shadows", "Desativar sombras em tempo real" },
-                    { "clean_missing_scripts", "Limpar scripts ausentes" }, { "advanced", "Configurações avançadas" },
+                    { "optimize_ui_raycasts", "Otimizar raycasts da UI" }, { "clean_missing_scripts", "Limpar scripts ausentes" }, { "advanced", "Configurações avançadas" },
                     { "review", "REVISAR" }, { "largest_textures", "Maiores texturas" }, { "readwrite_review", "Memória Read/Write" },
                     { "heavy_meshes", "Meshes pesadas" }, { "scan_project", "Escanear projeto inteiro" },
                     { "last_result", "Último resultado" }, { "ready", "Escolha uma ação." }, { "support", "Apoiar o desenvolvimento" }
@@ -216,7 +217,7 @@ namespace FISHHWB.VROptimizer
                     { "optimize_textures", "Оптимизировать текстуры" }, { "optimize_models", "Оптимизировать импорт моделей" },
                     { "optimize_particles", "Оптимизировать частицы" }, { "fix_materials", "Исправить стоимость материалов" },
                     { "optimize_lighting", "Оптимизировать освещение" }, { "disable_shadows", "Отключить тени реального времени" },
-                    { "clean_missing_scripts", "Очистить отсутствующие скрипты" }, { "advanced", "Расширенные настройки" },
+                    { "optimize_ui_raycasts", "Оптимизировать UI Raycast" }, { "clean_missing_scripts", "Очистить отсутствующие скрипты" }, { "advanced", "Расширенные настройки" },
                     { "review", "ПРОВЕРКА" }, { "largest_textures", "Самые большие текстуры" }, { "readwrite_review", "Память Read/Write" },
                     { "heavy_meshes", "Тяжёлые меши" }, { "scan_project", "Сканировать весь проект" },
                     { "last_result", "Последний результат" }, { "ready", "Выберите действие." }, { "support", "Поддержать разработку" }
@@ -230,7 +231,7 @@ namespace FISHHWB.VROptimizer
                     { "optimize_textures", "Ottimizza texture" }, { "optimize_models", "Ottimizza importazione modelli" },
                     { "optimize_particles", "Ottimizza particelle" }, { "fix_materials", "Correggi costo materiali" },
                     { "optimize_lighting", "Ottimizza illuminazione" }, { "disable_shadows", "Disattiva ombre in tempo reale" },
-                    { "clean_missing_scripts", "Pulisci script mancanti" }, { "advanced", "Impostazioni avanzate" },
+                    { "optimize_ui_raycasts", "Ottimizza raycast UI" }, { "clean_missing_scripts", "Pulisci script mancanti" }, { "advanced", "Impostazioni avanzate" },
                     { "review", "REVISIONE" }, { "largest_textures", "Texture più grandi" }, { "readwrite_review", "Memoria Read/Write" },
                     { "heavy_meshes", "Mesh pesanti" }, { "scan_project", "Scansiona intero progetto" },
                     { "last_result", "Ultimo risultato" }, { "ready", "Scegli un'azione." }, { "support", "Supporta lo sviluppo" }

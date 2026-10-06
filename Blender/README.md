@@ -1,4 +1,4 @@
-# Optimize Your Project for Blender: v0.7.55
+# Optimize Your Project for Blender: v0.7.60
 
 <img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="112">
 
@@ -25,20 +25,13 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For the fixed v0.7.55 release:
-
-```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.55
-```
-
 ### Blender
 
-Download the installable v0.7.55 package directly:
+Blender v0.7.60 is produced as both a Blender 4.2+ extension ZIP and Blender 3.6 legacy add-on ZIP by the release checks workflow:
 
-- [**Blender 4.2+ extension ZIP**](https://github.com/dedzedofficial/Optimize-Your-Project/raw/refs/heads/main/Blender/Downloads/optimize-your-project-blender-extension-0.7.55.zip)
-- [**Blender 3.6 legacy add-on ZIP**](https://github.com/dedzedofficial/Optimize-Your-Project/raw/refs/heads/main/Blender/Downloads/optimize-your-project-blender-0.7.55.zip)
+[![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
 
-Install the downloaded ZIP directly using **Install from Disk**. Do not extract it. These packages include surface/UV preservation and the latest blendshape correspondence fix. Restart Blender after replacing an older installation of the same version.
+Install the downloaded ZIP directly using **Install from Disk**. Do not extract it.
 
 ### VRChat Creator Companion / VCC
 
@@ -46,92 +39,67 @@ Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedze
 
 </details>
 
-> **New here?** Start with the [Overview](../README.md). You can read the complete documentation directly on GitHub before installing anything.
-
-
-Blender v0.7.55 is intentionally focused on **Remesh and LOD generation only**. Earlier experimental cleanup, Game-Ready, merge, heavy-mesh, triangle-limit, join/atlas and related controls were removed because they were not reliable or useful enough to keep presenting as supported features. The compact sidebar still supports English, Japanese, Simplified Chinese and Korean.
+Blender v0.7.60 keeps the compact **Remesh + LOD** design and extends the existing LOD button with an optional collision proxy output. It does not restore the older experimental cleanup, Game-Ready, merge, atlas or heavy-mesh panels.
 
 ## Install
 
-### Blender 4.2+ / Blender Extensions package
+### Blender 4.2+
 
-The package intended for Blender 4.2+ and `extensions.blender.org` is:
+Download `optimize-your-project-blender-extension-0.7.60.zip` from the latest successful [Check release packages](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml) artifact, then use **Edit > Preferences > Get Extensions > Install from Disk**.
 
-```text
-optimize-your-project-blender-extension-0.7.55.zip
-```
+### Blender 3.6
 
-Download the `optimize-your-project-blender-0.7.55` artifact from the latest successful [Check release packages](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml) run. The artifact contains the extension ZIP above plus the Blender 3.6 legacy ZIP.
+Download `optimize-your-project-blender-0.7.60.zip` from the same workflow artifact, then use **Edit > Preferences > Add-ons > Install...**.
 
-For a local install in Blender 4.2+, use **Edit > Preferences > Get Extensions > Install from Disk** and choose the extension ZIP.
+After enabling the add-on, press **N** in the 3D Viewport and open the **FISHHWB** tab.
 
-### Blender 3.6 legacy package
+## One-Click Remesh
 
-Use:
+Select a supported mesh in Object Mode, choose the triangle target and press **One-Click Remesh**.
 
-```text
-optimize-your-project-blender-0.7.55.zip
-```
+The action creates a separate `_Remesh` copy and preserves the source. Surface reduction retains supported UV layers and material assignments. Supported armature bindings, vertex weights and relative blendshapes are carried through the reduced topology. Unsupported deformation cases are rejected rather than silently damaged.
 
-Then use **Edit > Preferences > Add-ons > Install...**, enable **Optimize Your Project for Blender**, press **N** in the 3D Viewport and open the **FISHHWB** tab.
+## LOD Generation
 
-### Official Blender Extensions listing
+Press **Create LOD0 / LOD1 / LOD2** for one selected static mesh, or select several supported meshes and use the same visible LOD action to process the selection.
 
-The final GitHub install button will point directly to the official Blender Extensions listing after it is published. The extension ZIP above is the submission package for that listing.
+- **LOD0** preserves the evaluated source detail.
+- **LOD1** targets up to 66% of LOD0 triangles.
+- **LOD2** targets up to 33% of LOD0 triangles.
+- **Apply Existing Modifiers** optionally bakes supported existing modifiers into LOD0 before lower levels are generated.
 
-The Blender extension package is licensed under **GPL-3.0-or-later**, as required for add-ons submitted to Blender Extensions. The repository's non-Blender portions retain their existing licensing.
+The original source is preserved.
 
-## Supported Blender tools in v0.7.55
+## Optional collision proxy
 
-Select a supported mesh in Object Mode.
+Enable **Create Collision Proxy from LOD2** inside the existing LOD section before running the LOD action.
 
-### One-Click Remesh
+When enabled, the same action creates a separate `<Source>_COLLIDER` object copied from LOD2. The proxy:
 
-Press **One-Click Remesh** to create a separate `_Remesh` copy. The source object is preserved.
+- has its own mesh data,
+- uses the LOD2 geometry instead of reducing the source again,
+- is marked as wireframe in Blender,
+- is disabled for rendering,
+- is stored with the generated LOD set,
+- participates in the existing generated-output history and reuse checks,
+- never replaces or modifies the original source mesh.
 
-The button uses surface-preserving triangle reduction instead of voxel reconstruction. It retains UV layers and material assignments, keeps separate surfaces separate, and enforces the triangle target. A mesh already below the target is copied without unnecessary reconstruction. Supported armature bindings, weight groups and relative shape keys are transferred onto the final topology in neutral space. LOD continues to reject deformation-sensitive inputs.
+This is a collision proxy candidate, not an engine-specific collider component. Configure the actual collider or physics component after importing the mesh into Unity or another target engine.
 
-### LOD Generation
+With the option disabled, the LOD workflow behaves as before and creates only LOD0, LOD1 and LOD2.
 
-Press **Create LOD0 / LOD1 / LOD2** to create a separate LOD collection for the active mesh:
+## History and protection
 
-- **LOD0** preserves the evaluated source triangle count.
-- **LOD1** targets up to 66% of the LOD0 triangle count.
-- **LOD2** targets up to 33% of the LOD0 triangle count.
-
-The original source object remains untouched.
-
-Enable **Apply Existing Modifiers** if supported non-armature modifiers should be baked into LOD0 before LOD1 and LOD2 are generated. When multiple supported meshes are selected, **Create LODs for Selection** creates a LOD set for each selection.
-
-### Removed experimental tools
-
-The following Blender tools are not part of the supported v0.7.55 UI anymore: mesh cleanup, Game-Ready copy, duplicate-vertex merge, heavy-mesh finder, triangle-limit copy, mesh joining and texture atlas tools.
-
-They were removed from this version because they did not provide a reliable enough result or enough practical benefit to justify the extra UI.
-
+Repeated Remesh and LOD actions reuse verified unchanged outputs. If a generated result has been manually edited or protected, the add-on preserves it instead of silently overwriting it. Use **Reset history** on the original source only when you deliberately want a fresh generated set.
 
 ## Interface languages
 
-Use the **Language** control at the top of the sidebar. v0.7.55 includes English, Japanese, Simplified Chinese and Korean for the main Blender workflow. Future language additions are tracked in the project roadmap.
+The Blender sidebar currently supports English, Japanese, Simplified Chinese and Korean. The new collision proxy option is translated in all four supported Blender languages.
 
-## Notes
+## Verification
 
-Blender v0.7.55 is early support. Test generated meshes before replacing production assets, especially before GLB/FBX export into Unity or another engine.
+Blender runtime regression checks run on Blender 3.6 and 4.2 and cover Remesh, LOD, source preservation, generated-output reuse, manual-edit protection and the optional collision proxy path.
 
-## v0.7.55 compact workflow
+Workflow: https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
 
-Set the **Triangle target** slider and press **One-Click Remesh** to create a remeshed copy within that maximum triangle budget. A failed reduction removes its output and preserves the source.
-
-The single LOD button automatically uses the batch operator when multiple mesh objects are selected. LOD0 remains full detail; LOD1 and LOD2 use 66% and 33% of its triangles. The remesh target does not silently change LOD0.
-
-Blender runtime verification of the new target is pending; the CI regression suite covers budget enforcement and source preservation.
-
-## v0.7.55: deformation transfer inside Remesh
-
-No additional button is required. One-Click Remesh automatically transfers all vertex-group names/locks and interpolated weights, relative shape-key names/offsets/relationships/masks/slider limits, supported shape-key actions/drivers, and armature modifier bindings/settings. Parenting and object transforms are retained. Remeshing occurs in the neutral basis before weights and shapes are restored; the source rig is never put into a different pose.
-
-Blendshape offsets and weights now follow the same edge collapses as the neutral surface. This avoids nearest-surface errors between overlapping lips, eyelids or clothing. With no reduction, offsets retain their original vertex correspondence. Reduced topology still interpolates expressions and cannot reproduce every movement of removed vertices exactly. Test expressions and poses before replacing the original.
-
-Absolute/time-based shape keys, shape-key NLA stacks, missing armature bindings and deformation meshes with non-armature modifiers are rejected before changes. Unsupported driver modifier properties cause the output to be removed rather than silently discarding animation. Apply non-armature modifiers on a separate copy first. UV layers and material assignments are retained through surface reduction. Aggressive reduction can still distort texture interpolation, silhouettes and deformation; it cannot invent missing detail or guarantee production retopology.
-
-LOD remains static-only in this update. Deformation data participates in incremental history, so changing weights or shape coordinates triggers a fresh remesh while edited generated results remain protected.
+The Blender extension package uses **GPL-3.0-or-later**. The repository's non-Blender portions retain their existing licensing.
