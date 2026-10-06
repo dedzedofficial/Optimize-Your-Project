@@ -7,12 +7,13 @@ namespace FISHHWB.VROptimizer
 {
     internal static class VRUIRaycastOptimizer
     {
-        internal static string Optimize(GameObject root)
+        internal static string Optimize(GameObject root, bool confirm = true)
         {
             var graphics = CollectGraphics(root);
             var candidates = new List<Component>();
             int interactive = 0;
             int alreadyOptimized = 0;
+            int blockedByCanvasGroup = 0;
 
             foreach (var graphic in graphics)
             {
@@ -29,6 +30,12 @@ namespace FISHHWB.VROptimizer
                     continue;
                 }
 
+                if (CanvasGroupAlreadyBlocksRaycasts(graphic.transform))
+                {
+                    blockedByCanvasGroup++;
+                    continue;
+                }
+
                 if (HasInteractiveHierarchy(graphic.transform))
                 {
                     interactive++;
@@ -39,15 +46,16 @@ namespace FISHHWB.VROptimizer
             }
 
             if (candidates.Count == 0)
-                return "UI raycasts: nothing safe to change. " + alreadyOptimized + " already disabled, " + interactive + " kept for interactive UI.";
+                return "UI raycasts: nothing safe to change. " + alreadyOptimized + " already disabled, " +
+                       interactive + " kept for interactive UI, " + blockedByCanvasGroup + " already blocked by CanvasGroup.";
 
-            if (!EditorUtility.DisplayDialog(
+            if (confirm && !EditorUtility.DisplayDialog(
                 "Optimize UI raycasts",
                 "Disable Raycast Target on " + candidates.Count + " decorative UI graphics?\n\n" +
-                "Graphics on objects or parent hierarchies with EventSystem interaction handlers are skipped. " +
-                "This reduces unnecessary GraphicRaycaster checks without changing interactive controls.\n\n" +
+                "Selectable controls, EventSystem handlers and graphics under a CanvasGroup that already blocks raycasts are preserved. " +
+                "This reduces unnecessary GraphicRaycaster checks without changing known interactive controls.\n\n" +
                 "Unity Undo is available.",
-                "Optimize",
+                "Optimize UI Raycasts",
                 "Cancel"))
                 return "UI raycast optimization cancelled.";
 
@@ -70,6 +78,7 @@ namespace FISHHWB.VROptimizer
                     Undo.RecordObject(graphic, "Optimize UI Raycasts");
                     raycast.boolValue = false;
                     serialized.ApplyModifiedProperties();
+                    PrefabUtility.RecordPrefabInstancePropertyModifications(graphic);
                     EditorUtility.SetDirty(graphic);
                     changed++;
                 }
@@ -80,7 +89,8 @@ namespace FISHHWB.VROptimizer
             }
 
             return "UI raycasts optimized: " + changed + " decorative graphics changed. " +
-                   interactive + " interactive graphics kept, " + alreadyOptimized + " already optimized. Use Undo if needed.";
+                   interactive + " interactive graphics kept, " + alreadyOptimized + " already optimized, " +
+                   blockedByCanvasGroup + " already blocked by CanvasGroup. Use Undo if needed.";
         }
 
         static List<Component> CollectGraphics(GameObject root)
@@ -111,7 +121,7 @@ namespace FISHHWB.VROptimizer
                     result.Add(component);
         }
 
-        static bool IsGraphic(System.Type type)
+        static bool IsGraphic(Type type)
         {
             while (type != null)
             {
@@ -130,6 +140,8 @@ namespace FISHHWB.VROptimizer
                 {
                     if (!component) continue;
                     var type = component.GetType();
+                    if (DerivesFrom(type, "UnityEngine.UI.Selectable"))
+                        return true;
 
                     foreach (var contract in type.GetInterfaces())
                     {
@@ -142,6 +154,33 @@ namespace FISHHWB.VROptimizer
                     break;
             }
 
+            return false;
+        }
+
+        static bool CanvasGroupAlreadyBlocksRaycasts(Transform transform)
+        {
+            for (var current = transform; current; current = current.parent)
+            {
+                foreach (var component in current.GetComponents<Component>())
+                {
+                    if (!component || component.GetType().FullName != "UnityEngine.CanvasGroup") continue;
+                    var serialized = new SerializedObject(component);
+                    var blocks = serialized.FindProperty("m_BlocksRaycasts");
+                    if (blocks != null && blocks.propertyType == SerializedPropertyType.Boolean && !blocks.boolValue)
+                        return true;
+                }
+                if (current.GetComponent<Canvas>()) break;
+            }
+            return false;
+        }
+
+        static bool DerivesFrom(Type type, string fullName)
+        {
+            while (type != null)
+            {
+                if (type.FullName == fullName) return true;
+                type = type.BaseType;
+            }
             return false;
         }
 
