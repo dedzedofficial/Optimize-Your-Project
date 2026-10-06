@@ -1,6 +1,6 @@
 {
   "name": "com.fishhwb.vr-optimizer",
-  "version": "0.7.55",
+  "version": "0.7.60",
   "displayName": "Optimize Your Project",
   "description": "One-click project optimization tools for Unity developers, Blender artists, and broader real-time development workflows.",
   "unity": "2021.3",
