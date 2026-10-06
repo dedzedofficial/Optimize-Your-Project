@@ -28,6 +28,7 @@ namespace FISHHWB.VROptimizer
         [Serializable]
         sealed class VersionFeed
         {
+            public string version;
             public string unity;
             public string unity_tag;
             public string unity_url;
@@ -55,7 +56,7 @@ namespace FISHHWB.VROptimizer
             get
             {
                 var info = PackageInfo.FindForAssetPath("Packages/com.fishhwb.vr-optimizer/package.json");
-                return info != null ? info.version : "0.7.60";
+                return info != null ? info.version : "0.7.61";
             }
         }
 
@@ -133,14 +134,16 @@ namespace FISHHWB.VROptimizer
                 try
                 {
                     var feed = JsonUtility.FromJson<VersionFeed>(request.downloadHandler.text);
-                    if (feed == null || !Version.TryParse(feed.unity, out _))
+                    string feedVersion = feed == null ? null :
+                        (!string.IsNullOrEmpty(feed.version) ? feed.version : feed.unity);
+                    if (feed == null || !Version.TryParse(feedVersion, out _))
                     {
-                        message = "The update feed did not contain a valid Unity version.";
+                        message = "The update feed did not contain a valid project version.";
                     }
                     else
                     {
-                        latestVersion = feed.unity;
-                        latestTag = string.IsNullOrEmpty(feed.unity_tag) ? "v" + feed.unity : feed.unity_tag;
+                        latestVersion = feedVersion;
+                        latestTag = string.IsNullOrEmpty(feed.unity_tag) ? "v" + feedVersion : feed.unity_tag;
                         releaseUrl = feed.unity_url;
 
                         EditorPrefs.SetString(VersionKey, latestVersion);
