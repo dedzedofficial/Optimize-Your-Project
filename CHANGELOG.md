@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <strong>Interface languages:</strong> English | 日本語 | 简体中文 | 한국어
+  <strong>Unity interface languages:</strong> Auto | English | 日本語 | 简体中文 | 繁體中文 | 한국어 | Español | Français | Deutsch | Português | Русский | Italiano
 </p>
 
 <details open>
@@ -25,15 +25,15 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For the fixed v0.7.55 release:
+For the fixed v0.7.60 release:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.55
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.60
 ```
 
 ### Blender
 
-The Blender build now produces two real ZIP packages:
+The Blender build produces two real ZIP packages:
 
 - **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.55.zip`
 - **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.55.zip`
@@ -53,19 +53,29 @@ Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedze
 > **New here?** Start with the [Overview](README.md). You can read the complete documentation directly on GitHub before installing anything.
 
 
-The product is now positioned as a **general developer optimization toolkit**. The historical Unity package ID `com.fishhwb.vr-optimizer` is retained for installation compatibility; it does not mean the tool is VR-only.
+The product is positioned as a **general developer optimization toolkit**. The historical Unity package ID `com.fishhwb.vr-optimizer` is retained for installation compatibility; it does not mean the tool is VR-only.
+
+## 0.7.60
+
+- Rebuilt the Unity Editor window into a much smaller dashboard with one compact header, a top Project / Character toolbar, a collapsed Advanced settings area and a slim update/support footer.
+- Removed the old action search and stacked descriptive cards because the primary jobs now fit directly in the window.
+- Kept the main actions visible as one-click buttons: Optimize Textures, Optimize Model Imports, Optimize Particles, Fix Material Costs, Optimize Lighting or Disable Realtime Shadows, and Clean Missing Scripts.
+- Added **Clean Missing Scripts** for loaded scenes and selected character hierarchies. It removes only missing MonoBehaviour entries and records Unity Undo before changing an affected GameObject.
+- Added a new localization layer with **Auto** language mode using `Application.systemLanguage`.
+- Added Unity interface options for Traditional Chinese, Spanish, French, German, Portuguese, Russian and Italian while keeping English, Japanese, Simplified Chinese and Korean.
+- Added migration from the older Unity language preference and English fallback for untranslated low-level labels.
+- Kept existing importer history, detail protection, restore and memory-trial behavior under the compact Advanced settings menu.
+- Updated the Unity package/update feed and release checks to v0.7.60. Blender remains v0.7.55 because this release does not change the Blender add-on.
 
 ## 0.7.55
 
 - Added neutral-space Remesh transfer of supported armature bindings, vertex weights and relative blendshapes, with shape-key animation transfer and deformation-aware cache fingerprints. LOD remains static-only.
-
 - Extended Optimize Lighting with guarded missing secondary-UV generation for imported static models.
 - Added persistent source/import-setting history and preservation of later manual edits to owning importer jobs.
 - Added explicit Unity asset and Blender object detail protection.
 - Added optional native asset-memory trials with rollback when savings are absent/unavailable, plus conflict-checked last-import-batch restore.
 - Added Blender output reuse, stable output identifiers, guarded replacement and manual-output protection.
 - Added Unity Edit Mode regression tests and Blender history/protection runtime checks. Unity testing remains pending; no FPS or visual-quality certification is claimed.
-
 - Added Unity Optimize Lighting: sets loaded scene lights to Baked, prepares eligible static mesh renderers for GI/lightmaps, enables baked GI and requests an asynchronous bake.
 - Skips known animated and physics-driven meshes; blocks play mode, existing bakes, prefab editing and unsaved scenes. Custom scripted movement requires review.
 - Consolidated material fixes into the combined action and removed duplicate window handlers.
@@ -108,7 +118,6 @@ The product is now positioned as a **general developer optimization toolkit**. T
 - Added a visible **Free for Developers** note explaining that the project is intended to help creators and newer developers without a paywall.
 - Added optional Patreon support buttons; donations help fund testing, documentation, new optimization tools and future integrations while the project remains free.
 - Collapsed Blender's advanced mesh controls behind an optional Advanced Tools section so one-click cleanup stays front and center.
-
 - Repositioned Optimize Your Project around general Unity, Blender and real-time development workflows rather than VR-only development.
 - Merged the old Unity World + Project split into one **PROJECT** page for ordinary Unity projects and loaded scenes.
 - Kept **AVATAR** as an optional character hierarchy workflow without requiring the VRChat SDK.
