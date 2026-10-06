@@ -10,7 +10,25 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-## Blender 0.7.61
+## 0.7.61
+
+### Project release
+
+- Unified Unity and Blender under the same **v0.7.61** project release instead of maintaining separate integration version numbers.
+- Added a top-level project version to `version.json` while retaining integration fields for compatibility with existing build/update code.
+- Updated the Unity package, update checker, documentation and release validation to use v0.7.61.
+
+### Unity
+
+- Kept the existing compact Project / Character interface and existing one-click action layout.
+- Improved **Optimize Textures** so it does not create unnecessary platform overrides when the base importer already uses an equal or stricter size limit.
+- Existing stricter platform texture limits are preserved instead of being increased.
+- Improved **Optimize Particles** lifetime capping to support both Constant and Two Constants modes while preserving authored curve-based lifetime data.
+- Tightened **Disable Realtime Shadows** so the optimizer itself rejects disabled, Mixed and Baked lights and records prefab-instance changes correctly.
+- Updated the Unity update checker to read the unified project version first while remaining compatible with the older Unity-specific version field.
+- Retained Clean Missing Scripts, Optimize UI Raycasts, model-import compression, material-cost fixes, lighting setup, project review and importer-history workflows.
+
+### Blender 4.2+
 
 - Moved the supported Blender release path to **Blender 4.2+ Extensions only**.
 - Stopped publishing and validating the legacy pre-4.2 add-on ZIP.
@@ -26,9 +44,8 @@
 - Added Blender 4.2+ regression tests for Lightmap UV generation, island separation, secondary-UV protection, exact mesh linking, collider render-data stripping and operator guards.
 - Updated Blender runtime CI to test **4.2 LTS, 4.5 LTS and 5.2 LTS**.
 - Updated the Blender extension package builder to include the 4.2+ tools module.
-- Blender now has its own v0.7.61 release line while Unity remains v0.7.60.
 
-## Unity 0.7.60
+## 0.7.60
 
 - Rebuilt the Unity Editor window into a smaller Project / Character dashboard.
 - Added **Clean Missing Scripts** with Unity Undo support.
