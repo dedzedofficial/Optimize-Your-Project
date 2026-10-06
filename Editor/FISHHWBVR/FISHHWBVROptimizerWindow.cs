@@ -35,12 +35,13 @@ namespace FISHHWB.VROptimizer
         GUIStyle mutedStyle;
         GUIStyle primaryButtonStyle;
         GUIStyle compactButtonStyle;
+        GUIStyle heroButtonStyle;
 
         [MenuItem("FISHHWB/Optimize Your Project")]
         static void Open()
         {
             var window = GetWindow<FISHHWBVROptimizerWindow>();
-            window.minSize = new Vector2(420, 520);
+            window.minSize = new Vector2(560, 620);
             window.titleContent = new GUIContent("Optimize Your Project", window.icon);
         }
 
@@ -63,9 +64,9 @@ namespace FISHHWB.VROptimizer
             DrawTopBar();
 
             scroll = EditorGUILayout.BeginScrollView(scroll);
-            GUILayout.Space(8);
-            EditorGUILayout.BeginHorizontal();
             GUILayout.Space(10);
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Space(12);
             EditorGUILayout.BeginVertical();
 
             if (page == Page.Project) DrawProject();
@@ -76,9 +77,9 @@ namespace FISHHWB.VROptimizer
             DrawFooter();
 
             EditorGUILayout.EndVertical();
-            GUILayout.Space(10);
+            GUILayout.Space(12);
             EditorGUILayout.EndHorizontal();
-            GUILayout.Space(8);
+            GUILayout.Space(10);
             EditorGUILayout.EndScrollView();
         }
 
@@ -88,8 +89,8 @@ namespace FISHHWB.VROptimizer
 
             panelStyle = new GUIStyle(EditorStyles.helpBox)
             {
-                padding = new RectOffset(10, 10, 8, 9),
-                margin = new RectOffset(0, 0, 0, 7)
+                padding = new RectOffset(12, 12, 10, 11),
+                margin = new RectOffset(0, 0, 0, 8)
             };
 
             sectionTitleStyle = new GUIStyle(EditorStyles.boldLabel)
@@ -100,35 +101,50 @@ namespace FISHHWB.VROptimizer
 
             mutedStyle = new GUIStyle(EditorStyles.wordWrappedMiniLabel)
             {
-                fontSize = 10
+                fontSize = 10,
+                wordWrap = true
             };
 
             primaryButtonStyle = new GUIStyle(GUI.skin.button)
             {
                 fontStyle = FontStyle.Bold,
-                fixedHeight = 32,
-                margin = new RectOffset(1, 1, 2, 2)
+                fixedHeight = 36,
+                margin = new RectOffset(2, 2, 3, 3),
+                wordWrap = true,
+                alignment = TextAnchor.MiddleCenter
             };
 
             compactButtonStyle = new GUIStyle(GUI.skin.button)
             {
-                fixedHeight = 26,
-                margin = new RectOffset(1, 1, 2, 2)
+                fixedHeight = 30,
+                margin = new RectOffset(2, 2, 2, 2),
+                wordWrap = true,
+                alignment = TextAnchor.MiddleCenter
+            };
+
+            heroButtonStyle = new GUIStyle(GUI.skin.button)
+            {
+                fontStyle = FontStyle.Bold,
+                fontSize = 12,
+                fixedHeight = 42,
+                margin = new RectOffset(1, 1, 5, 6),
+                wordWrap = true,
+                alignment = TextAnchor.MiddleCenter
             };
         }
 
         void DrawHeader()
         {
-            var rect = GUILayoutUtility.GetRect(1, 56, GUILayout.ExpandWidth(true));
+            var rect = GUILayoutUtility.GetRect(1, 64, GUILayout.ExpandWidth(true));
             var background = EditorGUIUtility.isProSkin
                 ? new Color(.075f, .085f, .095f)
                 : new Color(.93f, .94f, .95f);
             EditorGUI.DrawRect(rect, background);
 
             if (icon)
-                GUI.DrawTexture(new Rect(rect.x + 12, rect.y + 10, 36, 36), icon, ScaleMode.ScaleToFit, true);
+                GUI.DrawTexture(new Rect(rect.x + 14, rect.y + 12, 40, 40), icon, ScaleMode.ScaleToFit, true);
 
-            var title = new GUIStyle(EditorStyles.boldLabel) { fontSize = 15 };
+            var title = new GUIStyle(EditorStyles.boldLabel) { fontSize = 16 };
             var detail = new GUIStyle(EditorStyles.miniLabel) { fontSize = 10 };
             if (EditorGUIUtility.isProSkin)
             {
@@ -136,19 +152,20 @@ namespace FISHHWB.VROptimizer
                 detail.normal.textColor = new Color(.70f, .74f, .78f);
             }
 
-            GUI.Label(new Rect(rect.x + 58, rect.y + 9, rect.width - 70, 22), "Optimize Your Project", title);
-            GUI.Label(new Rect(rect.x + 58, rect.y + 31, rect.width - 70, 18), "v" + VRUpdateChecker.CurrentVersion, detail);
+            GUI.Label(new Rect(rect.x + 66, rect.y + 11, rect.width - 160, 24), "Optimize Your Project", title);
+            GUI.Label(new Rect(rect.x + 66, rect.y + 36, rect.width - 160, 18), T("developer_optimizer"), detail);
+            GUI.Label(new Rect(rect.xMax - 88, rect.y + 22, 74, 20), "v" + VRUpdateChecker.CurrentVersion, detail);
         }
 
         void DrawTopBar()
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-
             int next = GUILayout.Toolbar(
                 (int)page,
                 new[] { T("project"), T("avatar") },
                 EditorStyles.toolbarButton,
-                GUILayout.MinWidth(230));
+                GUILayout.ExpandWidth(true));
+            EditorGUILayout.EndHorizontal();
 
             if (next != (int)page)
             {
@@ -157,55 +174,218 @@ namespace FISHHWB.VROptimizer
                 summary = T("ready");
             }
 
-            GUILayout.FlexibleSpace();
-            GUILayout.Label(T("language"), EditorStyles.miniLabel, GUILayout.Width(58));
-
+            EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
+            GUILayout.Space(8);
+            GUILayout.Label(T("language"), EditorStyles.miniLabel, GUILayout.Width(72));
             int language = (int)OYPLocalization.Current;
             int selected = EditorGUILayout.Popup(
                 language,
                 OYPLocalization.LanguageNames,
                 EditorStyles.toolbarPopup,
-                GUILayout.Width(170));
+                GUILayout.MinWidth(210));
             if (selected != language)
             {
                 OYPLocalization.Current = (OYPLanguage)selected;
                 summary = T("ready");
                 Repaint();
             }
-
+            GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
         }
 
         void DrawProject()
         {
             bool valid = DrawProjectScope();
+            DrawOptimizeArea(null, projectFolder, valid, false);
+            DrawProjectReview(valid);
+            DrawDangerZone(valid);
+        }
 
-            DrawSectionLabel(T("one_click"));
+        bool DrawProjectScope()
+        {
             EditorGUILayout.BeginVertical(panelStyle);
-
+            EditorGUILayout.LabelField(T("project_scope"), sectionTitleStyle);
             EditorGUILayout.BeginHorizontal();
+            projectFolder = EditorGUILayout.TextField(projectFolder, GUILayout.MinWidth(260));
+            if (GUILayout.Button(T("use_selection"), compactButtonStyle, GUILayout.Width(132)))
+                projectFolder = VRProjectInsights.FolderFromSelection(projectFolder);
+            EditorGUILayout.EndHorizontal();
+
+            bool valid = projectFolder == "Assets" ||
+                         projectFolder.StartsWith("Assets/", StringComparison.Ordinal) &&
+                         AssetDatabase.IsValidFolder(projectFolder);
+            EditorGUILayout.LabelField(T("scope_help"), mutedStyle);
+            if (!valid)
+                EditorGUILayout.HelpBox(T("invalid_folder"), MessageType.Warning);
+
+            EditorGUILayout.EndVertical();
+            return valid;
+        }
+
+        void DrawAvatar()
+        {
+            EditorGUILayout.BeginVertical(panelStyle);
+            EditorGUILayout.LabelField(T("avatar_root"), sectionTitleStyle);
+            EditorGUILayout.BeginHorizontal();
+            avatar = (GameObject)EditorGUILayout.ObjectField(avatar, typeof(GameObject), true);
+            if (GUILayout.Button(T("use_selection"), compactButtonStyle, GUILayout.Width(132)))
+                avatar = Selection.activeGameObject;
+            EditorGUILayout.EndHorizontal();
+
+            bool valid = VRAvatarWorkflow.EditableRoot(avatar);
+            if (!valid)
+                EditorGUILayout.LabelField(T("avatar_help"), mutedStyle);
+            EditorGUILayout.EndVertical();
+
+            DrawOptimizeArea(avatar, "Assets", valid, true);
+
+            DrawSectionLabel(T("review"));
+            EditorGUILayout.BeginVertical(panelStyle);
             using (new EditorGUI.DisabledScope(!valid))
-                if (Primary(T("optimize_textures"))) OptimizeTextures(null, projectFolder);
-            if (Primary(T("optimize_models"))) OptimizeModelImports(null);
-            EditorGUILayout.EndHorizontal();
+            {
+                if (Compact(T("heavy_meshes")))
+                {
+                    issues = VRProjectInsights.OversizedMeshes(avatar);
+                    summary = "Heavy mesh review: " + issues.Count + " candidates.";
+                }
+            }
+            EditorGUILayout.EndVertical();
+        }
+
+        void DrawOptimizeArea(GameObject root, string folder, bool valid, bool avatarScope)
+        {
+            DrawSectionLabel(T("quick_optimize"));
+            EditorGUILayout.BeginVertical(panelStyle);
+            EditorGUILayout.LabelField(T("quick_help"), mutedStyle);
 
             EditorGUILayout.BeginHorizontal();
-            if (Primary(T("optimize_particles"))) OptimizeParticles(null);
+            if (Compact(T("config_balanced"))) ApplyConfiguration("Balanced");
+            if (Compact(T("config_mobile"))) ApplyConfiguration("Mobile");
+            if (Compact(T("config_vr"))) ApplyConfiguration("VR");
+            EditorGUILayout.EndHorizontal();
+
             using (new EditorGUI.DisabledScope(!valid))
-                if (Primary(T("fix_materials"))) FixExpensiveMaterialSetups(null, projectFolder);
-            EditorGUILayout.EndHorizontal();
+            {
+                if (GUILayout.Button(avatarScope ? T("optimize_character") : T("optimize_scope"), heroButtonStyle))
+                    RunQuickOptimize(root, folder, avatarScope);
+            }
 
-            EditorGUILayout.BeginHorizontal();
-            using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode || Lightmapping.isRunning))
-                if (Primary(T("optimize_lighting"))) summary = VRLightingSetup.Optimize();
-            if (Primary(T("optimize_ui_raycasts"))) summary = VRUIRaycastOptimizer.Optimize(null);
-            EditorGUILayout.EndHorizontal();
+            GUILayout.Space(3);
+            EditorGUILayout.LabelField(T("individual_tools"), sectionTitleStyle);
 
-            if (Primary(T("clean_missing_scripts"))) summary = VRMissingScriptCleaner.Clean(null);
+            using (new EditorGUI.DisabledScope(!valid))
+            {
+                EditorGUILayout.BeginHorizontal();
+                if (Primary(T("optimize_textures"))) OptimizeTextures(root, folder);
+                if (Primary(T("optimize_models"))) OptimizeModelImports(root);
+                EditorGUILayout.EndHorizontal();
+
+                EditorGUILayout.BeginHorizontal();
+                if (Primary(T("optimize_particles"))) OptimizeParticles(root);
+                if (Primary(T("fix_materials"))) FixExpensiveMaterialSetups(root, folder);
+                EditorGUILayout.EndHorizontal();
+
+                EditorGUILayout.BeginHorizontal();
+                if (avatarScope)
+                {
+                    if (Primary(T("disable_shadows"))) DisableRealtimeShadows(root);
+                }
+                else
+                {
+                    using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode || Lightmapping.isRunning))
+                        if (Primary(T("optimize_lighting"))) summary = VRLightingSetup.Optimize();
+                }
+
+                if (Primary(T("optimize_ui_raycasts"))) summary = VRUIRaycastOptimizer.Optimize(root);
+                EditorGUILayout.EndHorizontal();
+
+                if (Primary(T("clean_missing_scripts"))) summary = VRMissingScriptCleaner.Clean(root);
+            }
 
             DrawAdvancedSettings();
             EditorGUILayout.EndVertical();
+        }
 
+        void ApplyConfiguration(string configuration)
+        {
+            switch (configuration)
+            {
+                case "Mobile":
+                    settings.pc = 1024;
+                    settings.android = 512;
+                    settings.ios = 512;
+                    settings.maxParticles = 250;
+                    settings.maxLifetime = 6f;
+                    meshLevel = ModelImporterMeshCompression.Medium;
+                    break;
+                case "VR":
+                    settings.pc = 2048;
+                    settings.android = 1024;
+                    settings.ios = 1024;
+                    settings.maxParticles = 300;
+                    settings.maxLifetime = 8f;
+                    meshLevel = ModelImporterMeshCompression.Medium;
+                    break;
+                default:
+                    settings.pc = 2048;
+                    settings.android = 1024;
+                    settings.ios = 1024;
+                    settings.maxParticles = 500;
+                    settings.maxLifetime = 10f;
+                    meshLevel = ModelImporterMeshCompression.Medium;
+                    break;
+            }
+
+            settings.capParticles = true;
+            settings.capLifetime = true;
+            settings.Sanitize();
+            settings.Save();
+            summary = configuration + " configuration applied. Existing artistic module toggles were left unchanged.";
+        }
+
+        void RunQuickOptimize(GameObject root, string folder, bool avatarScope)
+        {
+            string scopeName = avatarScope ? "character / avatar" : "current project scope";
+            if (!EditorUtility.DisplayDialog(
+                "Quick optimize " + scopeName,
+                "Run the safe bundled optimization jobs for the " + scopeName + "?\n\n" +
+                "Includes textures, model imports, particles, material costs, decorative UI raycasts and missing-script cleanup.\n\n" +
+                "Lighting and realtime-shadow changes stay manual because they can visibly change the scene. Import changes remain recoverable through Batch Options; scene changes use Unity Undo where supported.",
+                "Run Quick Optimize",
+                "Cancel"))
+            {
+                summary = "Quick optimize cancelled.";
+                return;
+            }
+
+            var details = new List<string>();
+            QuickStep(details, "Textures", () => OptimizeTextures(root, folder, false));
+            QuickStep(details, "Model imports", () => OptimizeModelImports(root, false));
+            QuickStep(details, "Particles", () => OptimizeParticles(root));
+            QuickStep(details, "Materials", () => FixExpensiveMaterialSetups(root, folder, false));
+            QuickStep(details, "UI raycasts", () => summary = VRUIRaycastOptimizer.Optimize(root, false));
+            QuickStep(details, "Missing scripts", () => summary = VRMissingScriptCleaner.Clean(root, false));
+
+            Debug.Log("Optimize Your Project quick optimize results:\n" + string.Join("\n\n", details));
+            summary = "Quick optimize complete. Six guarded jobs ran for the current scope. Full per-job details were written to the Unity Console. Lighting remains manual.";
+        }
+
+        void QuickStep(List<string> details, string label, Action action)
+        {
+            try
+            {
+                action();
+                details.Add(label + ": " + (summary ?? "Complete."));
+            }
+            catch (Exception error)
+            {
+                details.Add(label + " failed: " + error.Message);
+                Debug.LogException(error);
+            }
+        }
+
+        void DrawProjectReview(bool valid)
+        {
             DrawSectionLabel(T("review"));
             EditorGUILayout.BeginVertical(panelStyle);
             EditorGUILayout.BeginHorizontal();
@@ -241,80 +421,22 @@ namespace FISHHWB.VROptimizer
             EditorGUILayout.EndVertical();
         }
 
-        bool DrawProjectScope()
+        void DrawDangerZone(bool valid)
         {
+            DrawSectionLabel(T("danger_zone"));
             EditorGUILayout.BeginVertical(panelStyle);
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(T("scope"), sectionTitleStyle, GUILayout.Width(86));
-            projectFolder = EditorGUILayout.TextField(projectFolder);
-            if (GUILayout.Button(T("use_selection"), GUILayout.Width(106)))
-                projectFolder = VRProjectInsights.FolderFromSelection(projectFolder);
-            EditorGUILayout.EndHorizontal();
-
-            bool valid = projectFolder == "Assets" ||
-                         projectFolder.StartsWith("Assets/", StringComparison.Ordinal) &&
-                         AssetDatabase.IsValidFolder(projectFolder);
-            if (!valid)
-                EditorGUILayout.HelpBox(T("invalid_folder"), MessageType.Warning);
-
-            EditorGUILayout.EndVertical();
-            return valid;
-        }
-
-        void DrawAvatar()
-        {
-            EditorGUILayout.BeginVertical(panelStyle);
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.Label(T("avatar_root"), sectionTitleStyle, GUILayout.Width(142));
-            avatar = (GameObject)EditorGUILayout.ObjectField(avatar, typeof(GameObject), true);
-            if (GUILayout.Button(T("use_selection"), GUILayout.Width(106)))
-                avatar = Selection.activeGameObject;
-            EditorGUILayout.EndHorizontal();
-
-            bool valid = VRAvatarWorkflow.EditableRoot(avatar);
-            if (!valid)
-                EditorGUILayout.LabelField(T("avatar_help"), mutedStyle);
-            EditorGUILayout.EndVertical();
-
-            DrawSectionLabel(T("one_click"));
+            EditorGUILayout.HelpBox(T("unused_assets_warning"), MessageType.Warning);
             using (new EditorGUI.DisabledScope(!valid))
             {
-                EditorGUILayout.BeginVertical(panelStyle);
-
-                EditorGUILayout.BeginHorizontal();
-                if (Primary(T("optimize_textures"))) OptimizeTextures(avatar, "Assets");
-                if (Primary(T("optimize_models"))) OptimizeModelImports(avatar);
-                EditorGUILayout.EndHorizontal();
-
-                EditorGUILayout.BeginHorizontal();
-                if (Primary(T("optimize_particles"))) OptimizeParticles(avatar);
-                if (Primary(T("fix_materials"))) FixExpensiveMaterialSetups(avatar, "Assets");
-                EditorGUILayout.EndHorizontal();
-
-                EditorGUILayout.BeginHorizontal();
-                if (Primary(T("disable_shadows"))) DisableRealtimeShadows(avatar);
-                if (Primary(T("optimize_ui_raycasts"))) summary = VRUIRaycastOptimizer.Optimize(avatar);
-                EditorGUILayout.EndHorizontal();
-
-                if (Primary(T("clean_missing_scripts"))) summary = VRMissingScriptCleaner.Clean(avatar);
-
-                DrawAdvancedSettings();
-                EditorGUILayout.EndVertical();
-
-                DrawSectionLabel(T("review"));
-                EditorGUILayout.BeginVertical(panelStyle);
-                if (Compact(T("heavy_meshes")))
-                {
-                    issues = VRProjectInsights.OversizedMeshes(avatar);
-                    summary = "Heavy mesh review: " + issues.Count + " candidates.";
-                }
-                EditorGUILayout.EndVertical();
+                if (GUILayout.Button(T("delete_unused_assets"), heroButtonStyle))
+                    summary = VRUnusedAssetCleaner.DeleteUnused(projectFolder);
             }
+            EditorGUILayout.EndVertical();
         }
 
         void DrawSectionLabel(string label)
         {
-            GUILayout.Space(3);
+            GUILayout.Space(4);
             EditorGUILayout.LabelField(label, sectionTitleStyle);
         }
 
@@ -333,7 +455,7 @@ namespace FISHHWB.VROptimizer
             showAdvanced = EditorGUILayout.Foldout(showAdvanced, T("advanced"), true);
             if (!showAdvanced) return;
 
-            GUILayout.Space(3);
+            GUILayout.Space(4);
             EditorGUI.BeginChangeCheck();
 
             showTextureSettings = EditorGUILayout.Foldout(showTextureSettings, T("texture_settings"), true);
@@ -388,7 +510,7 @@ namespace FISHHWB.VROptimizer
             return Mathf.Clamp(Mathf.ClosestPowerOfTwo(Mathf.Max(32, typed)), 32, 16384);
         }
 
-        void OptimizeTextures(GameObject root, string folder)
+        void OptimizeTextures(GameObject root, string folder, bool confirm = true)
         {
             settings.Sanitize();
             var textures = VRAvatarWorkflow.CollectTextures(root, settings, folder, out int unsupported);
@@ -421,7 +543,7 @@ namespace FISHHWB.VROptimizer
                 return;
             }
 
-            if (!EditorUtility.DisplayDialog(
+            if (confirm && !EditorUtility.DisplayDialog(
                 "Optimize textures",
                 "Optimize " + textures.Count + " supported textures? Recognized normal/data imports are repaired. Existing explicit formats and stricter size caps are preserved.",
                 "Optimize",
@@ -432,7 +554,7 @@ namespace FISHHWB.VROptimizer
             }
 
             var batch = new VRImportBatch();
-            string policy = "textures-v0760:" + settings.pc + ":" + settings.android + ":" + settings.ios + ":" + testImportedMemory;
+            string policy = "textures-v0765:" + settings.pc + ":" + settings.android + ":" + settings.ios + ":" + testImportedMemory;
             var result = VRActionSummary.Run("Textures", textures, item => item.Path, item =>
                 batch.Apply(item.Path, "textures", policy, () =>
             {
@@ -478,14 +600,16 @@ namespace FISHHWB.VROptimizer
             }
         }
 
-        void OptimizeModelImports(GameObject root)
+        void OptimizeModelImports(GameObject root, bool confirm = true)
         {
             var meshes = VRMeshCompression.Collect(root, out int unsupported);
             int pending = 0;
             foreach (var mesh in meshes)
             {
                 var model = AssetImporter.GetAtPath(mesh.Path) as ModelImporter;
-                if (mesh.Current != meshLevel || !model || !model.optimizeMeshVertices || !model.optimizeMeshPolygons)
+                if (!model) continue;
+                var desired = StrongerCompression(model.meshCompression, meshLevel);
+                if (model.meshCompression != desired || !model.optimizeMeshVertices || !model.optimizeMeshPolygons)
                     pending++;
             }
 
@@ -495,9 +619,10 @@ namespace FISHHWB.VROptimizer
                 return;
             }
 
-            if (!EditorUtility.DisplayDialog(
+            if (confirm && !EditorUtility.DisplayDialog(
                 "Optimize model imports",
-                "Reimport " + pending + " model assets using " + meshLevel + " compression and Unity mesh import optimization? Triangle counts, Read/Write, rigs, animations and blendshapes are left unchanged.",
+                "Reimport " + pending + " model assets using at least " + meshLevel + " compression and Unity mesh import optimization? " +
+                "A stronger existing compression level is preserved. Triangle counts, Read/Write, rigs, animations and blendshapes are left unchanged.",
                 "Optimize",
                 "Cancel"))
             {
@@ -507,14 +632,15 @@ namespace FISHHWB.VROptimizer
 
             var batch = new VRImportBatch();
             var result = VRActionSummary.Run("Imported meshes", meshes, item => item.Path, item =>
-                batch.Apply(item.Path, "models", "models-v0760:" + meshLevel + ":" + testImportedMemory, () =>
+                batch.Apply(item.Path, "models", "models-v0765:" + meshLevel + ":" + testImportedMemory, () =>
             {
                 var importer = AssetImporter.GetAtPath(item.Path) as ModelImporter;
                 if (!importer) return VRActionOutcome.Unsupported;
-                if (importer.meshCompression == meshLevel && importer.optimizeMeshVertices && importer.optimizeMeshPolygons)
+                var desired = StrongerCompression(importer.meshCompression, meshLevel);
+                if (importer.meshCompression == desired && importer.optimizeMeshVertices && importer.optimizeMeshPolygons)
                     return VRActionOutcome.Unchanged;
 
-                importer.meshCompression = meshLevel;
+                importer.meshCompression = desired;
                 importer.optimizeMeshVertices = true;
                 importer.optimizeMeshPolygons = true;
                 importer.SaveAndReimport();
@@ -524,7 +650,12 @@ namespace FISHHWB.VROptimizer
             summary = result.Format("Imported meshes") + batch.Details(testImportedMemory);
         }
 
-        void FixExpensiveMaterialSetups(GameObject root, string folder)
+        static ModelImporterMeshCompression StrongerCompression(ModelImporterMeshCompression current, ModelImporterMeshCompression requested)
+        {
+            return (ModelImporterMeshCompression)Mathf.Max((int)current, (int)requested);
+        }
+
+        void FixExpensiveMaterialSetups(GameObject root, string folder, bool confirm = true)
         {
             var duplicates = VRProjectMaintenance.CollectDuplicateMaterialFixes(root, folder);
             var slots = VRProjectMaintenance.CollectUnusedMaterialSlots(root);
@@ -540,7 +671,7 @@ namespace FISHHWB.VROptimizer
                 return;
             }
 
-            if (!EditorUtility.DisplayDialog(
+            if (confirm && !EditorUtility.DisplayDialog(
                 "Fix material cost issues",
                 "Apply safe material fixes in this loaded scope?\n\nExact duplicate references: " + replacements +
                 "\nTrailing empty slots: " + remove +
@@ -623,7 +754,7 @@ namespace FISHHWB.VROptimizer
 
         void DrawImportOptions(bool allowTrial)
         {
-            if (!GUILayout.Button(T("batch_options"), EditorStyles.miniButton)) return;
+            if (!GUILayout.Button(T("batch_options"), compactButtonStyle)) return;
 
             var menu = new GenericMenu();
             if (allowTrial)
@@ -645,11 +776,11 @@ namespace FISHHWB.VROptimizer
         {
             if (issues == null) return;
 
-            GUILayout.Space(5);
+            GUILayout.Space(6);
             EditorGUILayout.BeginVertical(panelStyle);
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Results  " + issues.Count, sectionTitleStyle);
-            filter = (Filter)GUILayout.Toolbar((int)filter, new[] { T("all"), T("critical"), T("warning") }, GUILayout.MaxWidth(285));
+            filter = (Filter)GUILayout.Toolbar((int)filter, new[] { T("all"), T("critical"), T("warning") }, GUILayout.MaxWidth(300));
             EditorGUILayout.EndHorizontal();
 
             int count = 0;
@@ -670,12 +801,12 @@ namespace FISHHWB.VROptimizer
                 EditorGUILayout.BeginVertical();
                 EditorGUILayout.LabelField(issue.Message, EditorStyles.wordWrappedLabel);
                 if (!string.IsNullOrEmpty(issue.AssetPath))
-                    EditorGUILayout.LabelField(issue.AssetPath, EditorStyles.miniLabel);
+                    EditorGUILayout.LabelField(issue.AssetPath, mutedStyle);
                 EditorGUILayout.EndVertical();
 
                 using (new EditorGUI.DisabledScope(!issue.Target))
                 {
-                    if (GUILayout.Button(T("select"), GUILayout.Width(72)))
+                    if (GUILayout.Button(T("select"), GUILayout.Width(78)))
                     {
                         Selection.activeObject = issue.Target;
                         EditorGUIUtility.PingObject(issue.Target);
@@ -692,7 +823,7 @@ namespace FISHHWB.VROptimizer
 
         void DrawResultStrip()
         {
-            GUILayout.Space(2);
+            GUILayout.Space(3);
             EditorGUILayout.BeginVertical(panelStyle);
             EditorGUILayout.LabelField(T("last_result"), sectionTitleStyle);
             EditorGUILayout.LabelField(summary ?? T("ready"), mutedStyle);
@@ -702,12 +833,13 @@ namespace FISHHWB.VROptimizer
         void DrawFooter()
         {
             var health = VRUpdateChecker.Health;
-            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.BeginVertical(panelStyle);
 
+            EditorGUILayout.BeginHorizontal();
             var dot = new GUIStyle(EditorStyles.boldLabel) { fontSize = 13 };
             dot.normal.textColor = StatusColor(health);
-            GUILayout.Label("●", dot, GUILayout.Width(17));
-            GUILayout.Label("v" + VRUpdateChecker.CurrentVersion, EditorStyles.miniBoldLabel, GUILayout.Width(58));
+            GUILayout.Label("●", dot, GUILayout.Width(18));
+            GUILayout.Label("v" + VRUpdateChecker.CurrentVersion, EditorStyles.miniBoldLabel, GUILayout.Width(66));
 
             string stateText;
             switch (health)
@@ -725,36 +857,35 @@ namespace FISHHWB.VROptimizer
                 if (VRUpdateChecker.HasUpdate)
                 {
                     string label = VRUpdateChecker.CanUpdateDirectly ? "Update " + VRUpdateChecker.LatestTag : "Update info";
-                    if (GUILayout.Button(label, EditorStyles.miniButton, GUILayout.Width(92)))
+                    if (GUILayout.Button(label, compactButtonStyle, GUILayout.Width(112)))
                         VRUpdateChecker.Update();
                 }
-                else if (GUILayout.Button(T("check_update"), EditorStyles.miniButton, GUILayout.Width(86)))
+                else if (GUILayout.Button(T("check_update"), compactButtonStyle, GUILayout.Width(112)))
                 {
                     VRUpdateChecker.Check(true);
                 }
             }
-
-            if (GUILayout.Button(T("support"), EditorStyles.miniButton, GUILayout.Width(112)))
-                Application.OpenURL("https://www.patreon.com/cw/DedZed");
-
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button(T("support"), compactButtonStyle, GUILayout.Width(150)))
+                Application.OpenURL("https://www.patreon.com/cw/DedZed");
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("GitHub", EditorStyles.linkLabel))
                 Application.OpenURL("https://github.com/dedzedofficial/Optimize-Your-Project");
-            GUILayout.Space(8);
+            GUILayout.Space(10);
             if (GUILayout.Button("Website", EditorStyles.linkLabel))
                 Application.OpenURL("https://fishhwb.github.io/");
-            GUILayout.Space(8);
+            GUILayout.Space(10);
             if (GUILayout.Button("Discord", EditorStyles.linkLabel))
                 Application.OpenURL("https://discord.gg/wZGxxkk4Jg");
-            GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
             if (!string.IsNullOrEmpty(VRUpdateChecker.Message) &&
                 (health == VRUpdateHealth.Unknown || VRUpdateChecker.Installing))
                 EditorGUILayout.LabelField(VRUpdateChecker.Message, mutedStyle);
+
+            EditorGUILayout.EndVertical();
         }
 
         static Color StatusColor(VRUpdateHealth health)
