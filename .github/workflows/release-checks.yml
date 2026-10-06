@@ -13,7 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Read Blender version
         id: versions
-        run: echo "blender=$(python3 -c 'import json; print(json.load(open(\"version.json\"))[\"blender\"])')" >> "$GITHUB_OUTPUT"
+        run: |
+          python3 -c 'import json; print("blender=" + json.load(open("version.json"))["blender"])' >> "$GITHUB_OUTPUT"
       - name: Validate versions, logos and packages
         run: python3 scripts/check_release.py
       - name: Build Blender extension ZIP
@@ -53,5 +54,6 @@ jobs:
         if: matrix.blender.series == '4.2'
         run: |
           python3 scripts/build_blender_extension.py
-          BLENDER_PACKAGE="dist/optimize-your-project-blender-extension-$(python3 -c 'import json; print(json.load(open(\"version.json\"))[\"blender\"])').zip"
+          BLENDER_VERSION=$(python3 -c 'import json; print(json.load(open("version.json"))["blender"])')
+          BLENDER_PACKAGE="dist/optimize-your-project-blender-extension-${BLENDER_VERSION}.zip"
           "$RUNNER_TEMP/blender/blender" --background --factory-startup --command extension validate "$BLENDER_PACKAGE"
