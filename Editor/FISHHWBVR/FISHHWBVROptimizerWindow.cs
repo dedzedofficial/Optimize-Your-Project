@@ -41,7 +41,7 @@ namespace FISHHWB.VROptimizer
         static void Open()
         {
             var window = GetWindow<FISHHWBVROptimizerWindow>();
-            window.minSize = new Vector2(560, 620);
+            window.minSize = new Vector2(500, 570);
             window.titleContent = new GUIContent("Optimize Your Project", window.icon);
         }
 
@@ -254,24 +254,8 @@ namespace FISHHWB.VROptimizer
 
         void DrawOptimizeArea(GameObject root, string folder, bool valid, bool avatarScope)
         {
-            DrawSectionLabel(T("quick_optimize"));
+            DrawSectionLabel(T("one_click"));
             EditorGUILayout.BeginVertical(panelStyle);
-            EditorGUILayout.LabelField(T("quick_help"), mutedStyle);
-
-            EditorGUILayout.BeginHorizontal();
-            if (Compact(T("config_balanced"))) ApplyConfiguration("Balanced");
-            if (Compact(T("config_mobile"))) ApplyConfiguration("Mobile");
-            if (Compact(T("config_vr"))) ApplyConfiguration("VR");
-            EditorGUILayout.EndHorizontal();
-
-            using (new EditorGUI.DisabledScope(!valid))
-            {
-                if (GUILayout.Button(avatarScope ? T("optimize_character") : T("optimize_scope"), heroButtonStyle))
-                    RunQuickOptimize(root, folder, avatarScope);
-            }
-
-            GUILayout.Space(3);
-            EditorGUILayout.LabelField(T("individual_tools"), sectionTitleStyle);
 
             using (new EditorGUI.DisabledScope(!valid))
             {
@@ -304,84 +288,6 @@ namespace FISHHWB.VROptimizer
 
             DrawAdvancedSettings();
             EditorGUILayout.EndVertical();
-        }
-
-        void ApplyConfiguration(string configuration)
-        {
-            switch (configuration)
-            {
-                case "Mobile":
-                    settings.pc = 1024;
-                    settings.android = 512;
-                    settings.ios = 512;
-                    settings.maxParticles = 250;
-                    settings.maxLifetime = 6f;
-                    meshLevel = ModelImporterMeshCompression.Medium;
-                    break;
-                case "VR":
-                    settings.pc = 2048;
-                    settings.android = 1024;
-                    settings.ios = 1024;
-                    settings.maxParticles = 300;
-                    settings.maxLifetime = 8f;
-                    meshLevel = ModelImporterMeshCompression.Medium;
-                    break;
-                default:
-                    settings.pc = 2048;
-                    settings.android = 1024;
-                    settings.ios = 1024;
-                    settings.maxParticles = 500;
-                    settings.maxLifetime = 10f;
-                    meshLevel = ModelImporterMeshCompression.Medium;
-                    break;
-            }
-
-            settings.capParticles = true;
-            settings.capLifetime = true;
-            settings.Sanitize();
-            settings.Save();
-            summary = configuration + " configuration applied. Existing artistic module toggles were left unchanged.";
-        }
-
-        void RunQuickOptimize(GameObject root, string folder, bool avatarScope)
-        {
-            string scopeName = avatarScope ? "character / avatar" : "current project scope";
-            if (!EditorUtility.DisplayDialog(
-                "Quick optimize " + scopeName,
-                "Run the safe bundled optimization jobs for the " + scopeName + "?\n\n" +
-                "Includes textures, model imports, particles, material costs, decorative UI raycasts and missing-script cleanup.\n\n" +
-                "Lighting and realtime-shadow changes stay manual because they can visibly change the scene. Import changes remain recoverable through Batch Options; scene changes use Unity Undo where supported.",
-                "Run Quick Optimize",
-                "Cancel"))
-            {
-                summary = "Quick optimize cancelled.";
-                return;
-            }
-
-            var details = new List<string>();
-            QuickStep(details, "Textures", () => OptimizeTextures(root, folder, false));
-            QuickStep(details, "Model imports", () => OptimizeModelImports(root, false));
-            QuickStep(details, "Particles", () => OptimizeParticles(root));
-            QuickStep(details, "Materials", () => FixExpensiveMaterialSetups(root, folder, false));
-            QuickStep(details, "UI raycasts", () => summary = VRUIRaycastOptimizer.Optimize(root, false));
-            QuickStep(details, "Missing scripts", () => summary = VRMissingScriptCleaner.Clean(root, false));
-
-            Debug.Log("Optimize Your Project quick optimize results:\n" + string.Join("\n\n", details));
-            summary = "Quick optimize complete. Six guarded jobs ran for the current scope. Full per-job details were written to the Unity Console. Lighting remains manual.";
-        }
-
-        void QuickStep(List<string> details, string label, Action action)
-        {
-            try
-            {
-                action();
-                details.Add(label + ": " + (summary ?? "Complete."));
-            }
-            catch (Exception error)
-            {
-                details.Add(label + " failed: " + error.Message);
-                Debug.LogException(error);
-            }
         }
 
         void DrawProjectReview(bool valid)

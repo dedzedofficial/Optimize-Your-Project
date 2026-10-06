@@ -9,17 +9,17 @@ from .Blender.vr_optimizer_blender import tools_42 as _tools42
 
 bl_info = dict(_addon.bl_info)
 bl_info.update({
-    "version": (0, 7, 65),
+    "version": (0, 7, 66),
     "blender": (4, 2, 0),
     "description": "Readable one-panel Remesh, LOD, lightmap, collider and static-mesh optimization tools",
 })
 
 _addon.bl_info.update(bl_info)
 _addon._TRANSLATIONS["subtitle"].update({
-    "EN": "Blender v0.7.65: Quick Optimize",
-    "JA": "Blender v0.7.65: クイック最適化",
-    "ZH": "Blender v0.7.65：快速优化",
-    "KO": "Blender v0.7.65: 빠른 최적화",
+    "EN": "Blender v0.7.66: Primary Actions",
+    "JA": "Blender v0.7.66: 主要アクション",
+    "ZH": "Blender v0.7.66：主要操作",
+    "KO": "Blender v0.7.66: 주요 작업",
 })
 
 
@@ -40,7 +40,7 @@ def _draw_core_765(self, context):
 
     brand = layout.box()
     if _addon._brand_preview and "logo" in _addon._brand_preview:
-        brand.template_icon(icon_value=_addon._brand_preview["logo"].icon_id, scale=2.4)
+        brand.template_icon(icon_value=_addon._brand_preview["logo"].icon_id, scale=2.2)
     brand.label(text=_addon.tr(context, "title"))
     brand.label(text=_addon.tr(context, "subtitle"))
     brand.prop(context.scene, "fishhwb_language", text=_addon.tr(context, "language"))
@@ -63,44 +63,36 @@ def _draw_core_765(self, context):
     else:
         _wrapped(selected, _addon.tr(context, "select_mesh"), context, "INFO")
 
-    quick = layout.box()
-    quick.label(text="QUICK OPTIMIZE", icon="TOOL_SETTINGS")
-    _wrapped(quick, "All supported mesh optimization actions are grouped here. Source meshes are preserved by Remesh and LOD workflows.", context)
+    primary = layout.box()
+    primary.label(text="PRIMARY ACTIONS", icon="TOOL_SETTINGS")
 
-    remesh = quick.box()
-    remesh.label(text=_addon.tr(context, "remesh_title"), icon="MOD_REMESH")
-    _wrapped(remesh, _addon.tr(context, "remesh_desc"), context)
+    remesh = primary.box()
     remesh.prop(context.scene, "fishhwb_triangle_target", text=_addon.tr(context, "triangle_target"), slider=True)
     row = remesh.row()
-    row.scale_y = 1.45
-    row.operator("fishhwb.one_click_remesh", text=_addon.tr(context, "remesh"), icon="MOD_REMESH")
+    row.scale_y = 1.5
+    row.operator("fishhwb.one_click_remesh", text="REMESH TO TRIANGLE TARGET", icon="MOD_REMESH")
 
-    lod = quick.box()
-    lod.label(text=_addon.tr(context, "lod_title"), icon="MOD_DECIM")
-    _wrapped(lod, _addon.tr(context, "lod_desc"), context)
+    lod = primary.box()
     lod.prop(context.scene, "fishhwb_apply_modifiers", text=_addon.tr(context, "apply_modifiers"))
     lod.prop(context.scene, "fishhwb_create_collision_proxy", text=_addon.tr(context, "collision_proxy"))
     row = lod.row()
-    row.scale_y = 1.45
+    row.scale_y = 1.5
     row.operator(
         "fishhwb.create_lods_selected" if len(selected_meshes) > 1 else "fishhwb.create_lods",
-        text=_addon.tr(context, "create_lods"), icon="MOD_DECIM",
+        text="CREATE LOD0 / LOD1 / LOD2", icon="MOD_DECIM",
     )
 
-    modern = quick.box()
-    modern.label(text="BLENDER 4.2+ MESH TOOLS", icon="MESH_GRID")
-    _wrapped(modern, _tools42._tr(context, "lightmap_help"), context)
-    row = modern.row()
-    row.scale_y = 1.3
-    row.operator("fishhwb.generate_lightmap_uv", text=_tools42._tr(context, "lightmap"), icon="UV")
-    _wrapped(modern, _tools42._tr(context, "link_help"), context)
-    row = modern.row()
-    row.scale_y = 1.3
-    row.operator("fishhwb.link_identical_mesh_data", text=_tools42._tr(context, "link"), icon="LINKED")
-    _wrapped(modern, _tools42._tr(context, "strip_collider_help"), context)
-    row = modern.row()
-    row.scale_y = 1.3
-    row.operator("fishhwb.strip_collider_render_data", text=_tools42._tr(context, "strip_collider"), icon="TRASH")
+    row = primary.row()
+    row.scale_y = 1.4
+    row.operator("fishhwb.generate_lightmap_uv", text="GENERATE LIGHTMAP UV", icon="UV")
+
+    row = primary.row()
+    row.scale_y = 1.4
+    row.operator("fishhwb.link_identical_mesh_data", text="LINK IDENTICAL MESH DATA", icon="LINKED")
+
+    row = primary.row()
+    row.scale_y = 1.4
+    row.operator("fishhwb.strip_collider_render_data", text="STRIP COLLIDER RENDER DATA", icon="TRASH")
 
     if context.scene.fishhwb_last_result:
         result = layout.box()

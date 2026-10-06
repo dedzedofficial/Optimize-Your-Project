@@ -14,7 +14,7 @@ unity_manifest = json.loads((root / "package.json").read_text(encoding="utf-8"))
 versions = json.loads((root / "version.json").read_text(encoding="utf-8"))
 extension_manifest = tomllib.loads((root / "blender_manifest.toml").read_text(encoding="utf-8"))
 
-assert versions["version"] == "0.7.65"
+assert versions["version"] == "0.7.66"
 assert unity_manifest["displayName"] == "Optimize Your Project"
 assert unity_manifest["name"] == "com.fishhwb.vr-optimizer"
 assert unity_manifest["version"] == versions["unity"] == versions["blender"] == versions["version"]
@@ -22,7 +22,7 @@ assert versions["unity_tag"] == versions["blender_tag"] == "v" + versions["versi
 assert versions["unity_url"].endswith("/releases/tag/" + versions["unity_tag"])
 
 update_checker = (root / "Editor/FISHHWBVR/VRUpdateChecker.cs").read_text(encoding="utf-8")
-assert '"0.7.65"' in update_checker
+assert '"0.7.66"' in update_checker
 assert "feed.version" in update_checker
 
 assert extension_manifest["schema_version"] == "1.0.0"
@@ -40,12 +40,9 @@ assert icon.with_suffix(".png.meta").is_file()
 window = (root / "Editor/FISHHWBVR/FISHHWBVROptimizerWindow.cs").read_text(encoding="utf-8")
 for required in [
     "Optimize Your Project",
-    "window.minSize = new Vector2(560, 620)",
+    "window.minSize = new Vector2(500, 570)",
     "DrawOptimizeArea",
-    "RunQuickOptimize",
-    'ApplyConfiguration("Balanced")',
-    'ApplyConfiguration("Mobile")',
-    'ApplyConfiguration("VR")',
+    'T("one_click")',
     "VRMissingScriptCleaner.Clean",
     "VRUIRaycastOptimizer.Optimize",
     "VRUnusedAssetCleaner.DeleteUnused",
@@ -151,7 +148,7 @@ for path in [root / "README.md", root / "Blender/README.md"]:
     assert "Optimize-Your-Project.png" in text, path
     assert "Install / Download Optimize Your Project" in text, path
     assert "Blender 4.2+" in text, path
-    assert "0.7.65" in text, path
+    assert "0.7.66" in text, path
     assert "Generate Lightmap UV" in text, path
     assert "Link Identical Mesh Data" in text, path
     assert "Strip Collider Render Data" in text, path
@@ -159,7 +156,7 @@ for path in [root / "README.md", root / "Blender/README.md"]:
     assert "Smart UV Project" not in text, path
 
 readme = (root / "README.md").read_text(encoding="utf-8")
-assert "**v0.7.65" in readme
+assert "**v0.7.66" in readme
 assert "general developer optimization" in readme.lower()
 assert "VRChat / VCC (optional)" in readme
 assert "Find and Permanently Delete Unused Assets" in readme
@@ -168,7 +165,7 @@ assert "Unreal Engine 5.x" in readme
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
 
 roadmap = (root / "Documentation/Roadmap.md").read_text(encoding="utf-8")
-for required in ["Current baseline: v0.7.65", "Godot 4.x", "Unreal Engine 5.x", "v0.7.66"]:
+for required in ["Current baseline: v0.7.66", "Godot 4.x", "Unreal Engine 5.x", "v0.7.66"]:
     assert required in roadmap, required
 
 for relative in subprocess.check_output(
@@ -203,7 +200,7 @@ extension_built = subprocess.run(
     text=True,
 )
 extension_archive = Path(extension_built.stdout.strip())
-assert extension_archive.name == "optimize-your-project-blender-extension-0.7.65.zip"
+assert extension_archive.name == "optimize-your-project-blender-extension-0.7.66.zip"
 with ZipFile(extension_archive) as package:
     assert package.testzip() is None
     names = set(package.namelist())
@@ -216,4 +213,4 @@ with ZipFile(extension_archive) as package:
     ]:
         assert required in names, required
 
-print("Optimize Your Project v0.7.65 unified release checks passed.")
+print("Optimize Your Project v0.7.66 unified release checks passed.")

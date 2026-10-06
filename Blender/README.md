@@ -10,7 +10,7 @@
   <a href="../CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-**Current Blender release: v0.7.65**
+**Current Blender release: v0.7.66**
 
 The Blender integration targets **Blender 4.2 and newer** through the Blender Extensions system. The supported download is one modern extension ZIP.
 
@@ -20,19 +20,19 @@ Open the latest successful **Check release packages** workflow:
 
 https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
 
-Download the `optimize-your-project-blender-0.7.65` artifact and install:
+Download the `optimize-your-project-blender-0.7.66` artifact and install:
 
 ```text
-optimize-your-project-blender-extension-0.7.65.zip
+optimize-your-project-blender-extension-0.7.66.zip
 ```
 
 Use **Edit > Preferences > Get Extensions > Install from Disk**. Do not extract the ZIP.
 
 After enabling the extension, press **N** in the 3D Viewport and open the **FISHHWB** tab.
 
-## v0.7.65 interface
+## v0.7.66 interface
 
-The Blender sidebar now uses one readable **Quick Optimize** panel rather than splitting Remesh/LOD and modern static-mesh tools into separate stacked sections.
+The Blender sidebar now uses one readable **Primary Actions** panel rather than splitting Remesh/LOD and modern static-mesh tools into separate stacked sections.
 
 The panel includes:
 

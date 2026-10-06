@@ -12,15 +12,15 @@
 
 ## Release identity
 
-Optimize Your Project is a general developer optimization toolkit. Unity and Blender share one public release version. In v0.7.65 both integrations report **0.7.65**.
+Optimize Your Project is a general developer optimization toolkit. Unity and Blender share one public release version. In v0.7.66 both integrations report **0.7.66**.
 
 Blender support starts at **4.2** and uses the Blender Extensions system. The legacy pre-4.2 add-on path is not supported.
 
 ## Unity architecture
 
-The repository root is a Unity Package Manager package. The Editor window is split into Project and Character / Avatar pages, but both pages now use one **Quick Optimize** area for the common workflow.
+The repository root is a Unity Package Manager package. The Editor window is split into Project and Character / Avatar pages, but both pages now use one **Primary Actions** area for the common workflow.
 
-Quick Optimize coordinates the existing owning actions instead of duplicating their implementation. It runs texture, model-import, particle, material, decorative UI-raycast and missing-script jobs behind one confirmation. Lighting and realtime-shadow changes remain explicit because they can visibly alter the scene.
+Primary Actions coordinates the existing owning actions instead of duplicating their implementation. It runs texture, model-import, particle, material, decorative UI-raycast and missing-script jobs behind one confirmation. Lighting and realtime-shadow changes remain explicit because they can visibly alter the scene.
 
 ### Unity owning actions
 
@@ -42,7 +42,7 @@ Quick Optimize coordinates the existing owning actions instead of duplicating th
 
 ### Permanent unused-asset cleanup
 
-`VRUnusedAssetCleaner` is intentionally isolated from normal Quick Optimize actions because deletion cannot use Unity Undo.
+`VRUnusedAssetCleaner` is intentionally isolated from normal Primary Actions actions because deletion cannot use Unity Undo.
 
 The cleaner:
 
@@ -67,7 +67,7 @@ Blender/vr_optimizer_blender/
 
 The root `blender_manifest.toml` and extension `__init__.py` provide the Blender 4.2+ package entry point.
 
-In v0.7.65 the extension entry point replaces the older stacked draw layout with one width-aware **Quick Optimize** panel. The modern 4.2+ operators remain implemented in `tools_42.py`, but their old child panel is intentionally not registered because those actions are surfaced in the main panel.
+In v0.7.66 the extension entry point replaces the older stacked draw layout with one width-aware **Primary Actions** panel. The modern 4.2+ operators remain implemented in `tools_42.py`, but their old child panel is intentionally not registered because those actions are surfaced in the main panel.
 
 ### Blender mesh workflows
 
@@ -88,7 +88,7 @@ Generated Remesh/LOD outputs are fingerprinted so unchanged jobs can reuse them.
 The release workflow:
 
 - validates unified versions and package contents,
-- checks the Unity 0.7.65 UI and destructive-cleanup guard rails,
+- checks the Unity 0.7.66 UI and destructive-cleanup guard rails,
 - builds the Unity package,
 - builds and uploads the Blender Extensions ZIP,
 - runs Blender runtime tests on 4.2 LTS, 4.5 LTS and 5.2 LTS,

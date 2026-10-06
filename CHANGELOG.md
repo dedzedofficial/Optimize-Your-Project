@@ -10,6 +10,16 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
+## 0.7.66
+
+### UI correction
+
+- Restored a button-first Unity layout where each optimization feature is a primary action instead of leading with bundled configurations.
+- Kept Advanced settings and all 0.7.65 safety improvements behind the same feature buttons.
+- Kept permanent unused-asset deletion isolated in the Unity danger zone.
+- Changed Blender to a single Primary Actions panel with direct Remesh, LOD, Lightmap UV, identical-mesh linking and collider-cleanup buttons.
+- Reduced explanatory UI clutter while keeping operator tooltips, confirmations and result summaries.
+
 ## 0.7.65
 
 ### Project release

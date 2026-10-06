@@ -23,7 +23,7 @@ Unity and Blender share one project version. Blender support starts at **4.2** a
 - **P2 - Medium priority:** new integrations or deeper automation that need more validation before becoming default behavior.
 - **P3 - Later / experimental:** useful ideas that should not delay the main Unity, Blender, Godot and Unreal work.
 
-## Current baseline: v0.7.65
+## Current baseline: v0.7.66
 
 ### Unity
 

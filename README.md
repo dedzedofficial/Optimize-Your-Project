@@ -10,7 +10,7 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-**v0.7.65 | Unity + Blender 4.2+ | General developer optimization tools | FISHHWB | Ded Zed**
+**v0.7.66 | Unity + Blender 4.2+ | General developer optimization tools | FISHHWB | Ded Zed**
 
 Optimize Your Project is a free general developer optimization toolkit focused on turning repetitive project cleanup and optimization work into clear, guarded actions. Unity and Blender share one project release version, with more engine integrations planned under the same safety and localization rules.
 
@@ -24,10 +24,10 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For fixed v0.7.65:
+For fixed v0.7.66:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.65
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.66
 ```
 
 ### Blender 4.2+
@@ -38,10 +38,10 @@ Open the latest successful release-check workflow:
 
 https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
 
-Download the `optimize-your-project-blender-0.7.65` artifact and install:
+Download the `optimize-your-project-blender-0.7.66` artifact and install:
 
 ```text
-optimize-your-project-blender-extension-0.7.65.zip
+optimize-your-project-blender-extension-0.7.66.zip
 ```
 
 Use **Edit > Preferences > Get Extensions > Install from Disk** and choose the ZIP without extracting it. Then press **N** in the 3D Viewport and open the **FISHHWB** tab.
@@ -54,17 +54,17 @@ vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Pro
 
 The Unity package does not require a VR SDK for normal projects.
 
-## Unity v0.7.65
+## Unity v0.7.66
 
-The Unity window is now built around one readable **Quick Optimize** area instead of cramming navigation, language and actions into the same narrow rows.
+The Unity window is now built around one readable **Primary Actions** area instead of cramming navigation, language and actions into the same narrow rows.
 
-### Quick Optimize
+### Primary Actions
 
 - **Balanced**, **Mobile** and **VR** safe configuration buttons adjust texture caps, particle limits and the requested model-compression level without forcing artistic module toggles.
 - **Optimize Current Scope** bundles texture, model-import, particle, material, decorative UI-raycast and missing-script jobs behind one confirmation.
 - **Optimize Character / Avatar** runs the same guarded bundle against the selected hierarchy.
 - Lighting and realtime-shadow actions remain explicit because they can visibly alter the scene.
-- Full per-job Quick Optimize details are written to the Unity Console while the window shows a concise result summary.
+- Full per-job Primary Actions details are written to the Unity Console while the window shows a concise result summary.
 
 ### Individual tools
 
@@ -93,9 +93,9 @@ The cleaner is intentionally conservative:
 
 Use source control or a backup before any permanent cleanup.
 
-## Blender v0.7.65
+## Blender v0.7.66
 
-Blender remains focused on **4.2+** and now presents Remesh, LOD and modern static-mesh tools in one readable **Quick Optimize** panel.
+Blender remains focused on **4.2+** and now presents Remesh, LOD and modern static-mesh tools in one readable **Primary Actions** panel.
 
 - long helper text wraps to the sidebar width instead of clipping,
 - action buttons are taller and easier to scan,
