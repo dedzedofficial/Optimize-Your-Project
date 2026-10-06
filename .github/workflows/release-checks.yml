@@ -17,25 +17,25 @@ jobs:
           python3 -c 'import json; print("blender=" + json.load(open("version.json"))["blender"])' >> "$GITHUB_OUTPUT"
       - name: Validate versions, logos and packages
         run: python3 scripts/check_release.py
-      - name: Build Blender extension ZIP
+      - name: Build Blender 4.2+ extension ZIP
         run: python3 scripts/build_blender_extension.py
-      - name: Upload Blender ZIP packages
+      - name: Upload Blender 4.2+ extension
         uses: actions/upload-artifact@v4
         with:
           name: optimize-your-project-blender-${{ steps.versions.outputs.blender }}
-          path: |
-            dist/optimize-your-project-blender-extension-${{ steps.versions.outputs.blender }}.zip
-            dist/optimize-your-project-blender-${{ steps.versions.outputs.blender }}.zip
+          path: dist/optimize-your-project-blender-extension-${{ steps.versions.outputs.blender }}.zip
           if-no-files-found: error
           retention-days: 90
+
   blender-runtime:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         blender:
-          - { series: '3.6', version: '3.6.23' }
           - { series: '4.2', version: '4.2.9' }
+          - { series: '4.5', version: '4.5.14' }
+          - { series: '5.2', version: '5.2.2' }
     steps:
       - uses: actions/checkout@v4
       - name: Install Blender runtime libraries
@@ -48,9 +48,11 @@ jobs:
           curl --fail --location --retry 3 "https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${BLENDER_VERSION}-linux-x64.tar.xz" -o "$RUNNER_TEMP/blender.tar.xz"
           mkdir -p "$RUNNER_TEMP/blender"
           tar -xf "$RUNNER_TEMP/blender.tar.xz" -C "$RUNNER_TEMP/blender" --strip-components=1
-      - name: Test remesh triangle budgets and LOD workflows
+      - name: Test Remesh, LOD and collision workflows
         run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender.py'
-      - name: Validate Blender extension package
+      - name: Test Blender 4.2+ optimization tools
+        run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender_42.py'
+      - name: Validate Blender Extensions package
         if: matrix.blender.series == '4.2'
         run: |
           python3 scripts/build_blender_extension.py

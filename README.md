@@ -10,12 +10,11 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-<p align="center">
-  <strong>Unity interface languages:</strong> Auto | English | 日本語 | 简体中文 | 繁體中文 | 한국어 | Español | Français | Deutsch | Português | Русский | Italiano
-</p>
+**Unity v0.7.60 | Blender v0.7.61 | General developer optimization tools | FISHHWB | Ded Zed**
 
-<details open>
-<summary><strong>Install / Download Optimize Your Project</strong></summary>
+Optimize Your Project is a free general developer optimization toolkit for reducing repetitive project cleanup and optimization work. Unity and Blender are developed independently so one integration can improve without forcing a version bump on the other.
+
+## Install / Download Optimize Your Project
 
 ### Unity
 
@@ -25,117 +24,139 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For the fixed v0.7.60 release after the tag is published:
+For fixed Unity v0.7.60:
 
 ```text
 https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.60
 ```
 
-### Blender
+### Blender 4.2+
 
-Blender v0.7.60 is built as both a Blender 4.2+ extension ZIP and a Blender 3.6 legacy add-on ZIP. The release workflow is available here:
+Blender support now targets the modern **Blender Extensions** system only. The minimum supported Blender version is **4.2**.
 
-[![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
+Download the latest successful `optimize-your-project-blender-<version>` workflow artifact from:
 
-Release history: [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases)
+https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
 
-Install the downloaded ZIP directly using **Install from Disk**. Do not extract it.
+Inside it, install:
+
+```text
+optimize-your-project-blender-extension-0.7.61.zip
+```
+
+In Blender, use **Edit > Preferences > Get Extensions > Install from Disk**, choose the ZIP without extracting it, then open the **FISHHWB** tab in the 3D Viewport sidebar.
 
 ### VRChat / VCC (optional)
 
-Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the chosen project.
+Use the VCC repository link when you want the Unity package in a VRChat Creator Companion project:
 
-</details>
+```text
+vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json
+```
 
-**Unity v0.7.60 | Blender v0.7.60 | General developer optimization tools | FISHHWB | Ded Zed**
+The Unity tools do not require a VR SDK for normal projects.
 
-Optimize Your Project is a free **general developer optimization** toolkit for Unity and Blender. It focuses on repetitive jobs that can be turned into a clear one-click action while keeping risky or art-direction-sensitive changes out of automatic workflows.
+## Unity v0.7.60
 
-## v0.7.60 highlights
+The Unity window stays compact with Project and Character / Avatar pages.
 
-### Unity
+Primary actions include:
 
-The Unity editor window remains intentionally compact. Project and Character / Avatar are the only top-level pages, advanced settings stay collapsed, and detailed findings only appear when requested.
+- **Optimize Textures** for size, compression and recognized import fixes.
+- **Optimize Model Imports** for mesh compression and Unity importer optimization without reducing source topology.
+- **Optimize Particles** for selected particle-cost limits.
+- **Fix Material Costs** for exact duplicate references and safe trailing empty slots.
+- **Optimize Lighting** for guarded baked-light setup on eligible loaded-scene content.
+- **Clean Missing Scripts** with Unity Undo support.
+- **Optimize UI Raycasts** to disable unnecessary `Raycast Target` flags on decorative UI while preserving detected interactive controls.
+- Project reviews for largest textures, Read/Write memory, heavy meshes and full scans.
 
-Current one-click actions include:
+Unity importer history, detail protection, memory trials and last-batch restoration remain under Advanced settings.
 
-- **Optimize Textures**: resize/compress supported textures and repair recognized normal/data imports.
-- **Optimize Model Imports**: apply model compression plus Unity vertex/polygon import optimization without changing triangle counts, rigs, animations or blendshapes.
-- **Optimize Particles**: apply the configured particle limits to the loaded scene or selected character hierarchy.
-- **Fix Material Costs**: remap exact duplicate material references and remove safe trailing empty material slots.
-- **Optimize Lighting**: prepare supported loaded-scene geometry for baked lighting and start a bake.
-- **Optimize UI Raycasts**: disable `Raycast Target` only on decorative UI graphics that are not inside a detected EventSystem interaction hierarchy. Interactive controls and custom pointer/select handlers are skipped, and Unity Undo is supported.
-- **Clean Missing Scripts**: remove only missing MonoBehaviour entries from the selected scope, with Unity Undo support.
+## Blender v0.7.61
 
-The Unity language selector supports **auto-detect** from the operating-system language, plus manual selection for English, Japanese, Simplified Chinese, Traditional Chinese, Korean, Spanish, French, German, Portuguese, Russian and Italian.
+Blender is now focused on **4.2+** and is packaged only as a Blender Extension.
 
-### Blender
+### Remesh
 
-Blender stays focused on the existing **Remesh** and **LOD** workflows instead of growing another large tool panel.
+**One-Click Remesh** creates a separate reduced copy while preserving the source. Supported UV layers, material assignments, armature bindings, vertex weights and relative shape keys are retained through the guarded workflow.
 
-- **One-Click Remesh** creates a separate surface-preserving reduced copy while retaining supported UVs, materials, armature weights and relative blendshapes.
-- **Create LOD0 / LOD1 / LOD2** still preserves the original and works on one or several selected supported static meshes.
-- The existing LOD workflow now has an optional **Create Collision Proxy from LOD2** setting. When enabled, the same button creates a separate `_COLLIDER` mesh copied from LOD2, marks it as a wireframe/render-disabled collision proxy candidate, and keeps it in the same generated LOD set.
-- The collision proxy is optional and off by default. Normal LOD generation still creates only LOD0, LOD1 and LOD2.
-- Re-running an unchanged LOD job reuses the verified generated outputs instead of creating duplicates.
+### LOD generation
 
-The Blender collision proxy is intentionally a candidate mesh. Import it into the target engine and configure the appropriate collider/physics component there; the add-on does not guess gameplay collision rules.
+**Create LOD0 / LOD1 / LOD2** creates source-preserving static-mesh LOD sets. Multiple selected supported meshes can be processed in one action.
 
-## Unity tools
+Optional **Create Collision Proxy from LOD2** adds a separate render-disabled wireframe collider candidate without modifying the original mesh.
 
-Open **FISHHWB > Optimize Your Project**.
+### Generate Lightmap UV
 
-### Project
+The new **Generate Lightmap UV** action is for selected supported static meshes. It:
 
-Project mode works with the selected Assets folder and loaded scenes. Reviews include Largest Textures, Read/Write Memory, Heavy Meshes and Scan Entire Project.
+- preserves geometry and the primary UV map,
+- creates `LightmapUV` only when it can safely become the second UV channel,
+- uses Blender Smart UV Project with a fractional island margin,
+- keeps existing secondary UV channels untouched instead of guessing which one to replace,
+- supports Blender Undo.
 
-### Character / Avatar
+This is useful for static assets intended for baked lighting workflows in Unity and other real-time engines.
 
-Character mode limits supported one-click jobs to the selected hierarchy. It does not require a VR SDK and can be used for ordinary characters.
+### Link Identical Mesh Data
 
-### Safety and recovery
+The new **Link Identical Mesh Data** action finds exact selected static duplicates and makes them share one Blender mesh datablock.
 
-Importer history, detail protection, optional memory trials and Restore Last Import Batch remain under Advanced settings. Scene changes such as particle edits, UI raycast changes, missing-script cleanup and supported lighting changes use native Unity Undo where applicable.
+It only links meshes whose geometry, topology, UV data, attributes and material assignments match. It skips modifiers, shape keys, linked-library meshes and object-level material overrides. Object transforms remain independent.
 
-## Blender tools
+This reduces duplicated live mesh data in repeated static props and gives downstream pipelines a clearer instancing opportunity without changing where objects are placed.
 
-Open the 3D Viewport sidebar with **N**, then choose the **FISHHWB** tab.
+### Blender 4.2+ validation
 
-The Blender add-on intentionally avoids bringing back the previously removed generic cleanup, merge, atlas and Game-Ready panels. Remesh changes topology; LOD creates alternate meshes; the optional collision proxy extends the LOD result rather than introducing another competing geometry workflow.
+The Blender workflow now tests the extension against:
+
+- Blender 4.2 LTS
+- Blender 4.5 LTS
+- Blender 5.2 LTS
+
+The release path no longer publishes or validates a legacy pre-4.2 add-on ZIP.
 
 ## Languages
 
-Unity supports Auto plus 11 manual interface languages. Blender currently supports English, Japanese, Simplified Chinese and Korean in its compact sidebar.
+Unity supports Auto, English, Japanese, Simplified Chinese, Traditional Chinese, Korean, Spanish, French, German, Portuguese, Russian and Italian.
 
-## Release checks
-
-The repository validates package/version consistency, Unity editor source expectations, Blender packaging, and Blender runtime behavior. Blender runtime checks run against Blender 3.6 and 4.2 and cover Remesh, LOD, cache/history behavior, source preservation and the optional collision proxy path.
-
-Workflow: https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
+The Blender sidebar currently supports English, Japanese, Simplified Chinese and Korean for the main workflows, including the 4.2+ tools.
 
 ## Free for developers
 
-Optimize Your Project is free to use. Optional Patreon support helps fund testing, documentation and future one-click workflows, but the core project remains free.
+Optimize Your Project is free to use. The goal is to turn repetitive optimization work into clear actions that are useful to experienced developers and easier for newer creators to understand.
+
+Optional development support: https://www.patreon.com/cw/DedZed
+
+## Safety
+
+Optimization can affect appearance or runtime behavior. Keep source control or backups for production projects and inspect generated results in the target engine.
+
+Blender Remesh and LOD workflows preserve source objects. Lightmap UV generation does not change geometry or the primary UV channel. Identical mesh-data linking is Undoable, but linked duplicates intentionally share later mesh-data edits until unlinked again.
 
 ## Repository layout
 
 ```text
-package.json                         Unity package manifest
-version.json                         Unity / Blender update feed
-Editor/FISHHWBVR/                   Unity Editor implementation
-Blender/vr_optimizer_blender/       Blender add-on
-Blender/README.md                    Blender install and usage
-Documentation/                      Architecture and Roadmap
-scripts/                            Release/package checks
-.github/workflows/                  Package and runtime validation
+package.json                                  Unity package manifest
+version.json                                  Independent Unity / Blender versions
+Editor/FISHHWBVR/                            Unity Editor implementation
+Blender/vr_optimizer_blender/                Blender core and 4.2+ tools
+blender_manifest.toml                        Blender Extensions manifest
+scripts/test_blender.py                      Remesh / LOD regression tests
+scripts/test_blender_42.py                   Blender 4.2+ tool regression tests
+scripts/build_blender_extension.py           Blender Extensions ZIP builder
+.github/workflows/release-checks.yml         Package and Blender runtime validation
 ```
 
 ## Keywords
 
-Unity optimization, Blender add-on, one-click optimization, game optimization, asset optimization, texture optimization, mesh optimization, material optimization, UI optimization, raycast optimization, missing-script cleanup, LOD, collision proxy, collider workflow, mobile optimization, VR, XR, VRChat, indie development and developer tools.
+Unity optimization, Blender 4.2 extension, one-click optimization, game optimization, asset optimization, texture optimization, mesh optimization, lightmap UV, mesh instancing, collision proxy, LOD, VR, XR, VRChat, mobile optimization and indie development.
 
 ## Community
 
-[Website](https://fishhwb.github.io/) | [Discord](https://discord.gg/wZGxxkk4Jg) | [Patreon](https://www.patreon.com/cw/DedZed)
+Website: https://fishhwb.github.io/
 
-Optimize Your Project remains free. The Unity/general repository code is MIT-licensed; the Blender extension package is distributed under **GPL-3.0-or-later** to meet Blender Extensions requirements.
+Discord: https://discord.gg/wZGxxkk4Jg
+
+Patreon: https://www.patreon.com/cw/DedZed

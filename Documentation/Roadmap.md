@@ -1,4 +1,4 @@
-# Optimize Your Project: development roadmap
+# Optimize Your Project roadmap
 
 <img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="96">
 
@@ -10,265 +10,96 @@
   <a href="../CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-<p align="center">
-  <strong>Interface languages:</strong> English | 日本語 | 简体中文 | 한국어
-</p>
-
-<details open>
-<summary><strong>Install / Download Optimize Your Project</strong></summary>
-
-### Unity
-
-Open **Window > Package Manager**, press **+**, choose **Add package from git URL**, then paste:
-
-```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git
-```
-
-For the fixed v0.7.55 release:
-
-```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.55
-```
-
-### Blender
-
-The Blender build now produces two real ZIP packages:
-
-- **Blender 4.2+ / Blender Extensions:** `optimize-your-project-blender-extension-0.7.55.zip`
-- **Blender 3.6 legacy add-on:** `optimize-your-project-blender-0.7.55.zip`
-
-[![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
-
-Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.55` artifact. It contains both ZIP files. Use the **extension** ZIP for `extensions.blender.org`. The official Blender Extensions listing will replace this temporary download button after publication.
-
-The legacy ZIP also remains available from [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases) when a matching Blender release is published.
-
-### VRChat Creator Companion / VCC
-
-Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the chosen project.
-
-</details>
-
-> **New here?** Start with the [Overview](../README.md). You can read the complete documentation directly on GitHub before installing anything.
-
-
-**Current code: v0.7.55; editor runtime verification pending. Revised direction: 3 October 2026. All future milestones are plans, not shipped features.**
-
 ## Direction
 
-Make repetitive optimization jobs a selection and one clearly named button. Grow through distinct, useful outcomes rather than more remesh, LOD or texture-compression variants. Improve an existing action before adding another action that reaches the same result.
+Optimize Your Project should turn repetitive optimization jobs into clear one-click or batch actions without becoming a confusing general-purpose toolbox.
 
-New means new to this toolkit. This roadmap does not claim these techniques have never been implemented elsewhere. Native editor functions should be reused; a wrapper belongs here only when it removes meaningful repeated work, handles a batch correctly or supplies recovery and verification.
+Unity and Blender have independent release numbers. Blender support now starts at **4.2** and uses the Blender Extensions system. New Blender work should target modern APIs and be tested on active LTS releases rather than carrying legacy compatibility that blocks useful features.
 
-Unity and Blender remain the supported integrations. Stabilize these before adding engines. Blender remains focused on Remesh and LOD until a separate new workflow proves useful and reliable. Do not restore previously removed experimental mesh cleanup, atlas or Game-Ready tools simply to fill the roadmap.
+## Current baseline
 
-## Existing capability baseline
+### Unity v0.7.60
 
-| Area | Current v0.7.4 behavior | Future ownership |
-| --- | --- | --- |
-| Unity textures | Compression/size caps, recognized normal/data import fixes, largest-texture and Read/Write review | One texture workflow; new import corrections extend it |
-| Unity meshes | Model compression; oversized import fix adds vertex/polygon import optimization without reducing topology | One model-import workflow; compression and triangle reduction are different outcomes |
-| Unity materials | Exact duplicate reference remapping, trailing empty renderer-slot cleanup, combined safe material fix | One material workflow with shared collectors |
-| Unity effects/lights | Particle limits and disabling realtime shadows | Improve these actions internally; no duplicate default buttons |
-| Unity review | Project scan, character review, category findings, search and selection scope | One findings system and the existing search field |
-| Blender geometry | Copy-based remesh, active-object and selected-object LOD generation | Remesh plus one LOD workflow with automatic selection scope |
-| Shared workflow | Outcome summaries, languages, source preservation and update checks | Extend shared infrastructure rather than copy it |
+- texture optimization and import repair,
+- model-import compression and mesh import optimization,
+- particle limits,
+- safe material-cost fixes,
+- baked-light setup,
+- missing-script cleanup,
+- UI raycast optimization,
+- project and character review tools,
+- importer history, protection, trial and restore infrastructure.
 
-Review helpers are useful but do not count as automated optimizations. Remesh changes topology, LOD creates alternate meshes, and importer compression changes stored data; do not merge them as though they were interchangeable.
+### Blender v0.7.61
 
-## Today's cleanup: v0.7.55 | Implemented in code, runtime verification pending
+- One-Click Remesh with guarded UV/material/deformation preservation,
+- LOD0 / LOD1 / LOD2 generation,
+- optional collision proxy from LOD2,
+- generated-output reuse and manual-edit protection,
+- Generate Lightmap UV,
+- Link Identical Mesh Data,
+- Blender 4.2+ Extensions packaging,
+- runtime validation on Blender 4.2 LTS, 4.5 LTS and 5.2 LTS.
 
-- One button should finish a useful setup job, not make the user repeat inspector edits.
-- Unity **Optimize Lighting** prepares all loaded saved scenes: lights become Baked, eligible static meshes contribute GI and receive lightmaps, baked GI is enabled and Unity's bake is started.
-- Moving/animated/physics-driven meshes are excluded. Custom scripted motion cannot be inferred. Lighting and batching static flags are set; navigation and occlusion flags are not blindly enabled.
-- Keep existing bake-quality settings. Do not guess light-probe placement, reflection layout or custom UV requirements.
-- Preserve rigs and geometry. Use Undo for setup; baked output is managed by Unity and is not covered by setup Undo.
-- Blender stays Remesh + LOD: triangle target slider, remesh copy, one selection-aware LOD action. No additional cleanup panel.
-- Material cleanup has one combined action; texture sizing and asset reviews stay collapsed.
-- Finish Unity bake/Undo tests and Blender runtime triangle-budget tests before tagging v0.7.55.
-- Model-import fixes are consolidated into the owning mesh button. Further roadmap work remains planned.
+## Blender 0.7.62 target
 
-## v0.7.5: consolidate before expanding | Planned
+Focus on useful static-mesh preparation without recreating the removed cleanup wall.
 
-- **Materials:** make the existing combined safe material fix the primary action. Move its two component actions into optional details; keep one implementation for each operation. Preserve duplicate assets and intentional extra material passes.
-- **Model imports:** replace competing compression and oversized-import entry points with one primary **Optimize Model Imports** workflow. Retain compression-only access in details. Describe exactly what changes; never suggest that compression removes triangles.
-- **Blender LODs (UI consolidated in v0.7.55):** expose one **Create LODs** button that uses the active object or selected supported objects automatically. Reuse the existing guarded implementation and preserve sources.
-- **Textures:** retain compression/size and import correction as distinct operations inside one compact section. They solve different problems; avoid a second generic image-compression feature.
-- **Reviews:** put largest textures, readable memory and heavy meshes behind **Review** or the existing search. Reuse project and character findings rather than adding parallel report panels.
-- Remove superseded controls, obsolete help and localization entries after checking callers, tests and compatibility. Keep old operator identifiers only where saved workflows need compatibility.
-- Publish a task inventory mapping each outcome to one implementation and primary UI route.
-- Keep the installed version at v0.7.4 until implementation and editor verification justify a release.
+Candidate work:
 
-## v0.7.6: recovery and reliable batches | Planned
+- **Optimize Material Slots**: remove only truly unused material slots with explicit index remapping and Undo.
+- **Batch Lightmap UV** improvements for generated LOD collections and selected static-prop groups.
+- **Instance Review**: show which selected meshes could be safely linked before changing data.
+- **Collider Simplification**: optional independent triangle target for collision proxies instead of always copying LOD2 exactly.
+- Better result summaries showing estimated duplicate mesh-data savings and UV channel outcomes.
 
-- **Restore Last Batch:** record exact importer settings before changes; restore only entries whose current state still matches that batch's output. Report conflicts instead of overwriting later edits.
-- Use native Undo for scene edits and preserved source copies for Blender geometry.
-- Share scope resolution, unique-asset processing, cancellation and outcome reporting across actions.
-- Run an unchanged second pass without repeated reimports. Retry failed items through the existing result panel.
-- These are infrastructure improvements, not additional optimization tasks or a second help toolbox.
+## Blender 0.7.7 target
 
-## v0.8.0: UI rendering waste | Planned, Unity first
+- optional export-preparation metadata for Unity, Godot and Unreal without forcing engine-specific settings into the mesh,
+- guarded transform review for negative or non-uniform scale before LOD/export jobs,
+- optional collection organization for generated LOD and collider outputs,
+- improved static-mesh batch cancellation and retry reporting.
 
-- **Optimize UI Raycasts:** batch-disable raycast targets only on explicitly eligible decorative graphics. Exclude controls, custom pointer handlers and uncertain runtime uses; preview uncertain candidates.
-- **Optimize Hidden UI Work:** support an explicit visibility contract for selected UI roots and stop eligible offscreen rendering work through a reversible setup. Do not guess whether gameplay scripts may stop.
-- Use one UI section with relevant actions; avoid a new dashboard.
-- Verify input, navigation, custom events and hide/show behavior. Measure UI rendering or raycast work in representative scenes before claiming a benefit.
+## Blender 0.8 target
 
-## v0.8.1: animation data waste | Planned, Unity first
+- **Static Mesh Optimize Selection** orchestration button that coordinates already-proven actions instead of duplicating their implementations,
+- measured mesh-data and material-slot savings,
+- optional lightmap workflow presets for common real-time asset sizes,
+- stronger Blender 5.x API usage where it provides a clear benefit while retaining 4.2 as the minimum until that becomes unreasonable.
 
-- **Optimize Animation Data:** create recoverable import changes or clip copies for explicitly approved static-prop clips; remove redundant constant curves only when bindings and behavior remain equivalent.
-- Treat reviewed clip compression as an option in this workflow, not a competing button.
-- Preserve events, root motion, rig settings and required bindings. Skip humanoid, additive, procedural and unsupported clips until tested.
-- Compare sampled transforms across the clip and check events before counting success.
+## Unity 0.8 target
 
-## v0.8.2: shader build waste | Planned, Unity first
+- safe UI rendering-work reductions,
+- animation-data cleanup for explicitly supported clips,
+- shader build-waste reduction using build evidence,
+- asset-loading and packaging diagnostics with guarded fixes,
+- collider proxy integration where imported generated Blender metadata can help without requiring Blender.
 
-- **Reduce Shader Build Waste:** provide a reversible, pipeline-specific build rule for verified unused variant categories.
-- Use actual build evidence and explicit supported rendering configurations. A material scan alone cannot prove a variant unused at runtime.
-- Preserve runtime keyword changes, quality tiers, addressable content and shader warming requirements.
-- Verify representative builds and rendering paths; report measured variant count, build time and build-size changes.
-- Keep unsupported pipelines in review mode. Do not expose a universal strip-all button.
+## 0.9 target
 
-## v0.8.3: asset loading and packaging waste | Planned, Unity first
+- one selection-based orchestration route per stable integration,
+- recovery and conflict handling for every destructive or metadata-changing batch,
+- performance/result evidence where it can be measured reliably,
+- remove actions that overlap or do not prove useful.
 
-- **Fix Duplicate Build Inclusion:** use build reports and supported packaging metadata to find content redundantly included through Resources, scenes or addressable groups, then apply a reviewed packaging change.
-- **Optimize Loading Settings:** batch only settings supported by a declared loading contract; preserve runtime access and record restoration data.
-- Treat dependency analysis as part of this workflow, not a separate unused-file deletion tool.
-- Never delete an asset because static references were not found. Dynamic paths and external content remain unresolved until verified.
-- Measure included bytes and loading behavior before reporting savings.
+## 1.0 target
 
-## v0.8.4: collision cost | Planned
+- a small set of dependable one-click workflows,
+- at least 90% coverage of the published safely automatable task inventory for each declared stable integration,
+- clear supported-version policy,
+- no duplicate buttons that perform the same outcome,
+- no automatic deletion of ambiguous project content,
+- source-preserving or Undo-backed behavior wherever practical.
 
-- **Create Collider Proxies:** generate separate collider candidates for explicitly selected static props and connect them through a reversible action.
-- Reuse existing generated geometry where appropriate; do not introduce a second visual remesher.
-- Preserve visual meshes, collision layers, triggers and gameplay intent. Skip animated, concave-sensitive and unsupported objects.
-- Verify contact behavior and physics cost. Primitive proxies need a compact fit preview before applying when the shape changes.
+## Admission rules
 
-## v0.8.5: supported draw submission improvements | Planned
+A new optimization action should only ship when it has:
 
-- Extend the existing material workflow with **Enable Compatible Instancing** only for verified shader, pipeline and renderer combinations.
-- Do not rename duplicate-material cleanup as a new draw-call optimizer; material identity alone does not guarantee fewer draw calls.
-- Keep batching, instancing and dynamic material behavior distinct internally while sharing one review and result panel.
-- Require a representative rendering comparison and profiler evidence. Unsupported or ambiguous candidates remain review-only.
+- a distinct outcome,
+- a real repetitive manual job to replace,
+- clear supported inputs,
+- a recovery route,
+- regression coverage,
+- no safer existing button that should simply be extended instead.
 
-## v0.9.0: one orchestration button | Planned
-
-- **Optimize Selection:** coordinate already verified actions using the detected scope and explicit eligibility rules.
-- Resolve conflicting settings before applying changes, deduplicate assets and reimport once where possible.
-- Quality-sensitive choices use one compact preview. Approved repeatable work runs without repeated setup.
-- This is a convenience entry point, not another set of implementations and not extra task coverage.
-- Retain focused actions for users who need a specific outcome.
-
-## v0.9.1: prove usefulness and remove clutter | Planned
-
-- Measure changed settings, included bytes, animation data, shader variants or relevant profiler counters according to the task.
-- Compare results under the same build target, scene and capture conditions. Label estimates and do not promise FPS improvements from asset counts.
-- Remove or fold in actions with duplicate outcomes, confusing scope or no demonstrated practical value.
-- Keep comparisons and restoration in the existing results panel.
-- Test clean installs, upgrades, large batches, cancellation, failure recovery and repeated runs in supported Unity and Blender versions.
-
-## v0.9.2: character compatibility | Planned
-
-- Apply existing verified workflows to character scopes only when rigs, shape keys, events and runtime access remain intact.
-- Extend the existing Character / Avatar page rather than adding a parallel character optimizer.
-- Optional creator-platform checks can supply eligibility rules for the same actions.
-- Do not add separate VRChat, ChilloutVR and Resonite optimization buttons that merely repeat a generic batch.
-
-## v0.9.3: focused integration evaluation | Planned
-
-- Evaluate Godot and Unreal only after the core workflows meet the release gates.
-- Prefer unmet automation needs such as supported UI, animation, build-dependency or loading workflows over another texture compressor or LOD wrapper.
-- Ship at most one experimental integration at a time, with native APIs, recovery and a published tested capability list.
-- Keep an integration deferred if its proposed actions add little beyond native tools. Engine count is not a release target.
-- Other DCCs, consoles and social-platform integrations remain requests until access and a distinct useful workflow are established.
-
-## v0.9.4: localization and usability | Planned
-
-- Review the four existing languages against the final compact UI before expanding translations.
-- Add Spanish, French, German and further community languages only when critical warnings and action descriptions can be reviewed.
-- Keep English fallback, test long text and ensure unsupported actions do not appear as working buttons.
-- Common tasks must be understandable and reachable without reading a long manual.
-
-## v0.9.5: release candidate | Planned
-
-- Freeze the verified task inventory and publish each supported scope and restriction.
-- Close high-value gaps before introducing more categories.
-- Complete editor compilation, representative runtime checks, restore/conflict checks and packaging validation.
-- Mark unfinished integrations experimental; do not inflate coverage with reports, wrappers or repeated buttons.
-
-## v1.0.0: useful optimization without clutter | Target
-
-- A small set of proven actions with one primary route per distinct outcome.
-- One selection-based batch, relevant focused actions, optional review and recovery.
-- At least 90% one-action coverage of the published, safely automatable task inventory for each declared stable integration and target.
-- Count tasks, not buttons. Reports, navigation, localization, recovery and orchestration do not inflate optimization coverage.
-- Publish remaining gaps and verification evidence. The 90% goal is task coverage, not a performance improvement promise.
-- Keep the toolkit free and useful without a VR SDK.
-
-## Superseded roadmap items
-
-| Earlier proposal | Revised treatment |
-| --- | --- |
-| New searchable action panel | Already shipped in v0.7.4; improve the current search |
-| More particle-limit and shadow buttons | Extend existing actions only when they add verified behavior |
-| Several material cleanup/consolidation buttons | One primary material workflow; specialized options in details |
-| Separate compression and heavy-model fix routes | One model-import workflow; explicit compression-only option |
-| Active LOD and batch LOD buttons | One selection-aware LOD route |
-| More remesh, decimation and image-compression variants | Deferred; improve the existing implementation instead |
-| Atlas save/export preparation | Removed from this plan; current Blender has no supported atlas generator |
-| Missing-reference help suite | Optional review navigation only; ambiguous repairs remain manual |
-| Multiple memory/draw-call/help dashboards | Existing search and findings route to the owning action |
-| Blanket target/scene/platform optimize buttons | One orchestration workflow with explicit scope and eligibility |
-| Godot/Unreal texture and LOD previews | Replaced with distinct-workflow evaluation after core stability |
-| Automatic unused-asset deletion or Read/Write disabling | Excluded without an explicit verified usage contract |
-
-## Admission and release rules
-
-- Before adding an action, identify its distinct outcome, current overlap, repeated manual work, supported inputs, recovery route and verification evidence.
-- If an existing action achieves the same outcome, extend that action and retire the redundant route.
-- Prefer one primary action per section. Advanced settings stay collapsed; detailed findings appear only after review.
-- One click means select a scope, press an action and receive a clear result. A button that opens a manual checklist is a helper.
-- Skip uncertain cases with a reason. Never conceal partial failures behind a success count.
-- Reuse native editor APIs and common task implementations. Avoid speculative gameplay rewrites and automatic art-direction choices.
-- Match package, add-on, update feed and release tag versions only for actual releases.
-- Preserve historical package/type names where compatibility requires them.
-- This update changes the roadmap and public future-development description. Runtime consolidation and new tools require implementation in their planned milestones.
-
-### Owning-button rule for v0.7.55
-
-Related operations belong to their existing action. Optimize Textures includes recognized texture import repair alongside size/compression. Optimize Model Imports includes vertex/polygon import optimization alongside compression. Material fixes use the combined action. Reviews remain diagnostic and do not introduce competing fix buttons. Model topology is preserved; Blender handles actual remesh and LOD generation.
-
-
-## v0.7.55 additions: smarter owning buttons
-
-These additions stay in v0.7.55 and extend existing actions rather than introducing another optimization dashboard.
-
-| Capability | Supported scope | Behavior |
-| --- | --- | --- |
-| Finish Lighting Setup | Unity loaded saved scenes and supported imported static models | Generate secondary UVs only where the mesh lacks UV1, then prepare static lighting and request a bake. Existing UVs are not repacked. Unsupported/protected or manually edited imports are skipped. |
-| Optimize New Changes | Unity texture/model/lighting-UV import jobs | Persistent per-project source/settings history skips accepted unchanged work and preserves later manual importer edits. |
-| Optimize New Changes | Blender Remesh/LOD | Reuse verified generated copies when source geometry/settings are unchanged; replace only untouched owned outputs after a successful source update. Preserve edited/protected outputs. |
-| Protect Important Detail | Unity texture/model assets and Blender source objects | Explicit protection opts assets out of importer/UV changes or topology-changing jobs. No automatic guessing about faces, signs or hero objects. |
-| Test and Keep Improvements | Optional Unity texture/model import trial | Compare sampled native texture/mesh asset memory before/after. Restore a changed trial when no saving is measured or measurement is unavailable. |
-| Restore Last Import Batch | Unity recorded importer batches | Restore metadata only if the source and current importer state still match the recorded output. Preserve later edits and report conflicts. |
-
-### Using the compact controls
-
-Unity: expand an action's existing settings and open **Batch options**. Select texture/model assets, a material, or a scene hierarchy to protect its referenced textures/models. Removing protection does not remove manual-edit protection; **Reset history for selection** explicitly makes current import settings the next baseline. **Restore last import batch** restores the most recent batch that actually changed imports, including lighting UV preparation.
-
-Blender: **Protect detail** is beside the selected object. Repeated actions on the original source reuse outputs. Reset history on the original source only when you deliberately want fresh copies while preserving previous outputs. Changed sources replace verified untouched generated sets after successful generation. History is stored as object metadata; geometry remains preserved. Renaming/duplicating a source may create a fresh set rather than taking ownership of another source's copies.
-
-### Limits and verification
-
-- The memory trial is an editor asset-memory experiment, not an FPS benchmark or an appearance check. It does not prove a visual change is acceptable. Model compression may help disk/build size without reducing sampled native memory; the trial can therefore reject it even when normal optimization is useful.
-- Play-mode frame-time, player-build and rendered-image comparisons remain future work. Do not advertise automatic whole-project performance certification in v0.7.55.
-- Unity importer history lives in ProjectSettings/OptimizeYourProjectHistory.asset. Keep it with project backups; missing history means a new baseline. Import source files are preserved. Source changes or unrecognized metadata changes can require review.
-- Scene lights/flags use native Undo; generated bake files are outside importer restore. Existing scene settings and known dynamic geometry still require the restrictions documented above.
-- UV readiness checks channel presence, not full chart overlap/distortion quality. Generated UVs use Unity's importer defaults. Custom/procedural geometry and unsupported importers are reported, not silently rebuilt.
-- Unity Edit Mode regression tests for caching, manual edits, protection, rollback, restoration and memory-trial rejection are in Editor/Tests. Enable package tests with Unity Test Framework to run them. Unity editor compilation and bake validation are still required before tagging.
-- Blender runtime regression checks include unchanged reuse, output rename, source updates, manual-edit preservation and detail protection on supported CI versions.
-
-### v0.7.55 Remesh deformation transfer
-
-Implemented under the existing Remesh button: neutral-basis remeshing, nearest-triangle interpolation of vertex weights and relative shape displacements, armature reconnection, supported key animation/driver transfer and deformation-aware incremental records. The source is preserved. Relative blendshapes are supported; absolute keys, NLA shape stacks and incompatible modifier stacks remain unsupported. LOD deformation transfer is separate future work. Surface projection requires visual pose/expression checks and is not an exact preservation guarantee.
+Reports, navigation helpers and duplicated wrappers do not count as optimization coverage.

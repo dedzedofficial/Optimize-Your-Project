@@ -1,4 +1,4 @@
-"""Build the Blender 4.2+ extension ZIP used for Blender Extensions submission."""
+"""Build the Blender 4.2+ Extensions ZIP."""
 from pathlib import Path
 import tomllib
 import zipfile
@@ -15,6 +15,7 @@ required = [
     root / "Blender" / "EXTENSION_LICENSE.txt",
     root / "Blender" / "vr_optimizer_blender" / "__init__.py",
     root / "Blender" / "vr_optimizer_blender" / "deform_transfer.py",
+    root / "Blender" / "vr_optimizer_blender" / "tools_42.py",
     root / "Blender" / "vr_optimizer_blender" / "optimize-your-project-logo.png",
 ]
 for path in required:
@@ -39,6 +40,8 @@ with zipfile.ZipFile(archive) as package:
         "Blender/__init__.py",
         "Blender/EXTENSION_LICENSE.txt",
         "Blender/vr_optimizer_blender/__init__.py",
+        "Blender/vr_optimizer_blender/deform_transfer.py",
+        "Blender/vr_optimizer_blender/tools_42.py",
         "Blender/vr_optimizer_blender/optimize-your-project-logo.png",
     ]:
         if required_name not in names:
