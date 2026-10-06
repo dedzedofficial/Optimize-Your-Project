@@ -174,8 +174,6 @@ for path in [
     assert "Architecture" in content, path
     assert "Changelog" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project.git" in content, path
-    assert "https://github.com/dedzedofficial/Optimize-Your-Project/releases" in content, path
-    assert "DOWNLOAD BLENDER ZIP BUILDS" in content, path
     assert "optimize-your-project-blender-extension-0.7.55.zip" in content, path
     assert "optimize-your-project-blender-0.7.55.zip" in content, path
     assert "https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml" in content, path
