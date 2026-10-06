@@ -10,9 +10,9 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-**Unity v0.7.60 | Blender v0.7.61 | General developer optimization tools | FISHHWB | Ded Zed**
+**v0.7.61 | Unity + Blender 4.2+ | General developer optimization tools | FISHHWB | Ded Zed**
 
-Optimize Your Project is a free general developer optimization toolkit for reducing repetitive project cleanup and optimization work. Unity and Blender have independent release versions so either integration can improve without forcing an unrelated version bump.
+Optimize Your Project is a free general developer optimization toolkit for reducing repetitive project cleanup and optimization work. Unity and Blender now share one project release version so the package, documentation and downloads stay easier to follow.
 
 ## Install / Download Optimize Your Project
 
@@ -24,15 +24,15 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For fixed Unity v0.7.60:
+For fixed v0.7.61:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.60
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.61
 ```
 
 ### Blender 4.2+
 
-Blender support now targets the modern **Blender Extensions** system only. The minimum supported Blender version is **4.2**.
+Blender support targets the modern **Blender Extensions** system only. The minimum supported Blender version is **4.2**.
 
 Open the latest successful release-check workflow:
 
@@ -54,7 +54,7 @@ vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Pro
 
 The Unity package does not require a VR SDK for normal projects.
 
-## Unity v0.7.60
+## Unity v0.7.61
 
 The compact Unity Project / Character interface includes:
 
@@ -68,9 +68,17 @@ The compact Unity Project / Character interface includes:
 - project reviews for large textures, Read/Write memory, heavy meshes and full scans
 - importer history, protection, memory trials and last-batch restoration under Advanced settings
 
+### Existing-feature improvements in 0.7.61
+
+- Texture optimization no longer creates unnecessary platform overrides when the base texture limit is already equal to or stricter than the selected target.
+- Existing stricter platform texture limits are preserved instead of being increased.
+- Particle lifetime capping now supports both Constant and Two Constants lifetime modes while leaving authored curve-based lifetimes untouched.
+- Realtime shadow optimization now independently refuses disabled, Mixed and Baked lights, and records prefab-instance changes correctly.
+- The Unity update checker now reads the unified project version feed while remaining compatible with the older Unity-specific field.
+
 ## Blender v0.7.61
 
-Blender is now focused on **4.2+** rather than carrying a legacy pre-4.2 release path.
+Blender is focused on **4.2+** rather than carrying a legacy pre-4.2 release path.
 
 ### One-Click Remesh
 
@@ -144,11 +152,13 @@ Use source control or backups for production projects and inspect generated resu
 
 Blender Remesh and LOD preserve source objects. Lightmap UV generation preserves geometry and primary UVs. Identical mesh-data linking is Undoable, but linked duplicates intentionally share later mesh-data edits until unlinked again. Collider render-data stripping is restricted to generated collision proxies.
 
+Unity importer changes use guarded history and restoration. Scene-object optimizations use Unity Undo where practical.
+
 ## Repository layout
 
 ```text
 package.json                                  Unity package manifest
-version.json                                  Independent Unity / Blender versions
+version.json                                  Unified project release version
 Editor/FISHHWBVR/                            Unity Editor implementation
 Blender/vr_optimizer_blender/                Blender core and 4.2+ tools
 blender_manifest.toml                        Blender Extensions manifest
