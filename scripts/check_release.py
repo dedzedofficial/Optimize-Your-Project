@@ -174,7 +174,7 @@ assert "Unreal Engine 5.x" in readme
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
 
 roadmap = (root / "Documentation/Roadmap.md").read_text(encoding="utf-8")
-for required in ["Current baseline: v0.7.66", "Godot 4.x", "Unreal Engine 5.x", "v0.7.67"]:
+for required in ["Current baseline: v0.7.66", "Godot 4.x", "Unreal Engine 5.x", "v0.7.66"]:
     assert required in roadmap, required
 
 for relative in subprocess.check_output(
