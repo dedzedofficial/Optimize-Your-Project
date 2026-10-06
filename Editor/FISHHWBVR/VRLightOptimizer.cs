@@ -8,11 +8,14 @@ namespace FISHHWB.VROptimizer
         // Called by the confirmed realtime shadow batch.
         public static bool Optimize(Light light, VRSettings settings)
         {
-            if (!light) return false;
-            bool shadows = light.shadows != LightShadows.None;
-            if (!shadows) return false;
+            if (!light || !light.enabled || light.lightmapBakeType != LightmapBakeType.Realtime)
+                return false;
+            if (light.shadows == LightShadows.None)
+                return false;
+
             Undo.RecordObject(light, "Optimize Light");
-            if (shadows) light.shadows = LightShadows.None;
+            light.shadows = LightShadows.None;
+            PrefabUtility.RecordPrefabInstancePropertyModifications(light);
             EditorUtility.SetDirty(light);
             return true;
         }
