@@ -108,11 +108,13 @@ class Blender42ToolsTests(unittest.TestCase):
         first.select_set(True)
         second.select_set(True)
         bpy.context.view_layer.objects.active = first
+        bpy.context.view_layer.update()
 
         first_snapshot = snapshot(first.data)
         second_transform = second.matrix_world.copy()
         self.assertIsNot(first.data, second.data)
         self.assertEqual(bpy.ops.fishhwb.link_identical_mesh_data(), {"FINISHED"})
+        bpy.context.view_layer.update()
         self.assertIs(first.data, second.data)
         self.assertEqual(first_snapshot, snapshot(second.data))
         self.assertEqual(second_transform, second.matrix_world)
@@ -160,7 +162,6 @@ finally:
 if not result.wasSuccessful():
     raise RuntimeError("Blender 4.2+ optimization regression checks failed")
 
-# Verify the extension entry point registers the 4.2+ subpanel and operators.
 spec = importlib.util.spec_from_file_location(
     "optimize_your_project",
     repo_root / "__init__.py",
