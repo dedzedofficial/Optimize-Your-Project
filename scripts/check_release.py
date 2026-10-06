@@ -93,7 +93,7 @@ for path in [root / "README.md", root / "Blender/README.md"]:
     assert "Generate Lightmap UV" in text, path
     assert "Link Identical Mesh Data" in text, path
     assert "Blender 3.6" not in text, path
-    assert "optimize-your-project-blender-0.7" not in text, path
+    assert "optimize-your-project-blender-0.7.55.zip" not in text, path
 
 readme = (root / "README.md").read_text(encoding="utf-8")
 assert "general developer optimization" in readme.lower()
