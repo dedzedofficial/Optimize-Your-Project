@@ -40,6 +40,8 @@ Download the installable v0.7.55 package directly:
 
 [![DOWNLOAD BLENDER ZIP BUILDS](https://img.shields.io/badge/DOWNLOAD%20BLENDER-ZIP%20BUILDS-EA7600?style=for-the-badge&logo=blender&logoColor=white)](https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml)
 
+Release history: [GitHub Releases](https://github.com/dedzedofficial/Optimize-Your-Project/releases)
+
 Install the downloaded ZIP directly using **Install from Disk**. Do not extract it. These packages include surface/UV preservation and the latest blendshape correspondence fix. Restart Blender after replacing an older installation of the same version.
 
 ### VRChat Creator Companion / VCC
