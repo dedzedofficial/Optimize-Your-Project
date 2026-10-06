@@ -43,6 +43,12 @@ for required in [
     "window.minSize = new Vector2(500, 570)",
     "DrawOptimizeArea",
     'T("one_click")',
+    'Primary(T("optimize_textures"))',
+    'Primary(T("optimize_models"))',
+    'Primary(T("optimize_particles"))',
+    'Primary(T("fix_materials"))',
+    'Primary(T("optimize_ui_raycasts"))',
+    'Primary(T("clean_missing_scripts"))',
     "VRMissingScriptCleaner.Clean",
     "VRUIRaycastOptimizer.Optimize",
     "VRUnusedAssetCleaner.DeleteUnused",
@@ -51,11 +57,12 @@ for required in [
     "models-v0765",
 ]:
     assert required in window, required
+assert "RunQuickOptimize" not in window
+assert "ApplyConfiguration(" not in window
 assert "FISHHWB VR Optimizer" not in window
 
 localization = (root / "Editor/FISHHWBVR/OYPLocalization.cs").read_text(encoding="utf-8")
 for required in [
-    '"quick_optimize"', '"config_balanced"', '"config_mobile"', '"config_vr"',
     '"danger_zone"', '"unused_assets_warning"', '"delete_unused_assets"',
 ]:
     assert required in localization, required
@@ -105,10 +112,11 @@ for required in [
 
 proxy = (root / "__init__.py").read_text(encoding="utf-8")
 for required in [
-    '"version": (0, 7, 65)',
+    '"version": (0, 7, 66)',
     '"blender": (4, 2, 0)',
     "_draw_core_765",
-    'quick.label(text="QUICK OPTIMIZE"',
+    'primary.label(text="PRIMARY ACTIONS"',
+    'row.operator("fishhwb.one_click_remesh"',
     'row.operator("fishhwb.generate_lightmap_uv"',
     'row.operator("fishhwb.link_identical_mesh_data"',
     'row.operator("fishhwb.strip_collider_render_data"',
@@ -116,6 +124,7 @@ for required in [
     "if cls is not _tools42.FISHHWB_PT_optimizer_42",
 ]:
     assert required in proxy, required
+assert "QUICK OPTIMIZE" not in proxy
 
 tools = (root / "Blender/vr_optimizer_blender/tools_42.py").read_text(encoding="utf-8")
 for required in [
@@ -165,7 +174,7 @@ assert "Unreal Engine 5.x" in readme
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
 
 roadmap = (root / "Documentation/Roadmap.md").read_text(encoding="utf-8")
-for required in ["Current baseline: v0.7.66", "Godot 4.x", "Unreal Engine 5.x", "v0.7.66"]:
+for required in ["Current baseline: v0.7.66", "Godot 4.x", "Unreal Engine 5.x", "v0.7.67"]:
     assert required in roadmap, required
 
 for relative in subprocess.check_output(
