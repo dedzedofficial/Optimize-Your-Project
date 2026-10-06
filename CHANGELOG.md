@@ -10,6 +10,37 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
+## 0.7.65
+
+### Project release
+
+- Bumped the unified Unity and Blender release to **v0.7.65**.
+- Consolidated the current-engine quality work planned across the earlier 0.7.62 to 0.7.65 milestones into one release.
+- Kept Unity and Blender on the same project version and release feed.
+
+### Unity
+
+- Rebuilt the Editor window for readability with a larger minimum width, separate navigation and language rows, wrapped button text and a two-row footer so controls no longer clip at normal window sizes.
+- Replaced the old crowded One Click area with a single **Quick Optimize** section.
+- Added **Balanced**, **Mobile** and **VR** configuration buttons for conservative texture, particle and model-import targets.
+- Added **Optimize Current Scope** and **Optimize Character / Avatar** bundled workflows. They run texture, model import, particle, material, UI-raycast and missing-script jobs behind one confirmation while leaving lighting and realtime-shadow changes explicit.
+- Updated **Optimize Model Imports** so stronger existing mesh-compression settings are preserved instead of being reduced to the requested level.
+- Updated importer-history policies to `textures-v0765` and `models-v0765` so the new release logic can be evaluated correctly on previously processed assets.
+- Updated **Optimize UI Raycasts** to preserve Selectable hierarchies and UI already blocked by CanvasGroup in addition to existing EventSystem-interface checks.
+- Updated **Clean Missing Scripts** with a preflight count and confirmation before removing broken MonoBehaviour entries.
+- Added **Find and Permanently Delete Unused Assets** in a separate Danger Zone.
+- The unused-asset cleaner only considers conservative asset categories, scans serialized inbound dependencies, protects common dynamic-use paths and externally marked assets, previews candidates and requires two confirmations.
+- Permanent asset deletion explicitly warns that Unity Undo cannot restore deleted project files and that runtime-only references cannot always be detected.
+
+### Blender 4.2+
+
+- Reworked the sidebar around one readable **Quick Optimize** panel.
+- Remesh, LOD, Lightmap UV, identical-mesh linking and collider render-data cleanup are now grouped in the main panel instead of being split between stacked panels.
+- Added width-aware wrapped descriptions and result text to reduce clipping in narrow Blender sidebars.
+- Increased action-row height for easier scanning and selection.
+- Kept Remesh/LOD source preservation, generated-output history, collision proxies and Blender 5.x slotted Action support intact.
+- Kept runtime CI targets at Blender 4.2 LTS, 4.5 LTS and 5.2 LTS.
+
 ## 0.7.61
 
 ### Project release
@@ -20,30 +51,18 @@
 
 ### Unity
 
-- Kept the existing compact Project / Character interface and existing one-click action layout.
 - Improved **Optimize Textures** so it does not create unnecessary platform overrides when the base importer already uses an equal or stricter size limit.
 - Existing stricter platform texture limits are preserved instead of being increased.
 - Improved **Optimize Particles** lifetime capping to support both Constant and Two Constants modes while preserving authored curve-based lifetime data.
 - Tightened **Disable Realtime Shadows** so the optimizer itself rejects disabled, Mixed and Baked lights and records prefab-instance changes correctly.
 - Updated the Unity update checker to read the unified project version first while remaining compatible with the older Unity-specific version field.
-- Retained Clean Missing Scripts, Optimize UI Raycasts, model-import compression, material-cost fixes, lighting setup, project review and importer-history workflows.
 
 ### Blender 4.2+
 
-- Moved the supported Blender release path to **Blender 4.2+ Extensions only**.
-- Stopped publishing and validating the legacy pre-4.2 add-on ZIP.
-- Added **Generate Lightmap UV** for selected supported static meshes.
-- Lightmap UV generation preserves geometry and the primary UV map, only creates `LightmapUV` when it can safely become the second UV channel, and refuses to replace existing secondary UV data automatically.
-- Replaced context-sensitive UV operators with a deterministic non-overlapping per-face lightmap atlas so the tool works reliably in interactive and headless Blender.
-- Added **Link Identical Mesh Data** for exact selected static duplicates.
-- Exact duplicate linking preserves object transforms and skips modifiers, shape keys, linked-library meshes and object-level material overrides.
-- Added **Strip Collider Render Data** for generated collision proxies, removing materials, UVs and color attributes while preserving geometry.
-- Added a compact **Blender 4.2+ Tools** child panel beneath the existing Remesh / LOD interface.
-- Kept One-Click Remesh, LOD generation and the optional LOD2 collision proxy intact.
+- Moved the supported Blender release path to Blender 4.2+ Extensions only.
+- Added Generate Lightmap UV, Link Identical Mesh Data and Strip Collider Render Data.
 - Updated shape-key animation handling for Blender 5.x slotted Actions/channelbags while retaining Blender 4.2 compatibility.
-- Added Blender 4.2+ regression tests for Lightmap UV generation, island separation, secondary-UV protection, exact mesh linking, collider render-data stripping and operator guards.
-- Updated Blender runtime CI to test **4.2 LTS, 4.5 LTS and 5.2 LTS**.
-- Updated the Blender extension package builder to include the 4.2+ tools module.
+- Updated Blender runtime CI to test Blender 4.2 LTS, 4.5 LTS and 5.2 LTS.
 
 ## 0.7.60
 
