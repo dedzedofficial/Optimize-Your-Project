@@ -14,7 +14,6 @@ unity_manifest = json.loads((root / "package.json").read_text(encoding="utf-8"))
 versions = json.loads((root / "version.json").read_text(encoding="utf-8"))
 extension_manifest = tomllib.loads((root / "blender_manifest.toml").read_text(encoding="utf-8"))
 
-# Unity remains on its independent release line.
 assert unity_manifest["displayName"] == "Optimize Your Project"
 assert unity_manifest["name"] == "com.fishhwb.vr-optimizer"
 assert unity_manifest["version"] == versions["unity"] == "0.7.60"
@@ -22,7 +21,6 @@ assert versions["unity_tag"] == "v" + versions["unity"]
 assert versions["unity_url"].endswith("/releases/tag/" + versions["unity_tag"])
 assert (root / "Editor/FISHHWBVR/VRUpdateChecker.cs").read_text().find('"' + versions["unity"] + '"') >= 0
 
-# Blender is extension-only and supports Blender 4.2+.
 assert versions["blender"] == "0.7.61"
 assert versions["blender_tag"] == "blender-v0.7.61"
 assert extension_manifest["schema_version"] == "1.0.0"
@@ -31,12 +29,12 @@ assert extension_manifest["version"] == versions["blender"]
 assert extension_manifest["type"] == "add-on"
 assert extension_manifest["license"] == ["SPDX:GPL-3.0-or-later"]
 assert extension_manifest["blender_version_min"] == "4.2.0"
+assert len(extension_manifest["tagline"]) <= 64
 
 icon = root / "Editor/FISHHWBVR/Icons/Optimize-Your-Project.png"
 assert icon.read_bytes()[:8] == bytes.fromhex("89504e470d0a1a0a")
 assert icon.with_suffix(".png.meta").is_file()
 
-# Unity surface checks.
 window = (root / "Editor/FISHHWBVR/FISHHWBVROptimizerWindow.cs").read_text(encoding="utf-8")
 for required in [
     "Optimize Your Project", "VRMissingScriptCleaner.Clean", "VRUIRaycastOptimizer.Optimize",
@@ -46,7 +44,6 @@ for required in [
     assert required in window, required
 assert "FISHHWB VR Optimizer" not in window
 
-# Blender core plus 4.2+ extension tools.
 core = (root / "Blender/vr_optimizer_blender/__init__.py").read_text(encoding="utf-8")
 for required in [
     'bl_idname = "fishhwb.one_click_remesh"',
@@ -68,11 +65,17 @@ for required in [
     "MIN_BLENDER_VERSION = (4, 2, 0)",
     'bl_idname = "fishhwb.generate_lightmap_uv"',
     'bl_idname = "fishhwb.link_identical_mesh_data"',
+    'bl_idname = "fishhwb.strip_collider_render_data"',
     'bl_idname = "FISHHWB_PT_optimizer_42"',
     'bl_parent_id = "FISHHWB_PT_optimizer"',
-    "bpy.ops.uv.smart_project", "LIGHTMAP_UV_NAME", "_mesh_signature",
+    "_pack_lightmap_face_atlas", "LIGHTMAP_UV_NAME", "_mesh_signature",
 ]:
     assert required in tools, required
+assert "bpy.ops.uv.smart_project" not in tools
+
+transfer = (root / "Blender/vr_optimizer_blender/deform_transfer.py").read_text(encoding="utf-8")
+for required in ["_action_fcurves", "action_get_channelbag_for_slot", "_restore_copied_action_slot"]:
+    assert required in transfer, required
 
 build_extension = (root / "scripts/build_blender_extension.py").read_text(encoding="utf-8")
 assert "tools_42.py" in build_extension
@@ -84,6 +87,7 @@ assert "optimize-your-project-blender-${{ steps.versions.outputs.blender }}.zip"
 for supported in ["'4.2'", "'4.5'", "'5.2'"]:
     assert supported in workflow, supported
 assert "scripts/test_blender_42.py" in workflow
+assert "scripts/test_blender_52.py" in workflow
 
 for path in [root / "README.md", root / "Blender/README.md"]:
     text = path.read_text(encoding="utf-8")
@@ -92,8 +96,10 @@ for path in [root / "README.md", root / "Blender/README.md"]:
     assert "Blender 4.2+" in text, path
     assert "Generate Lightmap UV" in text, path
     assert "Link Identical Mesh Data" in text, path
+    assert "Strip Collider Render Data" in text, path
     assert "Blender 3.6" not in text, path
     assert "optimize-your-project-blender-0.7.55.zip" not in text, path
+    assert "Smart UV Project" not in text, path
 
 readme = (root / "README.md").read_text(encoding="utf-8")
 assert "general developer optimization" in readme.lower()
@@ -102,7 +108,6 @@ assert "Optimize UI Raycasts" in readme
 assert "collision proxy" in readme.lower()
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
 
-# Keep the no-em-dash repository convention in text files.
 for relative in subprocess.check_output(
     ["git", "ls-files", "--cached", "--others", "--exclude-standard"], cwd=root, text=True
 ).splitlines():
@@ -113,7 +118,6 @@ for relative in subprocess.check_output(
         continue
     assert chr(0x2014) not in content, f"Unsupported punctuation in {relative}"
 
-# Build Unity and the single supported Blender 4.2+ package.
 env = dict(os.environ)
 env["GITHUB_REF_NAME"] = versions["unity_tag"]
 subprocess.run([sys.executable, "scripts/build_vpm.py"], cwd=root, env=env, check=True)
