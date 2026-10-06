@@ -211,10 +211,12 @@ sys.modules["optimize_your_project"] = extension
 spec.loader.exec_module(extension)
 extension.register()
 try:
-    if not hasattr(bpy.types, "FISHHWB_PT_optimizer_42"):
-        raise RuntimeError("Blender 4.2+ tools panel was not registered")
-    if extension.bl_info["version"] != (0, 7, 61):
-        raise RuntimeError("Blender extension runtime version is not 0.7.61")
+    if not hasattr(bpy.types, "FISHHWB_PT_optimizer"):
+        raise RuntimeError("Optimize Your Project main panel was not registered")
+    if hasattr(bpy.types, "FISHHWB_PT_optimizer_42"):
+        raise RuntimeError("The old separate Blender 4.2+ child panel should not be registered in 0.7.65")
+    if extension.bl_info["version"] != (0, 7, 65):
+        raise RuntimeError("Blender extension runtime version is not 0.7.65")
     if extension.bl_info["blender"] != (4, 2, 0):
         raise RuntimeError("Blender extension minimum runtime is not 4.2")
 finally:
