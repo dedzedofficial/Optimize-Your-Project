@@ -101,11 +101,11 @@ def _draw_core_765(self, context):
             _wrapped(result, line, context)
 
 
-# Replace the older stacked panel with the compact 0.7.65 layout.
+# Replace the older stacked panel with the button-first 0.7.66 layout.
 _addon.FISHHWB_PT_optimizer.draw = _draw_core_765
 
-# The modern tools remain registered as operators, but their separate child panel is
-# intentionally omitted because 0.7.65 exposes them in the main Quick Optimize area.
+# Modern 4.2+ tools remain registered as operators and are surfaced as direct
+# primary buttons in the main panel instead of a separate child panel.
 _tools42.classes = tuple(
     cls for cls in _tools42.classes
     if cls is not _tools42.FISHHWB_PT_optimizer_42
