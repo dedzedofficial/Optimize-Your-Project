@@ -1,9 +1,9 @@
 schema_version = "1.0.0"
 
 id = "optimize_your_project"
-version = "0.7.61"
+version = "0.7.65"
 name = "Optimize Your Project"
-tagline = "Remesh, LOD and static-mesh tools for Blender 4.2"
+tagline = "Quick mesh optimization tools for Blender 4.2"
 maintainer = "FISHHWB | Ded Zed"
 type = "add-on"
 
