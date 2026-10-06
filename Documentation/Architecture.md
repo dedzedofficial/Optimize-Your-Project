@@ -10,143 +10,96 @@
   <a href="../CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-## Install / Download Optimize Your Project
+## Release identity
 
-### Unity
+Optimize Your Project is a general developer optimization toolkit. Unity and Blender share one public release version. In v0.7.65 both integrations report **0.7.65**.
 
-Open **Window > Package Manager**, press **+**, choose **Add package from git URL**, then paste:
-
-```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git
-```
-
-For fixed v0.7.61:
-
-```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.61
-```
-
-### Blender 4.2+
-
-Blender is distributed only through the modern Blender Extensions package:
-
-```text
-optimize-your-project-blender-extension-0.7.61.zip
-```
-
-Open the latest successful **Check release packages** run and download the `optimize-your-project-blender-0.7.61` artifact. Install the extension ZIP through **Edit > Preferences > Get Extensions > Install from Disk**.
-
-Blender 3.6 and the old legacy add-on ZIP are no longer part of the supported release path.
-
-### VRChat Creator Companion / VCC
-
-Use:
-
-```text
-vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json
-```
-
-VRChat remains optional. The Unity tools do not require a VR SDK for ordinary projects.
-
-## Product identity
-
-Optimize Your Project is a **general developer optimization toolkit**. Unity is the primary game-engine integration and Blender is the first DCC integration. VRChat, VCC and other social-VR workflows are supported where useful, but they do not define the product.
-
-The project uses one public release version. In v0.7.61 both Unity and Blender report **0.7.61**.
+Blender support starts at **4.2** and uses the Blender Extensions system. The legacy pre-4.2 add-on path is not supported.
 
 ## Unity architecture
 
-The repository root is a Unity Package Manager package. The editor window is split into **Project** and **Avatar** pages and intentionally keeps the visible action set compact.
+The repository root is a Unity Package Manager package. The Editor window is split into Project and Character / Avatar pages, but both pages now use one **Quick Optimize** area for the common workflow.
 
-Project actions currently cover:
+Quick Optimize coordinates the existing owning actions instead of duplicating their implementation. It runs texture, model-import, particle, material, decorative UI-raycast and missing-script jobs behind one confirmation. Lighting and realtime-shadow changes remain explicit because they can visibly alter the scene.
 
-- texture import optimization and safe import repair,
-- model import compression and Unity mesh import optimization,
-- particle limits and optional module disabling,
-- safe material-reference and trailing-slot cleanup,
-- baked lighting setup,
-- missing-script cleanup,
-- UI raycast optimization,
-- project reviews and scans.
+### Unity owning actions
 
-Avatar uses the same owning actions but limits scene-object work to the selected hierarchy where supported. It does not require the VRChat SDK.
+- `VRTextureOptimizer` handles conservative texture caps and preserves explicit formats and stricter limits.
+- `VRMeshCompression` plus the window model-import action apply Unity mesh-import optimization while preserving a stronger existing compression level.
+- `VRParticleOptimizer` handles particle limits and optional module changes.
+- `VRProjectMaintenance` owns exact duplicate-material reference cleanup and safe trailing empty-slot cleanup.
+- `VRLightingSetup` owns baked-light preparation and bake start.
+- `VRLightOptimizer` owns guarded realtime-shadow disabling.
+- `VRUIRaycastOptimizer` disables decorative Raycast Target flags while preserving Selectable hierarchies, EventSystem handlers and CanvasGroup-blocked UI.
+- `VRMissingScriptCleaner` removes only missing MonoBehaviour entries after a preflight count.
+- `VRProjectInsights` and `VRProjectScanner` own review/report workflows.
 
-`VRProjectScanner` coordinates scanner modules and `VRIssue` results. The historical `VR` prefix remains in internal class names during v0.7 for compatibility and does not limit the supported project type.
+### Import history and recovery
 
-`VRTextureOptimizer` edits supported importer metadata and avoids unnecessary platform overrides when the base texture limit is already strict enough. Explicit formats, compression choices and stricter size limits are preserved.
+`VRImportHistory` stores source and importer-metadata fingerprints, per-job policies, explicit protection and recoverable last-batch metadata.
 
-`VRParticleOptimizer` handles the existing particle action. Constant and Two Constants lifetime modes can be capped without rewriting authored lifetime curves. Other optional particle-module changes remain user-controlled through Advanced settings.
+`VRImportBatch` is the guarded entry point for importer changes. Unknown later edits are preserved rather than overwritten. Batch Options can restore the last supported importer batch.
 
-`VRLightOptimizer` is restricted to enabled realtime lights when disabling realtime shadows. Baked and Mixed lights are rejected by the optimizer itself. Scene-object edits use Unity Undo and prefab-instance recording where applicable.
+### Permanent unused-asset cleanup
 
-`VRLightingSetup` performs the larger baked-light preparation workflow. It checks scene state before changes, prepares secondary UV imports where supported, marks suitable static meshes for GI and starts a bake only after setup succeeds.
+`VRUnusedAssetCleaner` is intentionally isolated from normal Quick Optimize actions because deletion cannot use Unity Undo.
 
-`VRProjectMaintenance` owns conservative material and texture-import maintenance. `VRProjectInsights` owns review-style diagnostics. `VRSettings` stores per-user tool settings.
+The cleaner:
 
-Automatic AssetPostprocessor-based optimization remains intentionally disabled. Users explicitly press an optimization action so the scope and timing stay visible.
+- only scans the user-selected Assets scope,
+- only considers conservative asset categories,
+- builds inbound-reference evidence from `AssetDatabase.GetDependencies`,
+- protects common runtime/dynamic-use folders,
+- protects labelled and AssetBundle assets,
+- previews candidates,
+- requires two warning dialogs,
+- permanently deletes through `AssetDatabase.DeleteAsset` only after the final confirmation.
 
-## Import history and recovery
-
-`VRImportHistory` stores source and metadata fingerprints, per-job policy identifiers, explicit protection and recoverable last-batch metadata in a project-local `ScriptableSingleton`.
-
-`VRImportBatch` is the shared guarded entry point for texture, model and UV importer changes. Known changes rebase other records for the same GUID so the tool does not mistake its own work for a manual edit. Unknown later importer edits are preserved rather than overwritten.
-
-A memory trial retains only changes that show a positive sampled native asset-memory reduction. This is a narrow importer check and is not presented as proof of player FPS or visual quality.
+The tool explicitly warns that runtime-only string/reflection/custom-loader references cannot always be proven by Unity's serialized dependency graph.
 
 ## Blender architecture
 
-Blender support starts at **4.2** and uses the Blender Extensions system.
-
-The maintained core lives under:
+The maintained Blender core lives under:
 
 ```text
 Blender/vr_optimizer_blender/
 ```
 
-The root `blender_manifest.toml` and `__init__.py` provide the extension package entry point. `scripts/build_blender_extension.py` builds the supported ZIP.
+The root `blender_manifest.toml` and extension `__init__.py` provide the Blender 4.2+ package entry point.
 
-### Core mesh workflow
+In v0.7.65 the extension entry point replaces the older stacked draw layout with one width-aware **Quick Optimize** panel. The modern 4.2+ operators remain implemented in `tools_42.py`, but their old child panel is intentionally not registered because those actions are surfaced in the main panel.
 
-The existing Blender core provides:
+### Blender mesh workflows
 
-- One-Click Remesh,
-- LOD0 / LOD1 / LOD2 generation,
-- optional collision proxy generation from LOD2,
-- generated-output ownership and reuse,
-- guarded transfer of supported UVs, materials, vertex weights, armature bindings and relative shape keys.
+- One-Click Remesh preserves source objects and transfers supported UV/material/deformation data.
+- LOD generation creates LOD0 / LOD1 / LOD2 plus an optional collision proxy.
+- Generate Lightmap UV creates a protected second UV channel for supported static meshes.
+- Link Identical Mesh Data links exact static duplicates to shared mesh data while preserving object transforms.
+- Strip Collider Render Data removes render-only data only from generated collider proxies.
 
-Source objects are preserved. Generated outputs are tracked so unchanged runs can reuse them and changed sources replace only verified untouched generated copies. Manual edits block automatic replacement until the user explicitly resets history.
-
-### Blender 4.2+ tools
-
-`tools_42.py` extends the compact core with modern static-mesh actions:
-
-- **Generate Lightmap UV** creates a protected second UV channel using deterministic face-island packing without context-sensitive UV operators.
-- **Link Identical Mesh Data** links exact supported static duplicates to one shared mesh datablock while preserving separate object transforms.
-- **Strip Collider Render Data** removes materials, UV layers and color attributes only from optimizer-generated collision proxies.
-
-The tools reject ambiguous or unsupported inputs rather than guessing.
+Generated Remesh/LOD outputs are fingerprinted so unchanged jobs can reuse them. Manual edits block automatic replacement until history is explicitly reset.
 
 ### Blender 5.x animation compatibility
 
-Blender 5.x removed the old direct `Action.fcurves` workflow. `deform_transfer.py` supports the newer slotted Action/channelbag API while retaining the compatible path required by Blender 4.2.
+`deform_transfer.py` supports Blender 5.x slotted Action/channelbag animation data while retaining the compatible path required by Blender 4.2.
 
 ## Validation
 
-The release workflow builds the Unity package and Blender extension, runs static release checks, and exercises Blender runtime tests on:
+The release workflow:
 
-- Blender 4.2 LTS,
-- Blender 4.5 LTS,
-- Blender 5.2 LTS.
-
-Blender 4.2 also validates the final Extensions ZIP with Blender's own extension validator.
+- validates unified versions and package contents,
+- checks the Unity 0.7.65 UI and destructive-cleanup guard rails,
+- builds the Unity package,
+- builds and uploads the Blender Extensions ZIP,
+- runs Blender runtime tests on 4.2 LTS, 4.5 LTS and 5.2 LTS,
+- validates the final extension ZIP with Blender 4.2.
 
 ## Update architecture
 
-`version.json` contains the unified project version plus compatibility fields used by the existing Unity and Blender build paths.
+`version.json` contains the unified project version plus compatibility fields used by the current Unity and Blender build paths.
 
-The Unity footer checks the same project feed. Git installs can update through Unity Package Manager; embedded, VCC or registry installs receive source-appropriate instructions instead of being modified behind the user's back.
+The Unity footer checks the same project feed. Git installs can update through Unity Package Manager; embedded, VCC or registry installs receive source-appropriate instructions instead of being modified automatically.
 
 ## Compatibility principle
 
-Historical package IDs and internal class names are retained when changing them would break existing installations. User-facing naming, documentation and future work use the broader **Optimize Your Project** identity.
+Historical package IDs and internal class names remain when changing them would break installations. User-facing naming, documentation and future work use the broader **Optimize Your Project** identity.
