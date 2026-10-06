@@ -12,7 +12,7 @@
 
 **v0.7.61 | Unity + Blender 4.2+ | General developer optimization tools | FISHHWB | Ded Zed**
 
-Optimize Your Project is a free general developer optimization toolkit for reducing repetitive project cleanup and optimization work. Unity and Blender now share one project release version so the package, documentation and downloads stay easier to follow.
+Optimize Your Project is a free general developer optimization toolkit for reducing repetitive project cleanup and optimization work. Unity and Blender share one project release version, with more game-engine integrations planned under the same version, safety and localization rules.
 
 ## Install / Download Optimize Your Project
 
@@ -72,9 +72,9 @@ The compact Unity Project / Character interface includes:
 
 - Texture optimization no longer creates unnecessary platform overrides when the base texture limit is already equal to or stricter than the selected target.
 - Existing stricter platform texture limits are preserved instead of being increased.
-- Particle lifetime capping now supports both Constant and Two Constants lifetime modes while leaving authored curve-based lifetimes untouched.
-- Realtime shadow optimization now independently refuses disabled, Mixed and Baked lights, and records prefab-instance changes correctly.
-- The Unity update checker now reads the unified project version feed while remaining compatible with the older Unity-specific field.
+- Particle lifetime capping supports both Constant and Two Constants lifetime modes while leaving authored curve-based lifetimes untouched.
+- Realtime shadow optimization independently refuses disabled, Mixed and Baked lights, and records prefab-instance changes correctly.
+- The Unity update checker reads the unified project version feed while remaining compatible with the older Unity-specific field.
 
 ## Blender v0.7.61
 
@@ -136,9 +136,26 @@ Blender 5.x uses the modern slotted Action/channelbag animation API while 4.2 re
 
 ## Languages
 
-Unity supports Auto, English, Japanese, Simplified Chinese, Traditional Chinese, Korean, Spanish, French, German, Portuguese, Russian and Italian.
+Unity currently supports Auto, English, Japanese, Simplified Chinese, Traditional Chinese, Korean, Spanish, French, German, Portuguese, Russian and Italian.
 
-The Blender interface currently supports English, Japanese, Simplified Chinese and Korean for its main workflows and 4.2+ tools.
+Blender currently supports English, Japanese, Simplified Chinese and Korean. The next localization priority is to bring Blender to parity with Unity, then expand both integrations together.
+
+Planned language expansion includes Dutch, Polish, Turkish, Ukrainian, Czech, Indonesian, Hindi, Thai, Vietnamese and additional European languages. Arabic and Hebrew are planned after right-to-left interface behavior is properly tested.
+
+## Roadmap showcase
+
+The full priority-led roadmap is in [Documentation/Roadmap.md](Documentation/Roadmap.md).
+
+| Priority | Focus | Showcase |
+| --- | --- | --- |
+| **P0** | Current integrations | Deeper upgrades to every useful Unity and Blender button, stronger recovery, better summaries and Blender 4.2+ quality improvements. |
+| **P1** | One-click configurations | Optimize Loaded Scene, Optimize Selected Hierarchy, Prepare Static Environment, Static Mesh Optimize Selection, Build Game LOD Package and similar orchestration actions. |
+| **P1** | Godot 4.x | Planned as the first new game-engine integration, focused on safe import, scene and selected-node optimization. |
+| **P2** | Unreal Engine 5.x | Planned editor plugin for texture, static-mesh, collision and asset optimization after the shared cross-engine layer is proven. |
+| **P1/P2** | Languages | Blender parity with Unity first, then wider shared language coverage with Auto detection across maintained integrations. |
+| **P3** | Later engines | Flax, Stride and other engines evaluated only after the main four integrations are stable enough to justify more surface area. |
+
+The project will continue to favor useful single-button jobs over large settings panels. New orchestration buttons should call already-proven actions, preview the planned changes and keep recovery available.
 
 ## Free for developers
 
@@ -171,7 +188,7 @@ scripts/build_blender_extension.py           Blender Extensions ZIP builder
 
 ## Keywords
 
-Unity optimization, Blender 4.2 extension, one-click optimization, game optimization, asset optimization, texture optimization, mesh optimization, lightmap UV, mesh instancing, collision proxy, LOD, VR, XR, VRChat, mobile optimization and indie development.
+Unity optimization, Blender 4.2 extension, Godot optimization, Unreal Engine optimization, one-click optimization, game optimization, asset optimization, texture optimization, mesh optimization, lightmap UV, mesh instancing, collision proxy, LOD, VR, XR, VRChat, mobile optimization and indie development.
 
 ## Community
 
