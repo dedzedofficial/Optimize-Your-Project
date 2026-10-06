@@ -16,11 +16,14 @@
 - Stopped publishing and validating the legacy pre-4.2 add-on ZIP.
 - Added **Generate Lightmap UV** for selected supported static meshes.
 - Lightmap UV generation preserves geometry and the primary UV map, only creates `LightmapUV` when it can safely become the second UV channel, and refuses to replace existing secondary UV data automatically.
+- Replaced context-sensitive UV operators with a deterministic non-overlapping per-face lightmap atlas so the tool works reliably in interactive and headless Blender.
 - Added **Link Identical Mesh Data** for exact selected static duplicates.
 - Exact duplicate linking preserves object transforms and skips modifiers, shape keys, linked-library meshes and object-level material overrides.
+- Added **Strip Collider Render Data** for generated collision proxies, removing materials, UVs and color attributes while preserving geometry.
 - Added a compact **Blender 4.2+ Tools** child panel beneath the existing Remesh / LOD interface.
 - Kept One-Click Remesh, LOD generation and the optional LOD2 collision proxy intact.
-- Added Blender 4.2+ regression tests for Lightmap UV generation, secondary-UV protection, exact mesh linking and operator guards.
+- Updated shape-key animation handling for Blender 5.x slotted Actions/channelbags while retaining Blender 4.2 compatibility.
+- Added Blender 4.2+ regression tests for Lightmap UV generation, island separation, secondary-UV protection, exact mesh linking, collider render-data stripping and operator guards.
 - Updated Blender runtime CI to test **4.2 LTS, 4.5 LTS and 5.2 LTS**.
 - Updated the Blender extension package builder to include the 4.2+ tools module.
 - Blender now has its own v0.7.61 release line while Unity remains v0.7.60.
