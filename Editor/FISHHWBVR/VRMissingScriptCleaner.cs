@@ -6,7 +6,7 @@ namespace FISHHWB.VROptimizer
 {
     internal static class VRMissingScriptCleaner
     {
-        internal static string Clean(GameObject root)
+        internal static string Clean(GameObject root, bool confirm = true)
         {
             var objects = new List<GameObject>();
 
@@ -20,6 +20,28 @@ namespace FISHHWB.VROptimizer
                 foreach (var transform in VRProjectScanner.SceneObjects<Transform>())
                     if (transform) objects.Add(transform.gameObject);
             }
+
+            int pendingObjects = 0;
+            int pendingScripts = 0;
+            foreach (var gameObject in objects)
+            {
+                if (!gameObject) continue;
+                int missing = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(gameObject);
+                if (missing <= 0) continue;
+                pendingObjects++;
+                pendingScripts += missing;
+            }
+
+            if (pendingScripts == 0)
+                return "Missing scripts: nothing to clean in this scope.";
+
+            if (confirm && !EditorUtility.DisplayDialog(
+                "Clean missing scripts",
+                "Remove " + pendingScripts + " missing script component(s) from " + pendingObjects +
+                " object(s)?\n\nOnly broken MonoBehaviour entries are removed. Valid scripts and components are untouched. Unity Undo is available.",
+                "Clean Missing Scripts",
+                "Cancel"))
+                return "Missing script cleanup cancelled. Nothing changed.";
 
             int affectedObjects = 0;
             int removedScripts = 0;
@@ -43,6 +65,7 @@ namespace FISHHWB.VROptimizer
 
                     affectedObjects++;
                     removedScripts += removed;
+                    PrefabUtility.RecordPrefabInstancePropertyModifications(gameObject);
                     EditorUtility.SetDirty(gameObject);
                 }
             }
@@ -51,9 +74,8 @@ namespace FISHHWB.VROptimizer
                 Undo.CollapseUndoOperations(group);
             }
 
-            return removedScripts == 0
-                ? "Missing scripts: nothing to clean in this scope."
-                : "Missing scripts cleaned: " + removedScripts + " removed from " + affectedObjects + " objects. Use Undo if needed.";
+            return "Missing scripts cleaned: " + removedScripts + " removed from " + affectedObjects +
+                   " objects. Use Undo if needed.";
         }
     }
 }
