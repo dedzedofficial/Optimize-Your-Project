@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <strong>Interface languages:</strong> English | 日本語 | 简体中文 | 한국어
+  <strong>Unity interface languages:</strong> Auto | English | 日本語 | 简体中文 | 繁體中文 | 한국어 | Español | Français | Deutsch | Português | Русский | Italiano
 </p>
 
 <details open>
@@ -25,10 +25,10 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-After the v0.7.55 tag is published:
+After the v0.7.60 tag is published:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.55
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.60
 ```
 
 ### Blender
@@ -49,11 +49,25 @@ Use [Add Optimize Your Project to VCC](vcc://vpm/addRepo?url=https%3A%2F%2Fdedze
 > **New here?** Start with the [Overview](README.md). You can read the complete documentation directly on GitHub before installing anything.
 
 
-**v0.7.55 · General developer optimization tools · Unity + Blender · FISHHWB | Ded Zed**
+**Unity v0.7.60 · Blender v0.7.55 · General developer optimization tools · FISHHWB | Ded Zed**
 
 Optimize Your Project is a free toolkit for developers building real-time projects. Its priority is removing repetitive optimization work through clear one-click and batch actions for games, mobile projects, VR titles, social experiences, prototypes and reusable asset packs.
 
-v0.7.4 introduced the multilingual workflow; v0.7.55 simplifies it and adds scene lighting setup. The toolkit includes searchable Unity actions, texture import repair, material-cost tools, richer mesh review, a deliberately focused Blender Remesh + LOD workflow, and interface language support for **English, Japanese, Simplified Chinese and Korean**.
+Unity v0.7.60 focuses on a much smaller interface, automatic language detection, broader localization and one more safe one-click maintenance action. Blender remains on v0.7.55 and keeps its intentionally focused Remesh + LOD workflow.
+
+## v0.7.60 Unity update
+
+- Rebuilt the Unity window into a compact action dashboard instead of a long wall of cards.
+- Removed the old action search box because the primary actions now fit directly in the window.
+- Kept **Project** and **Character / Avatar** as the two top-level pages.
+- Grouped the main work into six one-click actions with advanced options collapsed by default.
+- Moved project reviews into one compact Review area and kept detailed findings hidden until requested.
+- Replaced the large support/version cards with a slim footer containing version status, update access and support links.
+- Added **Clean Missing Scripts**. It removes only missing MonoBehaviour entries from loaded scene objects or the selected character hierarchy and records Unity Undo before each affected object is changed.
+- Added **Auto** language mode. Unity now detects the operating-system language on first use unless the user already has a saved manual language choice.
+- Expanded the Unity language selector to English, Japanese, Simplified Chinese, Traditional Chinese, Korean, Spanish, French, German, Portuguese, Russian and Italian.
+- Manual language selection remains available at all times from the top toolbar.
+- Existing 0.7.55 importer history, detail protection, restore and memory-trial behavior remains available under the collapsed advanced settings.
 
 ## v0.7.55 cleanup
 
@@ -73,24 +87,32 @@ v0.7.4 introduced the multilingual workflow; v0.7.55 simplifies it and adds scen
 | **Blender 4.2+** | Download `optimize-your-project-blender-extension-0.7.55.zip` from the latest successful release-check artifact; this is the Blender Extensions submission ZIP |
 | **VRChat / VCC (optional)** | [Add the VPM repository](vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Project%2Findex.json), then add **Optimize Your Project** to the chosen project |
 
-For a fixed Unity release after the v0.7.55 tag is published:
+For a fixed Unity release after the v0.7.60 tag is published:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.55
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.60
 ```
 
 ## Languages
 
-The main Unity and Blender workflows support:
+The Unity editor window supports:
 
+- Auto-detect from the operating-system language
 - English
 - Japanese
 - Simplified Chinese
+- Traditional Chinese
 - Korean
+- Spanish
+- French
+- German
+- Portuguese
+- Russian
+- Italian
 
-Unity stores the selected tool language as an Editor preference. Blender exposes a Language control at the top of the sidebar.
+The selector stays visible in the compact top toolbar. Auto mode is the default for new users. Existing English, Japanese, Simplified Chinese and Korean choices from the older preference are migrated when possible. If a less common label has not yet been translated, the Unity UI falls back to English instead of showing a broken key.
 
-Future language work is tracked in [Documentation/Roadmap.md](Documentation/Roadmap.md). Planned additions include Spanish, French, German, Brazilian Portuguese, Italian, Traditional Chinese, Polish, Turkish and Russian.
+Blender v0.7.55 continues to expose English, Japanese, Simplified Chinese and Korean in its sidebar.
 
 ## Unity tools
 
@@ -101,30 +123,32 @@ The Unity window keeps the two focused work pages:
 - **PROJECT** for ordinary project assets and loaded scenes.
 - **CHARACTER / AVATAR** for one selected character hierarchy without requiring a VR SDK.
 
-### Faster navigation
+### Minimal navigation
 
-- **Language selector** at the top of the window.
-- **Find an action** search box to narrow the interface to texture, mesh, particle, light, memory or scan tasks.
-- **Use Current Selection** can set the Project asset scope from the selected Project window asset or folder.
-- Detailed findings stay hidden until a review or scan action is requested.
+- The Project / Character switch is always visible in the top toolbar.
+- The language selector sits beside it and can stay on **Auto** or be manually overridden.
+- **Use Selection** can set the Project asset scope from the selected Project window asset or folder.
+- Primary optimization buttons are always visible.
+- Texture, particle and model settings live under one collapsed **Advanced settings** foldout.
+- Detailed findings stay hidden until a Review or full Scan action is requested.
 
 ### Project optimization buttons
 
 - **Optimize Textures** applies size/compression and recognized normal/data import repairs in one batch, preserving stricter existing limits and explicit formats.
+- **Optimize Model Imports** applies compression and vertex/polygon import optimization to scoped model assets without reducing triangle counts or changing Read/Write, rigs, animations or blendshapes.
 - **Optimize Particles** applies selected particle limits to loaded scenes or the chosen character hierarchy.
-- **Optimize Model Imports** applies compression and vertex/polygon import optimization to scoped model assets without reducing triangle counts.
-- The combined material action remaps loaded renderers from exact duplicate material assets to one canonical exact match with Unity Undo. Duplicate asset files are preserved.
-- The combined material action removes only trailing empty renderer slots beyond the mesh's actual submesh count and supports Unity Undo. Non-empty extra materials are preserved.
-- **Fix Safe Material Cost Issues** combines exact duplicate-material remapping with safe trailing empty-slot cleanup. High submesh counts that require art or topology changes are left untouched.
+- **Fix Material Costs** remaps loaded renderers from exact duplicate material assets to one canonical exact match and removes only safe trailing empty material slots. Unity Undo is supported.
 - **Optimize Lighting** prepares and starts baked scene lighting. Character / Avatar retains its scoped realtime-shadow action.
+- **Clean Missing Scripts** removes only missing script component entries in the current loaded-scene or selected-character scope and supports Undo.
 - **Scan Entire Project** runs the heavier diagnostic pass and shows filterable Critical / Warning results.
 
 ### Project Insights
 
 These buttons help find expensive assets without changing project files:
 
-- **Show Largest Textures** lists the largest source textures in the chosen Assets folder.
-- **Review Read/Write Memory** lists textures and imported models with CPU-readable copies enabled.
+- **Largest Textures** lists the largest source textures in the chosen Assets folder.
+- **Read/Write Memory** lists textures and imported models with CPU-readable copies enabled.
+- **Heavy Meshes** lists high-cost mesh candidates without automatically changing topology.
 
 Read/Write review is intentionally diagnostic-only. CPU-readable copies can consume additional memory, but disabling them automatically can break scripts, runtime mesh access and other workflows that require readable data. Unity documents the extra CPU memory cost for readable texture and mesh data.
 
@@ -196,7 +220,7 @@ If the project saves you time and you want to help it grow, you can support deve
 
 Optimization changes can affect appearance or runtime behavior. Use source control or a backup before large batches and inspect the result in the target platform.
 
-Unity importer jobs change import metadata rather than source image files. Scene particle and light changes support Undo where applicable. Read/Write review does not automatically disable CPU access.
+Unity importer jobs change import metadata rather than source image files. Scene particle, missing-script and light changes support Undo where applicable. Read/Write review does not automatically disable CPU access.
 
 Blender cleanup and preparation tools create copies for supported mesh workflows instead of replacing source objects.
 
@@ -220,10 +244,11 @@ Pull requests validate:
 - Unity package and update-feed version consistency.
 - Blender add-on version consistency and Python syntax.
 - Required branding and package files.
-- Unity v0.7 Project / Character UI shape.
-- Unity language and Project Insights integration.
+- Unity compact Project / Character UI shape.
+- Unity Auto language detection and expanded interface language integration.
+- Unity missing-script cleaner and meta coverage.
+- Unity Project Insights integration.
 - Blender Remesh, active LOD generation, batch LOD generation, source preservation and unsupported-topology guards.
-- English, Japanese, Simplified Chinese and Korean language entries.
 - Buildability of the Unity VPM archive and Blender add-on ZIP.
 
 Blender runtime regression checks run on Blender 3.6 and 4.2 in CI. Unity editor compilation and interactive editor checks are still required before publishing a release tag.
@@ -258,7 +283,7 @@ These additions stay in v0.7.55 and extend existing actions rather than introduc
 
 ### Using the compact controls
 
-Unity: expand an action's existing settings and open **Batch options**. Select texture/model assets, a material, or a scene hierarchy to protect its referenced textures/models. Removing protection does not remove manual-edit protection; **Reset history for selection** explicitly makes current import settings the next baseline. **Restore last import batch** restores the most recent batch that actually changed imports, including lighting UV preparation.
+Unity: expand **Advanced settings** and open **Batch options**. Select texture/model assets, a material, or a scene hierarchy to protect its referenced textures/models. Removing protection does not remove manual-edit protection; **Reset history for selection** explicitly makes current import settings the next baseline. **Restore last import batch** restores the most recent batch that actually changed imports, including lighting UV preparation.
 
 Blender: **Protect detail** is beside the selected object. Repeated actions on the original source reuse outputs. Reset history on the original source only when you deliberately want fresh copies while preserving previous outputs. Changed sources replace verified untouched generated sets after successful generation. History is stored as object metadata; geometry remains preserved. Renaming/duplicating a source may create a fresh set rather than taking ownership of another source's copies.
 
