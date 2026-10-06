@@ -54,14 +54,31 @@ namespace FISHHWB.VROptimizer
         static bool Platform(TextureImporter importer, string name, int maximum)
         {
             var p = importer.GetPlatformTextureSettings(name);
-            bool changed = false;
             bool hadOverride = p.overridden;
-            if (!p.overridden) { p.overridden = true; changed = true; }
-            // A cap preserves smaller textures and does not increase a pre-existing stricter limit.
-            int current = hadOverride && p.maxTextureSize > 0 ? p.maxTextureSize : maximum;
+            int current = hadOverride && p.maxTextureSize > 0 ? p.maxTextureSize : importer.maxTextureSize;
             int next = Mathf.Min(current, maximum);
-            if (p.maxTextureSize != next) { p.maxTextureSize = next; changed = true; }
-            // Preserve all format, compression, mip, filter and anisotropy settings.
+
+            // Do not create a platform override when the base importer is already at
+            // an equal or stricter size limit. This keeps projects cleaner and avoids
+            // needless platform-specific reimports.
+            if (!hadOverride && importer.maxTextureSize <= maximum)
+                return false;
+
+            bool changed = false;
+            if (!p.overridden)
+            {
+                p.overridden = true;
+                changed = true;
+            }
+
+            // Never increase an existing stricter limit.
+            if (p.maxTextureSize != next)
+            {
+                p.maxTextureSize = next;
+                changed = true;
+            }
+
+            // Preserve explicit format, compression, mip, filter and anisotropy settings.
             if (changed) importer.SetPlatformTextureSettings(p);
             return changed;
         }
