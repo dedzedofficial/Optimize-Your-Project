@@ -10,9 +10,9 @@
   <a href="../CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-**Current Blender release: v0.7.61**
+**Current Blender release: v0.7.65**
 
-The Blender integration targets **Blender 4.2 and newer** through the Blender Extensions system. The supported download is one modern extension ZIP. The old legacy pre-4.2 add-on release path is no longer maintained.
+The Blender integration targets **Blender 4.2 and newer** through the Blender Extensions system. The supported download is one modern extension ZIP.
 
 ## Install / Download Optimize Your Project
 
@@ -20,15 +20,33 @@ Open the latest successful **Check release packages** workflow:
 
 https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
 
-Download the `optimize-your-project-blender-0.7.61` artifact and install:
+Download the `optimize-your-project-blender-0.7.65` artifact and install:
 
 ```text
-optimize-your-project-blender-extension-0.7.61.zip
+optimize-your-project-blender-extension-0.7.65.zip
 ```
 
 Use **Edit > Preferences > Get Extensions > Install from Disk**. Do not extract the ZIP.
 
 After enabling the extension, press **N** in the 3D Viewport and open the **FISHHWB** tab.
+
+## v0.7.65 interface
+
+The Blender sidebar now uses one readable **Quick Optimize** panel rather than splitting Remesh/LOD and modern static-mesh tools into separate stacked sections.
+
+The panel includes:
+
+- current selection and triangle/vertex summary,
+- Protect detail and Reset history controls,
+- One-Click Remesh,
+- LOD0 / LOD1 / LOD2 generation,
+- optional collision proxy generation,
+- Generate Lightmap UV,
+- Link Identical Mesh Data,
+- Strip Collider Render Data,
+- wrapped last-result text.
+
+Long descriptions are width-aware and wrap to the sidebar instead of being cut off. Primary actions use taller rows to make the panel easier to read at normal Blender UI scaling.
 
 ## One-Click Remesh
 
@@ -57,11 +75,7 @@ Enable **Create Collision Proxy from LOD2** to add a separate `<Source>_COLLIDER
 
 The collider candidate has its own mesh data, is shown as wireframe, is disabled for rendering and is tracked with generated LOD history. It does not modify or replace the source mesh.
 
-## Blender 4.2+ Tools
-
-The modern extension adds a compact child panel beneath the main Remesh / LOD interface.
-
-### Generate Lightmap UV
+## Generate Lightmap UV
 
 **Generate Lightmap UV** creates a `LightmapUV` channel for selected supported static meshes.
 
@@ -75,36 +89,21 @@ Safety rules:
 - armature and shape-key meshes are skipped,
 - Blender Undo is available.
 
-The generator uses a deterministic per-face lightmap atlas. Every polygon receives a separate padded UV cell inside the 0 to 1 range. This guarantees island separation without relying on context-sensitive UV operators, making the same action reliable in interactive Blender and background batch tests.
+The current generator uses a deterministic per-face atlas and prioritizes safety and non-overlap over maximum packing density.
 
-The current atlas intentionally prioritizes safety and non-overlap over maximum packing density.
-
-### Link Identical Mesh Data
+## Link Identical Mesh Data
 
 **Link Identical Mesh Data** scans selected meshes for exact static duplicates and links matching objects to one shared mesh datablock.
 
-The match includes geometry, topology, UV data, mesh attributes and material assignments. The action skips:
+The match includes geometry, topology, UV data, mesh attributes and material assignments. The action skips meshes with modifiers, shape keys, linked-library data and object-level material overrides.
 
-- meshes with modifiers,
-- meshes with shape keys,
-- linked-library data,
-- object-level material overrides.
+Object transforms stay independent.
 
-Object transforms stay independent, so repeated props keep their own positions, rotations and scales while sharing identical mesh data.
+## Strip Collider Render Data
 
-Old zero-user mesh datablocks remain available for Undo and can later be removed through normal Blender orphan-data cleanup.
+**Strip Collider Render Data** only works on generated collision proxies carrying the optimizer's collision-proxy marker.
 
-### Strip Collider Render Data
-
-**Strip Collider Render Data** is restricted to generated collision proxies carrying the optimizer's collision-proxy marker.
-
-It removes:
-
-- materials,
-- UV layers,
-- color attributes.
-
-Geometry is not changed. This leaves collider candidates lighter and cleaner for export without touching normal render meshes. Running the action again reports the collider as unchanged.
+It removes materials, UV layers and color attributes while preserving geometry.
 
 ## History and protection
 
@@ -124,24 +123,10 @@ The minimum stays at 4.2 until a future feature genuinely requires a newer Blend
 
 ## Languages
 
-The Blender interface supports English, Japanese, Simplified Chinese and Korean for the current workflows.
+The Blender interface currently supports English, Japanese, Simplified Chinese and Korean. Language parity with Unity remains the next localization priority.
 
 ## Verification
 
-Automated Blender runtime checks cover:
-
-- Remesh triangle budgets and source preservation,
-- UV and material preservation,
-- supported deformation transfer,
-- legacy and slotted shape-key Action handling,
-- LOD generation and batch LODs,
-- optional collision proxies,
-- generated-output reuse and manual-edit protection,
-- Generate Lightmap UV and non-overlapping face islands,
-- existing-secondary-UV protection,
-- Link Identical Mesh Data,
-- exact-duplicate guards,
-- Strip Collider Render Data,
-- extension registration and Blender 4.2 minimum metadata.
+Automated Blender runtime checks cover Remesh, deformation transfer, LODs, collision proxies, generated-output reuse, Lightmap UV generation, exact mesh-data linking, collider render-data stripping, Blender 5.x slotted Actions and extension validation.
 
 The Blender extension package is licensed under **GPL-3.0-or-later**.
