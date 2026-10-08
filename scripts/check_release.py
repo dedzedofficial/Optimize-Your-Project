@@ -72,7 +72,6 @@ for required in [
     '"optimize_audio"', '"danger_zone"', '"unused_assets_warning"', '"delete_unused_assets"',
 ]:
     assert required in localization, required
-# 14 manual languages + Auto.
 assert localization.count("OYPLanguage.") >= 14
 
 unused_cleaner = (root / "Editor/FISHHWBVR/VRUnusedAssetCleaner.cs").read_text(encoding="utf-8")
@@ -106,7 +105,7 @@ for required in [
     '"version": (0, 8, 0)',
     '"blender": (4, 2, 0)',
     "_draw_core_080",
-    'primary.label(text="PRIMARY ACTIONS"',
+    'primary.label(text=_addon.tr(context, "primary_actions")',
     'row.operator("fishhwb.one_click_remesh"',
     'row.operator("fishhwb.clean_mesh"',
     'row.operator("fishhwb.generate_lightmap_uv"',
@@ -114,7 +113,8 @@ for required in [
     'row.operator("fishhwb.strip_collider_render_data"',
     "FISHHWB_PT_optimizer.draw = _draw_core_080",
     "if cls is not _tools42.FISHHWB_PT_optimizer_42",
-    "('NL', 'Nederlands'", "('PL', 'Polski'", "('TR', 'Türkçe'",
+    "('AUTO', 'Auto'", "('NL', 'Nederlands'", "('PL', 'Polski'", "('TR', 'Türkçe'",
+    "_effective_language", "_LOCALE_MAP",
 ]:
     assert required in proxy, required
 assert "QUICK OPTIMIZE" not in proxy
@@ -122,7 +122,7 @@ assert "QUICK OPTIMIZE" not in proxy
 v08 = (root / "Blender/vr_optimizer_blender/v08_tools.py").read_text(encoding="utf-8")
 for required in [
     'bl_idname = "fishhwb.clean_mesh"', "bmesh.ops.remove_doubles", "recalc_face_normals",
-    "install_remesh_guard", "source_uvs", "source_materials", "source_groups", "source_shapes",
+    "_has_deformation", "install_remesh_guard", "source_uvs", "source_materials", "source_groups", "source_shapes",
     "Remesh output rejected", "Original object kept unchanged",
 ]:
     assert required in v08, required
