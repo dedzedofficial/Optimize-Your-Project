@@ -27,7 +27,7 @@ def _has_deformation(obj):
 class FISHHWB_OT_clean_mesh(bpy.types.Operator):
     bl_idname = "fishhwb.clean_mesh"
     bl_label = "Clean Mesh"
-    bl_description = "Safely clean duplicate, loose and degenerate geometry on static meshes; deformed meshes receive normals-only cleanup"
+    bl_description = "Safely clean duplicate, loose and degenerate geometry on static meshes while preserving deformation-sensitive meshes"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -47,9 +47,15 @@ class FISHHWB_OT_clean_mesh(bpy.types.Operator):
                 continue
 
             mesh = obj.data
-            before = (len(mesh.vertices), len(mesh.edges), len(mesh.polygons))
-            has_deformation = _has_deformation(obj)
+            if _has_deformation(obj):
+                # Do not round-trip deformation-sensitive meshes through BMesh. Even a
+                # topology-preserving BMesh write can disturb authored correspondence.
+                mesh.update()
+                deformation_safe += 1
+                unchanged += 1
+                continue
 
+            before = (len(mesh.vertices), len(mesh.edges), len(mesh.polygons))
             bm = None
             try:
                 bm = bmesh.new()
@@ -58,21 +64,13 @@ class FISHHWB_OT_clean_mesh(bpy.types.Operator):
                 bm.edges.ensure_lookup_table()
                 bm.faces.ensure_lookup_table()
 
-                # Topology-changing cleanup is intentionally limited to static meshes.
-                # Shape keys, vertex groups and armature-bound meshes keep vertex correspondence.
-                if not has_deformation:
-                    if bm.verts:
-                        bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=0.00001)
-                    loose = [v for v in bm.verts if not v.link_edges and not v.link_faces]
-                    if loose:
-                        bmesh.ops.delete(bm, geom=loose, context='VERTS')
-                    if bm.edges:
-                        degenerate = [e for e in bm.edges if e.verts[0] is e.verts[1]]
-                        if degenerate:
-                            bmesh.ops.delete(bm, geom=degenerate, context='EDGES')
-                else:
-                    deformation_safe += 1
-
+                if bm.verts:
+                    bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=0.00001)
+                if bm.edges:
+                    bmesh.ops.dissolve_degenerate(bm, dist=0.00001, edges=list(bm.edges))
+                loose = [v for v in bm.verts if not v.link_edges and not v.link_faces]
+                if loose:
+                    bmesh.ops.delete(bm, geom=loose, context='VERTS')
                 if bm.faces:
                     bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
 
@@ -94,8 +92,8 @@ class FISHHWB_OT_clean_mesh(bpy.types.Operator):
         _action_report(
             self,
             context,
-            "Safe cleanup completed. Static meshes can remove duplicate/loose geometry. "
-            f"{deformation_safe} deformed mesh(es) used normals-only cleanup so shape keys, weights and armature vertex correspondence were not topology-edited.",
+            "Safe cleanup completed. Static meshes can merge duplicate vertices, dissolve degenerate geometry, remove loose vertices and recalculate normals. "
+            f"{deformation_safe} deformation-sensitive mesh(es) were left topology-untouched so shape keys, weights and armature vertex correspondence remain authored.",
             changed=changed,
             unchanged=unchanged,
             unsupported=unsupported,
