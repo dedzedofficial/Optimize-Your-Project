@@ -16,8 +16,9 @@ bl_info.update({
 })
 _addon.bl_info.update(bl_info)
 
-# Keep Blender language parity with Unity: 14 manually selectable languages.
+# Unity and Blender both expose Auto plus the same 14 actual languages.
 _addon.LANGUAGE_ITEMS = (
+    ('AUTO', 'Auto', 'Follow Blender interface language'),
     ('EN', 'English', 'English'),
     ('JA', '日本語', 'Japanese'),
     ('ZH', '简体中文', 'Chinese (Simplified)'),
@@ -52,7 +53,7 @@ _set_translation('title', {
     'IT': 'OTTIMIZZA IL PROGETTO', 'NL': 'OPTIMALISEER JE PROJECT', 'PL': 'OPTYMALIZUJ PROJEKT',
     'TR': 'PROJENİ OPTİMİZE ET',
 })
-_set_translation('subtitle', {code: 'Blender v0.8.0' for code, _, _ in _addon.LANGUAGE_ITEMS})
+_set_translation('subtitle', {code: 'Blender v0.8.0' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
 _set_translation('selection', {
     'EN': 'CURRENT SELECTION', 'JA': '現在の選択', 'ZH': '当前选择', 'ZT': '目前選取', 'KO': '현재 선택',
     'ES': 'SELECCIÓN ACTUAL', 'FR': 'SÉLECTION ACTUELLE', 'DE': 'AKTUELLE AUSWAHL', 'PT': 'SELEÇÃO ATUAL',
@@ -113,6 +114,31 @@ _set_translation('last_result', {
     'ES': 'ÚLTIMO RESULTADO', 'FR': 'DERNIER RÉSULTAT', 'DE': 'LETZTES ERGEBNIS', 'PT': 'ÚLTIMO RESULTADO',
     'RU': 'ПОСЛЕДНИЙ РЕЗУЛЬТАТ', 'IT': 'ULTIMO RISULTATO', 'NL': 'LAATSTE RESULTAAT', 'PL': 'OSTATNI WYNIK', 'TR': 'SON SONUÇ',
 })
+
+_LOCALE_MAP = {
+    'ja': 'JA', 'zh_hans': 'ZH', 'zh_cn': 'ZH', 'zh_sg': 'ZH', 'zh_hant': 'ZT', 'zh_tw': 'ZT', 'zh_hk': 'ZT',
+    'ko': 'KO', 'es': 'ES', 'fr': 'FR', 'de': 'DE', 'pt': 'PT', 'ru': 'RU', 'it': 'IT', 'nl': 'NL', 'pl': 'PL', 'tr': 'TR',
+}
+
+
+def _effective_language(context):
+    selected = getattr(context.scene, 'fishhwb_language', 'EN') if context and context.scene else 'EN'
+    if selected != 'AUTO':
+        return selected
+    locale = str(getattr(context.preferences.view, 'language', 'en_US') or 'en_US').lower()
+    for prefix, code in _LOCALE_MAP.items():
+        if locale.startswith(prefix):
+            return code
+    return 'EN'
+
+
+def _tr_v080(context, key):
+    values = _addon._TRANSLATIONS.get(key, {})
+    lang = _effective_language(context)
+    return values.get(lang, values.get('EN', key))
+
+
+_addon.tr = _tr_v080
 
 
 def _wrapped(layout, text, context, icon=None):
@@ -204,7 +230,6 @@ _tools42.classes = tuple(cls for cls in _tools42.classes if cls is not _tools42.
 def register():
     if bpy.app.version < (4, 2, 0):
         raise RuntimeError("Optimize Your Project for Blender requires Blender 4.2 or newer.")
-    # Patch Remesh before Blender registers the operator class so validation is part of the registered operator.
     _v08.install_remesh_guard(_addon)
     _addon.register()
     try:
