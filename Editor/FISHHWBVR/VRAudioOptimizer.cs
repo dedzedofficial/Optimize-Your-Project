@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -20,69 +19,60 @@ namespace FISHHWB.VROptimizer
             int unsupported = 0;
             int failed = 0;
 
-            try
+            foreach (string guid in guids)
             {
-                AssetDatabase.StartAssetEditing();
-                foreach (string guid in guids)
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var importer = AssetImporter.GetAtPath(path) as AudioImporter;
+                var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+                if (!importer || !clip)
                 {
-                    string path = AssetDatabase.GUIDToAssetPath(guid);
-                    var importer = AssetImporter.GetAtPath(path) as AudioImporter;
-                    var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
-                    if (!importer || !clip)
+                    unsupported++;
+                    continue;
+                }
+
+                try
+                {
+                    var settings = importer.defaultSampleSettings;
+                    bool longClip = clip.length >= StreamingThresholdSeconds;
+                    var desiredLoadType = longClip ? AudioClipLoadType.Streaming : AudioClipLoadType.CompressedInMemory;
+                    const AudioCompressionFormat desiredFormat = AudioCompressionFormat.Vorbis;
+                    float desiredQuality = longClip ? 0.65f : 0.75f;
+
+                    bool dirty = false;
+                    if (settings.loadType != desiredLoadType)
                     {
-                        unsupported++;
+                        settings.loadType = desiredLoadType;
+                        dirty = true;
+                    }
+                    if (settings.compressionFormat != desiredFormat)
+                    {
+                        settings.compressionFormat = desiredFormat;
+                        dirty = true;
+                    }
+                    if (Math.Abs(settings.quality - desiredQuality) > 0.001f)
+                    {
+                        settings.quality = desiredQuality;
+                        dirty = true;
+                    }
+
+                    if (!dirty)
+                    {
+                        unchanged++;
                         continue;
                     }
 
-                    try
-                    {
-                        var settings = importer.defaultSampleSettings;
-                        bool longClip = clip.length >= StreamingThresholdSeconds;
-                        var desiredLoadType = longClip ? AudioClipLoadType.Streaming : AudioClipLoadType.CompressedInMemory;
-                        var desiredFormat = AudioCompressionFormat.Vorbis;
-                        float desiredQuality = longClip ? 0.65f : 0.75f;
-
-                        bool dirty = false;
-                        if (settings.loadType != desiredLoadType)
-                        {
-                            settings.loadType = desiredLoadType;
-                            dirty = true;
-                        }
-
-                        if (settings.compressionFormat != desiredFormat)
-                        {
-                            settings.compressionFormat = desiredFormat;
-                            dirty = true;
-                        }
-
-                        if (Math.Abs(settings.quality - desiredQuality) > 0.001f)
-                        {
-                            settings.quality = desiredQuality;
-                            dirty = true;
-                        }
-
-                        if (!dirty)
-                        {
-                            unchanged++;
-                            continue;
-                        }
-
-                        importer.defaultSampleSettings = settings;
-                        importer.SaveAndReimport();
-                        changed++;
-                    }
-                    catch
-                    {
-                        failed++;
-                    }
+                    importer.defaultSampleSettings = settings;
+                    importer.SaveAndReimport();
+                    changed++;
+                }
+                catch (Exception exception)
+                {
+                    failed++;
+                    Debug.LogWarning("[Optimize Your Project] Audio optimization failed for " + path + ": " + exception.Message);
                 }
             }
-            finally
-            {
-                AssetDatabase.StopAssetEditing();
-                AssetDatabase.Refresh();
-            }
 
+            AssetDatabase.Refresh();
             return "Audio optimization complete: " + changed + " changed, " + unchanged + " already optimized, " + unsupported + " unsupported, " + failed + " failed. Long clips use Streaming; shorter clips use Compressed In Memory with Vorbis compression.";
         }
 

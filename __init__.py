@@ -16,8 +16,9 @@ bl_info.update({
 })
 _addon.bl_info.update(bl_info)
 
-# Keep Blender language parity with Unity: 14 manually selectable languages.
+# Unity and Blender both expose Auto plus the same 14 actual languages.
 _addon.LANGUAGE_ITEMS = (
+    ('AUTO', 'Auto', 'Follow Blender interface language'),
     ('EN', 'English', 'English'),
     ('JA', '日本語', 'Japanese'),
     ('ZH', '简体中文', 'Chinese (Simplified)'),
@@ -52,7 +53,7 @@ _set_translation('title', {
     'IT': 'OTTIMIZZA IL PROGETTO', 'NL': 'OPTIMALISEER JE PROJECT', 'PL': 'OPTYMALIZUJ PROJEKT',
     'TR': 'PROJENİ OPTİMİZE ET',
 })
-_set_translation('subtitle', {code: 'Blender v0.8.0' for code, _, _ in _addon.LANGUAGE_ITEMS})
+_set_translation('subtitle', {code: 'Blender v0.8.0' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
 _set_translation('selection', {
     'EN': 'CURRENT SELECTION', 'JA': '現在の選択', 'ZH': '当前选择', 'ZT': '目前選取', 'KO': '현재 선택',
     'ES': 'SELECCIÓN ACTUAL', 'FR': 'SÉLECTION ACTUELLE', 'DE': 'AKTUELLE AUSWAHL', 'PT': 'SELEÇÃO ATUAL',
@@ -73,11 +74,71 @@ _set_translation('triangle_target', {
     'ES': 'Objetivo de triángulos', 'FR': 'Cible de triangles', 'DE': 'Dreiecks-Ziel', 'PT': 'Meta de triângulos',
     'RU': 'Цель по треугольникам', 'IT': 'Obiettivo triangoli', 'NL': 'Doel driehoeken', 'PL': 'Docelowa liczba trójkątów', 'TR': 'Üçgen hedefi',
 })
+_set_translation('primary_actions', {
+    'EN': 'PRIMARY ACTIONS', 'JA': '主要アクション', 'ZH': '主要操作', 'ZT': '主要操作', 'KO': '주요 작업',
+    'ES': 'ACCIONES PRINCIPALES', 'FR': 'ACTIONS PRINCIPALES', 'DE': 'HAUPTAKTIONEN', 'PT': 'AÇÕES PRINCIPAIS',
+    'RU': 'ОСНОВНЫЕ ДЕЙСТВИЯ', 'IT': 'AZIONI PRINCIPALI', 'NL': 'HOOFDACTIES', 'PL': 'GŁÓWNE DZIAŁANIA', 'TR': 'ANA İŞLEMLER',
+})
+_set_translation('remesh_action', {
+    'EN': 'REMESH TO TRIANGLE TARGET', 'JA': '目標三角形数へリメッシュ', 'ZH': '重网格到目标三角面', 'ZT': '重新網格至目標三角形', 'KO': '목표 삼각형으로 리메시',
+    'ES': 'REMALLAR AL OBJETIVO', 'FR': 'REMESH VERS LA CIBLE', 'DE': 'AUF DREIECKSZIEL REMESHEN', 'PT': 'REMESH PARA A META',
+    'RU': 'РЕМЕШ ДО ЦЕЛИ', 'IT': 'REMESH AL TARGET', 'NL': 'REMESH NAAR DOEL', 'PL': 'REMESH DO CELU', 'TR': 'ÜÇGEN HEDEFİNE REMESH',
+})
+_set_translation('lod_action', {
+    'EN': 'CREATE LOD0 / LOD1 / LOD2', 'JA': 'LOD0 / LOD1 / LOD2 を作成', 'ZH': '创建 LOD0 / LOD1 / LOD2', 'ZT': '建立 LOD0 / LOD1 / LOD2', 'KO': 'LOD0 / LOD1 / LOD2 생성',
+    'ES': 'CREAR LOD0 / LOD1 / LOD2', 'FR': 'CRÉER LOD0 / LOD1 / LOD2', 'DE': 'LOD0 / LOD1 / LOD2 ERSTELLEN', 'PT': 'CRIAR LOD0 / LOD1 / LOD2',
+    'RU': 'СОЗДАТЬ LOD0 / LOD1 / LOD2', 'IT': 'CREA LOD0 / LOD1 / LOD2', 'NL': 'MAAK LOD0 / LOD1 / LOD2', 'PL': 'UTWÓRZ LOD0 / LOD1 / LOD2', 'TR': 'LOD0 / LOD1 / LOD2 OLUŞTUR',
+})
+_set_translation('clean_mesh', {
+    'EN': 'CLEAN MESH', 'JA': 'メッシュをクリーン', 'ZH': '清理网格', 'ZT': '清理網格', 'KO': '메시 정리',
+    'ES': 'LIMPIAR MALLA', 'FR': 'NETTOYER LE MAILLAGE', 'DE': 'MESH BEREINIGEN', 'PT': 'LIMPAR MALHA',
+    'RU': 'ОЧИСТИТЬ СЕТКУ', 'IT': 'PULISCI MESH', 'NL': 'MESH OPSCHONEN', 'PL': 'WYCZYŚĆ SIATKĘ', 'TR': 'MESH TEMİZLE',
+})
+_set_translation('lightmap_uv', {
+    'EN': 'GENERATE LIGHTMAP UV', 'JA': 'ライトマップ UV を生成', 'ZH': '生成光照贴图 UV', 'ZT': '產生光照貼圖 UV', 'KO': '라이트맵 UV 생성',
+    'ES': 'GENERAR UV DE LIGHTMAP', 'FR': 'GÉNÉRER UV LIGHTMAP', 'DE': 'LIGHTMAP-UV ERSTELLEN', 'PT': 'GERAR UV DE LIGHTMAP',
+    'RU': 'СОЗДАТЬ LIGHTMAP UV', 'IT': 'GENERA UV LIGHTMAP', 'NL': 'LIGHTMAP UV GENEREREN', 'PL': 'GENERUJ UV LIGHTMAPY', 'TR': 'LIGHTMAP UV OLUŞTUR',
+})
+_set_translation('link_mesh_data', {
+    'EN': 'LINK IDENTICAL MESH DATA', 'JA': '同一メッシュデータをリンク', 'ZH': '链接相同网格数据', 'ZT': '連結相同網格資料', 'KO': '동일 메시 데이터 연결',
+    'ES': 'VINCULAR MALLAS IDÉNTICAS', 'FR': 'LIER LES MAILLAGES IDENTIQUES', 'DE': 'IDENTISCHE MESH-DATEN VERKNÜPFEN', 'PT': 'VINCULAR MALHAS IDÊNTICAS',
+    'RU': 'СВЯЗАТЬ ОДИНАКОВЫЕ СЕТКИ', 'IT': 'COLLEGA MESH IDENTICHE', 'NL': 'IDENTIEKE MESH-DATA KOPPELEN', 'PL': 'POŁĄCZ IDENTYCZNE SIATKI', 'TR': 'AYNI MESH VERİSİNİ BAĞLA',
+})
+_set_translation('strip_collider', {
+    'EN': 'STRIP COLLIDER RENDER DATA', 'JA': 'コライダー描画データを削除', 'ZH': '移除碰撞体渲染数据', 'ZT': '移除碰撞器渲染資料', 'KO': '콜라이더 렌더 데이터 제거',
+    'ES': 'QUITAR DATOS DE RENDER DEL COLISOR', 'FR': 'RETIRER LE RENDU DU COLLIDER', 'DE': 'COLLIDER-RENDERDATEN ENTFERNEN', 'PT': 'REMOVER RENDER DO COLISOR',
+    'RU': 'УДАЛИТЬ РЕНДЕР-ДАННЫЕ КОЛЛАЙДЕРА', 'IT': 'RIMUOVI DATI RENDER COLLIDER', 'NL': 'COLLIDER-RENDERDATA VERWIJDEREN', 'PL': 'USUŃ DANE RENDERERA KOLIDERA', 'TR': 'COLLIDER RENDER VERİSİNİ KALDIR',
+})
 _set_translation('last_result', {
     'EN': 'LAST RESULT', 'JA': '最後の結果', 'ZH': '上次结果', 'ZT': '上次結果', 'KO': '마지막 결과',
     'ES': 'ÚLTIMO RESULTADO', 'FR': 'DERNIER RÉSULTAT', 'DE': 'LETZTES ERGEBNIS', 'PT': 'ÚLTIMO RESULTADO',
     'RU': 'ПОСЛЕДНИЙ РЕЗУЛЬТАТ', 'IT': 'ULTIMO RISULTATO', 'NL': 'LAATSTE RESULTAAT', 'PL': 'OSTATNI WYNIK', 'TR': 'SON SONUÇ',
 })
+
+_LOCALE_MAP = {
+    'ja': 'JA', 'zh_hans': 'ZH', 'zh_cn': 'ZH', 'zh_sg': 'ZH', 'zh_hant': 'ZT', 'zh_tw': 'ZT', 'zh_hk': 'ZT',
+    'ko': 'KO', 'es': 'ES', 'fr': 'FR', 'de': 'DE', 'pt': 'PT', 'ru': 'RU', 'it': 'IT', 'nl': 'NL', 'pl': 'PL', 'tr': 'TR',
+}
+
+
+def _effective_language(context):
+    selected = getattr(context.scene, 'fishhwb_language', 'EN') if context and context.scene else 'EN'
+    if selected != 'AUTO':
+        return selected
+    locale = str(getattr(context.preferences.view, 'language', 'en_US') or 'en_US').lower()
+    for prefix, code in _LOCALE_MAP.items():
+        if locale.startswith(prefix):
+            return code
+    return 'EN'
+
+
+def _tr_v080(context, key):
+    values = _addon._TRANSLATIONS.get(key, {})
+    lang = _effective_language(context)
+    return values.get(lang, values.get('EN', key))
+
+
+_addon.tr = _tr_v080
 
 
 def _wrapped(layout, text, context, icon=None):
@@ -121,13 +182,13 @@ def _draw_core_080(self, context):
         _wrapped(selected, _addon.tr(context, "select_mesh"), context, "INFO")
 
     primary = layout.box()
-    primary.label(text="PRIMARY ACTIONS", icon="TOOL_SETTINGS")
+    primary.label(text=_addon.tr(context, "primary_actions"), icon="TOOL_SETTINGS")
 
     remesh = primary.box()
     remesh.prop(context.scene, "fishhwb_triangle_target", text=_addon.tr(context, "triangle_target"), slider=True)
     row = remesh.row()
     row.scale_y = 1.5
-    row.operator("fishhwb.one_click_remesh", text="REMESH TO TRIANGLE TARGET", icon="MOD_REMESH")
+    row.operator("fishhwb.one_click_remesh", text=_addon.tr(context, "remesh_action"), icon="MOD_REMESH")
 
     lod = primary.box()
     lod.prop(context.scene, "fishhwb_apply_modifiers", text=_addon.tr(context, "apply_modifiers"))
@@ -136,24 +197,24 @@ def _draw_core_080(self, context):
     row.scale_y = 1.5
     row.operator(
         "fishhwb.create_lods_selected" if len(selected_meshes) > 1 else "fishhwb.create_lods",
-        text="CREATE LOD0 / LOD1 / LOD2", icon="MOD_DECIM",
+        text=_addon.tr(context, "lod_action"), icon="MOD_DECIM",
     )
 
     row = primary.row()
     row.scale_y = 1.45
-    row.operator("fishhwb.clean_mesh", text="CLEAN MESH", icon="BRUSH_DATA")
+    row.operator("fishhwb.clean_mesh", text=_addon.tr(context, "clean_mesh"), icon="BRUSH_DATA")
 
     row = primary.row()
     row.scale_y = 1.35
-    row.operator("fishhwb.generate_lightmap_uv", text="GENERATE LIGHTMAP UV", icon="UV")
+    row.operator("fishhwb.generate_lightmap_uv", text=_addon.tr(context, "lightmap_uv"), icon="UV")
 
     row = primary.row()
     row.scale_y = 1.35
-    row.operator("fishhwb.link_identical_mesh_data", text="LINK IDENTICAL MESH DATA", icon="LINKED")
+    row.operator("fishhwb.link_identical_mesh_data", text=_addon.tr(context, "link_mesh_data"), icon="LINKED")
 
     row = primary.row()
     row.scale_y = 1.35
-    row.operator("fishhwb.strip_collider_render_data", text="STRIP COLLIDER RENDER DATA", icon="TRASH")
+    row.operator("fishhwb.strip_collider_render_data", text=_addon.tr(context, "strip_collider"), icon="TRASH")
 
     if context.scene.fishhwb_last_result:
         result = layout.box()
@@ -169,12 +230,14 @@ _tools42.classes = tuple(cls for cls in _tools42.classes if cls is not _tools42.
 def register():
     if bpy.app.version < (4, 2, 0):
         raise RuntimeError("Optimize Your Project for Blender requires Blender 4.2 or newer.")
+    _v08.install_remesh_guard(_addon)
     _addon.register()
     try:
         _tools42.register()
         _v08.register(_addon)
     except Exception:
         try:
+            _v08.unregister()
             _tools42.unregister()
         finally:
             _addon.unregister()

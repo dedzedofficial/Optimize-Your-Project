@@ -10,7 +10,7 @@
   <a href="../CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-**Current Blender release: v0.7.66**
+**Current Blender release: v0.8.0**
 
 The Blender integration targets **Blender 4.2 and newer** through the Blender Extensions system. The supported download is one modern extension ZIP.
 
@@ -20,19 +20,19 @@ Open the latest successful **Check release packages** workflow:
 
 https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
 
-Download the `optimize-your-project-blender-0.7.66` artifact and install:
+Download the `optimize-your-project-blender-0.8.0` artifact and install:
 
 ```text
-optimize-your-project-blender-extension-0.7.66.zip
+optimize-your-project-blender-extension-0.8.0.zip
 ```
 
 Use **Edit > Preferences > Get Extensions > Install from Disk**. Do not extract the ZIP.
 
 After enabling the extension, press **N** in the 3D Viewport and open the **FISHHWB** tab.
 
-## v0.7.66 interface
+## v0.8.0 interface
 
-The Blender sidebar now uses one readable **Primary Actions** panel rather than splitting Remesh/LOD and modern static-mesh tools into separate stacked sections.
+The Blender sidebar keeps one readable **Primary Actions** panel.
 
 The panel includes:
 
@@ -41,22 +41,40 @@ The panel includes:
 - One-Click Remesh,
 - LOD0 / LOD1 / LOD2 generation,
 - optional collision proxy generation,
+- Clean Mesh,
 - Generate Lightmap UV,
 - Link Identical Mesh Data,
 - Strip Collider Render Data,
-- wrapped last-result text.
-
-Long descriptions are width-aware and wrap to the sidebar instead of being cut off. Primary actions use taller rows to make the panel easier to read at normal Blender UI scaling.
+- wrapped last-result text,
+- Auto plus the same 14 languages exposed by Unity.
 
 ## One-Click Remesh
 
 Select a supported mesh and choose a triangle target.
 
-**One-Click Remesh** creates a separate reduced copy while preserving the source. Supported UV layers and material assignments are retained. Supported relative shape keys, armature bindings and vertex weights are transferred through the surface-preserving reduction path.
+**One-Click Remesh** creates a separate reduced copy while preserving the source. Supported UV layers and material assignments are retained. Supported relative shape keys, armature bindings and vertex weights are transferred through the existing surface-preserving reduction path.
+
+v0.8.0 adds a preservation validation pass after generation. The result is checked for required UV layers, material slots, vertex groups and shape keys. If required data is missing, the generated copy is rejected and the original source is reselected instead of leaving a known-bad optimized result.
 
 Unsupported deformation cases are rejected instead of silently damaging output.
 
 Blender 5.x animation transfer uses the modern slotted Action/channelbag API. Blender 4.2 uses the compatible legacy action access path.
+
+## Clean Mesh
+
+**Clean Mesh** is new in v0.8.0.
+
+For selected static meshes it can:
+
+- merge duplicate vertices within a very small tolerance,
+- remove loose geometry,
+- remove simple degenerate edge data,
+- recalculate face normals,
+- validate and update mesh data without intentionally changing material slots or UV ownership.
+
+For meshes with shape keys, vertex groups or armature modifiers, topology-changing cleanup is intentionally avoided so vertex correspondence is not intentionally damaged. Those meshes use the deformation-safe path instead.
+
+Linked-library meshes and objects marked **Protect detail** are skipped.
 
 ## LOD Generation
 
@@ -123,10 +141,27 @@ The minimum stays at 4.2 until a future feature genuinely requires a newer Blend
 
 ## Languages
 
-The Blender interface currently supports English, Japanese, Simplified Chinese and Korean. Language parity with Unity remains the next localization priority.
+Blender now matches Unity with Auto plus 14 manually selectable languages:
+
+- English
+- Japanese
+- Simplified Chinese
+- Traditional Chinese
+- Korean
+- Spanish
+- French
+- German
+- Portuguese
+- Russian
+- Italian
+- Dutch
+- Polish
+- Turkish
+
+**Auto** follows Blender's interface language when it maps to one of the supported languages and falls back to English otherwise.
 
 ## Verification
 
-Automated Blender runtime checks cover Remesh, deformation transfer, LODs, collision proxies, generated-output reuse, Lightmap UV generation, exact mesh-data linking, collider render-data stripping, Blender 5.x slotted Actions and extension validation.
+Automated Blender runtime checks cover Remesh, deformation transfer, LODs, collision proxies, generated-output reuse, Lightmap UV generation, exact mesh-data linking, collider render-data stripping, Blender 5.x slotted Actions and extension validation. v0.8.0 release checks also verify Clean Mesh packaging, Remesh preservation guard wiring and language parity entries.
 
 The Blender extension package is licensed under **GPL-3.0-or-later**.
