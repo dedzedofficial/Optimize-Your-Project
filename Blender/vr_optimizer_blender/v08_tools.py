@@ -15,10 +15,19 @@ def _action_report(operator, context, detail, changed=0, unsupported=0, failed=0
     operator.report({'ERROR'} if failed else ({'WARNING'} if unsupported and not changed else {'INFO'}), message)
 
 
+def _has_deformation(obj):
+    mesh = obj.data
+    return bool(
+        mesh.shape_keys
+        or obj.vertex_groups
+        or any(mod.type == 'ARMATURE' for mod in obj.modifiers)
+    )
+
+
 class FISHHWB_OT_clean_mesh(bpy.types.Operator):
     bl_idname = "fishhwb.clean_mesh"
     bl_label = "Clean Mesh"
-    bl_description = "Safely merge duplicate vertices, remove loose/degenerate geometry and recalculate normals while preserving object-level deformation data"
+    bl_description = "Safely clean duplicate, loose and degenerate geometry on static meshes; deformed meshes receive normals-only cleanup"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -30,6 +39,7 @@ class FISHHWB_OT_clean_mesh(bpy.types.Operator):
         unchanged = 0
         unsupported = 0
         failed = 0
+        deformation_safe = 0
 
         for obj in [item for item in context.selected_objects if item.type == 'MESH']:
             if obj.library or obj.data.library or obj.get('fishhwb_protect_detail'):
@@ -37,10 +47,10 @@ class FISHHWB_OT_clean_mesh(bpy.types.Operator):
                 continue
 
             mesh = obj.data
-            before_v = len(mesh.vertices)
-            before_e = len(mesh.edges)
-            before_p = len(mesh.polygons)
+            before = (len(mesh.vertices), len(mesh.edges), len(mesh.polygons))
+            has_deformation = _has_deformation(obj)
 
+            bm = None
             try:
                 bm = bmesh.new()
                 bm.from_mesh(mesh)
@@ -48,31 +58,44 @@ class FISHHWB_OT_clean_mesh(bpy.types.Operator):
                 bm.edges.ensure_lookup_table()
                 bm.faces.ensure_lookup_table()
 
-                if bm.verts:
-                    bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=0.00001)
-                loose_verts = [v for v in bm.verts if not v.link_edges and not v.link_faces]
-                if loose_verts:
-                    bmesh.ops.delete(bm, geom=loose_verts, context='VERTS')
+                # Topology-changing cleanup is intentionally limited to static meshes.
+                # Shape keys, vertex groups and armature-bound meshes keep vertex correspondence.
+                if not has_deformation:
+                    if bm.verts:
+                        bmesh.ops.remove_doubles(bm, verts=list(bm.verts), dist=0.00001)
+                    loose = [v for v in bm.verts if not v.link_edges and not v.link_faces]
+                    if loose:
+                        bmesh.ops.delete(bm, geom=loose, context='VERTS')
+                    if bm.edges:
+                        degenerate = [e for e in bm.edges if e.verts[0] is e.verts[1]]
+                        if degenerate:
+                            bmesh.ops.delete(bm, geom=degenerate, context='EDGES')
+                else:
+                    deformation_safe += 1
+
                 if bm.faces:
                     bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
 
                 bm.to_mesh(mesh)
-                bm.free()
                 mesh.validate(verbose=False, clean_customdata=False)
                 mesh.update()
 
                 after = (len(mesh.vertices), len(mesh.edges), len(mesh.polygons))
-                if after != (before_v, before_e, before_p):
+                if after != before:
                     changed += 1
                 else:
                     unchanged += 1
             except Exception:
                 failed += 1
+            finally:
+                if bm is not None:
+                    bm.free()
 
         _action_report(
             self,
             context,
-            "Safe cleanup completed. UV maps, material slots, vertex groups, armature modifiers and shape keys remain attached to the object/mesh data; protected or linked meshes are skipped.",
+            "Safe cleanup completed. Static meshes can remove duplicate/loose geometry. "
+            f"{deformation_safe} deformed mesh(es) used normals-only cleanup so shape keys, weights and armature vertex correspondence were not topology-edited.",
             changed=changed,
             unchanged=unchanged,
             unsupported=unsupported,
@@ -122,7 +145,14 @@ def install_remesh_guard(addon):
                 addon._select_only(context, source)
             except Exception:
                 pass
-            _action_report(self, context, "Remesh output rejected because preservation validation failed for: " + ", ".join(problems) + ". Original object kept unchanged.", failed=1)
+            _action_report(
+                self,
+                context,
+                "Remesh output rejected because preservation validation failed for: "
+                + ", ".join(problems)
+                + ". Original object kept unchanged.",
+                failed=1,
+            )
             return {'CANCELLED'}
 
         context.scene.fishhwb_last_result += " v0.8 preservation validation passed for UVs, materials, vertex groups and shape keys."
