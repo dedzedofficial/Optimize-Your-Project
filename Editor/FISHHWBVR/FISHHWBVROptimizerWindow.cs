@@ -283,7 +283,17 @@ namespace FISHHWB.VROptimizer
                 if (Primary(T("optimize_ui_raycasts"))) summary = VRUIRaycastOptimizer.Optimize(root);
                 EditorGUILayout.EndHorizontal();
 
+                EditorGUILayout.BeginHorizontal();
+                if (!avatarScope)
+                {
+                    if (Primary(T("optimize_audio"))) summary = VRAudioOptimizer.Optimize(folder);
+                }
+                else
+                {
+                    GUILayout.FlexibleSpace();
+                }
                 if (Primary(T("clean_missing_scripts"))) summary = VRMissingScriptCleaner.Clean(root);
+                EditorGUILayout.EndHorizontal();
             }
 
             DrawAdvancedSettings();
@@ -460,7 +470,7 @@ namespace FISHHWB.VROptimizer
             }
 
             var batch = new VRImportBatch();
-            string policy = "textures-v0765:" + settings.pc + ":" + settings.android + ":" + settings.ios + ":" + testImportedMemory;
+            string policy = "textures-v0800:" + settings.pc + ":" + settings.android + ":" + settings.ios + ":" + testImportedMemory;
             var result = VRActionSummary.Run("Textures", textures, item => item.Path, item =>
                 batch.Apply(item.Path, "textures", policy, () =>
             {
@@ -538,7 +548,7 @@ namespace FISHHWB.VROptimizer
 
             var batch = new VRImportBatch();
             var result = VRActionSummary.Run("Imported meshes", meshes, item => item.Path, item =>
-                batch.Apply(item.Path, "models", "models-v0765:" + meshLevel + ":" + testImportedMemory, () =>
+                batch.Apply(item.Path, "models", "models-v0800:" + meshLevel + ":" + testImportedMemory, () =>
             {
                 var importer = AssetImporter.GetAtPath(item.Path) as ModelImporter;
                 if (!importer) return VRActionOutcome.Unsupported;
