@@ -10,7 +10,7 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-**v0.7.66 | Unity + Blender 4.2+ | General developer optimization tools | FISHHWB | Ded Zed**
+**v0.8.0 | Unity + Blender 4.2+ | General developer optimization tools | FISHHWB | Ded Zed**
 
 Optimize Your Project is a free general developer optimization toolkit focused on turning repetitive project cleanup and optimization work into clear, guarded actions. Unity and Blender share one project release version, with more engine integrations planned under the same safety and localization rules.
 
@@ -24,10 +24,10 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For fixed v0.7.66:
+For fixed v0.8.0:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.7.66
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.8.0
 ```
 
 ### Blender 4.2+
@@ -38,10 +38,10 @@ Open the latest successful release-check workflow:
 
 https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
 
-Download the `optimize-your-project-blender-0.7.66` artifact and install:
+Download the `optimize-your-project-blender-0.8.0` artifact and install:
 
 ```text
-optimize-your-project-blender-extension-0.7.66.zip
+optimize-your-project-blender-extension-0.8.0.zip
 ```
 
 Use **Edit > Preferences > Get Extensions > Install from Disk** and choose the ZIP without extracting it. Then press **N** in the 3D Viewport and open the **FISHHWB** tab.
@@ -54,28 +54,21 @@ vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Pro
 
 The Unity package does not require a VR SDK for normal projects.
 
-## Unity v0.7.66
+## Unity v0.8.0
 
-The Unity window is now built around one readable **Primary Actions** area instead of cramming navigation, language and actions into the same narrow rows.
+The Unity window stays button-first and keeps project-wide destructive actions separate from normal optimization jobs.
 
-### Primary Actions
-
-- **Balanced**, **Mobile** and **VR** safe configuration buttons adjust texture caps, particle limits and the requested model-compression level without forcing artistic module toggles.
-- **Optimize Current Scope** bundles texture, model-import, particle, material, decorative UI-raycast and missing-script jobs behind one confirmation.
-- **Optimize Character / Avatar** runs the same guarded bundle against the selected hierarchy.
-- Lighting and realtime-shadow actions remain explicit because they can visibly alter the scene.
-- Full per-job Primary Actions details are written to the Unity Console while the window shows a concise result summary.
-
-### Individual tools
+### One-click tools
 
 - **Optimize Textures** preserves explicit formats and stricter existing size caps.
-- **Optimize Model Imports** now preserves a stronger existing mesh-compression level instead of lowering it to the requested level.
+- **Optimize Model Imports** preserves a stronger existing mesh-compression level instead of lowering it to the requested level.
 - **Optimize Particles** handles Constant and Two Constants lifetime caps without rewriting authored curve lifetimes.
 - **Fix Material Costs** remaps exact duplicate material references and removes safe trailing empty slots.
-- **Optimize Lighting** retains its guarded baked-light workflow as an explicit action.
-- **Disable Realtime Shadows** only changes supported realtime lights.
-- **Optimize UI Raycasts** now also preserves Selectable hierarchies and CanvasGroup-blocked UI while keeping EventSystem handler detection.
-- **Clean Missing Scripts** now previews the affected object/script count before removing broken MonoBehaviour entries.
+- **Optimize Lighting** retains its guarded baked-light workflow as an explicit project action.
+- **Disable Realtime Shadows** only changes supported realtime lights on character/avatar scope.
+- **Optimize UI Raycasts** preserves Selectable hierarchies and CanvasGroup-blocked UI while keeping EventSystem handler detection.
+- **Optimize Audio** is new in v0.8.0. Long clips use Streaming and shorter clips use Compressed In Memory with Vorbis compression and conservative quality settings.
+- **Clean Missing Scripts** previews the affected object/script count before removing broken MonoBehaviour entries.
 
 ### Permanent unused-asset cleanup
 
@@ -93,22 +86,25 @@ The cleaner is intentionally conservative:
 
 Use source control or a backup before any permanent cleanup.
 
-## Blender v0.7.66
+## Blender v0.8.0
 
-Blender remains focused on **4.2+** and now presents Remesh, LOD and modern static-mesh tools in one readable **Primary Actions** panel.
+Blender remains focused on **4.2+** and keeps Remesh, LOD and modern static-mesh tools in one readable **Primary Actions** panel.
 
-- long helper text wraps to the sidebar width instead of clipping,
-- action buttons are taller and easier to scan,
-- One-Click Remesh and LOD stay source-preserving,
-- Generate Lightmap UV, Link Identical Mesh Data and Strip Collider Render Data are grouped in the same main panel instead of another stacked child panel,
-- result messages wrap cleanly in narrow sidebars,
+- **One-Click Remesh** keeps the original object and now runs an additional v0.8 preservation validation before accepting generated output.
+- UV maps, material slots, vertex groups and shape keys are checked after Remesh. If preservation validation fails, the generated result is rejected and the original is reselected.
+- **Clean Mesh** is new in v0.8.0. Static meshes can merge duplicate vertices, remove loose/degenerate geometry and recalculate face normals.
+- Clean Mesh avoids topology-changing cleanup on shape-key, vertex-group or armature-bound meshes so vertex correspondence is not intentionally destroyed.
+- **Create LOD0 / LOD1 / LOD2** remains source-preserving and can optionally create a collision proxy from LOD2.
+- **Generate Lightmap UV**, **Link Identical Mesh Data** and **Strip Collider Render Data** remain in the same primary panel.
 - runtime validation remains on Blender 4.2 LTS, 4.5 LTS and 5.2 LTS.
 
 ### Blender tools
 
-**One-Click Remesh** creates a separate reduced copy while preserving the source. Supported UV layers, material assignments, relative shape keys, armature bindings and vertex weights are retained through the guarded workflow.
+**One-Click Remesh** creates a separate reduced copy while preserving the source. Supported UV layers, material assignments, relative shape keys, armature bindings and vertex weights are retained through the guarded workflow, with v0.8 adding a rejection pass if required data is missing from the result.
 
 **Create LOD0 / LOD1 / LOD2** creates source-preserving static-mesh LOD sets. Optional **Create Collision Proxy from LOD2** adds a separate render-disabled wireframe collider candidate.
+
+**Clean Mesh** performs safe cleanup on selected meshes. Static meshes receive topology cleanup; deformed meshes use the non-topology-safe path so their authored deformation correspondence is preserved.
 
 **Generate Lightmap UV** creates a protected `LightmapUV` second channel without replacing existing secondary UV data.
 
@@ -118,11 +114,27 @@ Blender remains focused on **4.2+** and now presents Remesh, LOD and modern stat
 
 ## Languages
 
-Unity currently supports Auto, English, Japanese, Simplified Chinese, Traditional Chinese, Korean, Spanish, French, German, Portuguese, Russian and Italian.
+Unity and Blender now have matching language coverage in v0.8.0:
 
-Blender currently supports English, Japanese, Simplified Chinese and Korean. The next localization priority is Blender parity with Unity, followed by wider shared language coverage.
+- Auto
+- English
+- Japanese
+- Simplified Chinese
+- Traditional Chinese
+- Korean
+- Spanish
+- French
+- German
+- Portuguese
+- Russian
+- Italian
+- Dutch
+- Polish
+- Turkish
 
-Planned language expansion includes Dutch, Polish, Turkish, Ukrainian, Czech, Indonesian, Hindi, Thai, Vietnamese and additional European languages. Arabic and Hebrew remain later targets after right-to-left interface behavior is properly tested.
+Unity Auto follows the system language. Blender Auto follows Blender's interface language and falls back to English for an unknown locale.
+
+Future language expansion can now be added to both integrations together instead of Blender lagging behind Unity.
 
 ## Roadmap showcase
 
@@ -131,7 +143,7 @@ The full priority-led roadmap is in [Documentation/Roadmap.md](Documentation/Roa
 | Priority | Focus | Showcase |
 | --- | --- | --- |
 | **P0** | Current integrations | Continue improving every useful Unity and Blender button, recovery route, result summary and regression check. |
-| **P1** | Languages | Bring Blender to Unity language parity, then expand both integrations together. |
+| **P1** | Languages | Expand Unity and Blender together now that they have localization parity. |
 | **P1** | Godot 4.x | First planned new game-engine integration, focused on safe import, scene and selected-node optimization. |
 | **P2** | Unreal Engine 5.x | Planned editor plugin for texture, static-mesh, collision and asset optimization after the shared cross-engine layer is proven. |
 | **P3** | Later engines | Flax, Stride and other engines are evaluated only after the main integrations are stable enough to justify more surface area. |
@@ -148,7 +160,7 @@ Optional support: https://www.patreon.com/cw/DedZed
 
 Use source control or backups for production projects and inspect generated results in the target engine.
 
-Blender Remesh and LOD preserve source objects. Lightmap UV generation preserves geometry and primary UVs. Identical mesh-data linking is Undoable, but linked duplicates intentionally share later mesh-data edits until unlinked again. Collider render-data stripping is restricted to generated collision proxies.
+Blender Remesh and LOD preserve source objects. Clean Mesh avoids topology edits on deformation-sensitive meshes. Lightmap UV generation preserves geometry and primary UVs. Identical mesh-data linking is Undoable, but linked duplicates intentionally share later mesh-data edits until unlinked again. Collider render-data stripping is restricted to generated collision proxies.
 
 Unity importer changes use guarded history and restoration. Scene-object optimizations use Unity Undo where practical. Permanent unused-asset deletion is the explicit exception and uses two warning dialogs because file deletion cannot be restored with Unity Undo.
 
@@ -169,7 +181,7 @@ scripts/build_blender_extension.py           Blender Extensions ZIP builder
 
 ## Keywords
 
-Unity optimization, Blender 4.2 extension, Godot optimization, Unreal Engine optimization, one-click optimization, game optimization, asset optimization, texture optimization, mesh optimization, lightmap UV, mesh instancing, collision proxy, LOD, VR, XR, VRChat, mobile optimization and indie development.
+Unity optimization, Blender 4.2 extension, Godot optimization, Unreal Engine optimization, one-click optimization, game optimization, asset optimization, texture optimization, audio optimization, mesh optimization, lightmap UV, mesh instancing, collision proxy, LOD, VR, XR, VRChat, mobile optimization and indie development.
 
 ## Community
 
