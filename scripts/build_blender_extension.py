@@ -16,6 +16,7 @@ required = [
     root / "Blender" / "vr_optimizer_blender" / "__init__.py",
     root / "Blender" / "vr_optimizer_blender" / "deform_transfer.py",
     root / "Blender" / "vr_optimizer_blender" / "tools_42.py",
+    root / "Blender" / "vr_optimizer_blender" / "v08_tools.py",
     root / "Blender" / "vr_optimizer_blender" / "optimize-your-project-logo.png",
 ]
 for path in required:
@@ -42,6 +43,7 @@ with zipfile.ZipFile(archive) as package:
         "Blender/vr_optimizer_blender/__init__.py",
         "Blender/vr_optimizer_blender/deform_transfer.py",
         "Blender/vr_optimizer_blender/tools_42.py",
+        "Blender/vr_optimizer_blender/v08_tools.py",
         "Blender/vr_optimizer_blender/optimize-your-project-logo.png",
     ]:
         if required_name not in names:
