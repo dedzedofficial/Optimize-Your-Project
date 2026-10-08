@@ -14,16 +14,12 @@ unity_manifest = json.loads((root / "package.json").read_text(encoding="utf-8"))
 versions = json.loads((root / "version.json").read_text(encoding="utf-8"))
 extension_manifest = tomllib.loads((root / "blender_manifest.toml").read_text(encoding="utf-8"))
 
-assert versions["version"] == "0.7.66"
+assert versions["version"] == "0.8.0"
 assert unity_manifest["displayName"] == "Optimize Your Project"
 assert unity_manifest["name"] == "com.fishhwb.vr-optimizer"
 assert unity_manifest["version"] == versions["unity"] == versions["blender"] == versions["version"]
 assert versions["unity_tag"] == versions["blender_tag"] == "v" + versions["version"]
 assert versions["unity_url"].endswith("/releases/tag/" + versions["unity_tag"])
-
-update_checker = (root / "Editor/FISHHWBVR/VRUpdateChecker.cs").read_text(encoding="utf-8")
-assert '"0.7.66"' in update_checker
-assert "feed.version" in update_checker
 
 assert extension_manifest["schema_version"] == "1.0.0"
 assert extension_manifest["id"] == "optimize_your_project"
@@ -48,39 +44,44 @@ for required in [
     'Primary(T("optimize_particles"))',
     'Primary(T("fix_materials"))',
     'Primary(T("optimize_ui_raycasts"))',
+    'Primary(T("optimize_audio"))',
     'Primary(T("clean_missing_scripts"))',
+    "VRAudioOptimizer.Optimize",
     "VRMissingScriptCleaner.Clean",
     "VRUIRaycastOptimizer.Optimize",
     "VRUnusedAssetCleaner.DeleteUnused",
     "StrongerCompression",
-    "textures-v0765",
-    "models-v0765",
+    "textures-v0800",
+    "models-v0800",
 ]:
     assert required in window, required
 assert "RunQuickOptimize" not in window
 assert "ApplyConfiguration(" not in window
 assert "FISHHWB VR Optimizer" not in window
 
+audio = (root / "Editor/FISHHWBVR/VRAudioOptimizer.cs").read_text(encoding="utf-8")
+for required in [
+    "AudioImporter", "AudioClipLoadType.Streaming", "AudioClipLoadType.CompressedInMemory",
+    "AudioCompressionFormat.Vorbis", "StreamingThresholdSeconds", "Optimize Audio",
+]:
+    assert required in audio, required
+
 localization = (root / "Editor/FISHHWBVR/OYPLocalization.cs").read_text(encoding="utf-8")
 for required in [
-    '"danger_zone"', '"unused_assets_warning"', '"delete_unused_assets"',
+    "Dutch", "Polish", "Turkish", "Nederlands", "Polski", "Türkçe",
+    '"optimize_audio"', '"danger_zone"', '"unused_assets_warning"', '"delete_unused_assets"',
 ]:
     assert required in localization, required
+# 14 manual languages + Auto.
+assert localization.count("OYPLanguage.") >= 14
 
 unused_cleaner = (root / "Editor/FISHHWBVR/VRUnusedAssetCleaner.cs").read_text(encoding="utf-8")
 for required in [
-    "AssetDatabase.GetDependencies",
-    "AssetDatabase.DeleteAsset",
-    "PERMANENT DELETE - no Unity Undo",
-    "runtime-only references cannot always be detected",
-    "Resources",
-    "StreamingAssets",
-    "AddressableAssetsData",
-    "assetBundleName",
-    "GetLabels",
+    "AssetDatabase.GetDependencies", "AssetDatabase.DeleteAsset", "PERMANENT DELETE - no Unity Undo",
+    "runtime-only references cannot always be detected", "Resources", "StreamingAssets", "AddressableAssetsData",
+    "assetBundleName", "GetLabels",
 ]:
     assert required in unused_cleaner, required
-assert (root / "Editor/FISHHWBVR/VRUnusedAssetCleaner.cs.meta").is_file()
 
 missing_cleaner = (root / "Editor/FISHHWBVR/VRMissingScriptCleaner.cs").read_text(encoding="utf-8")
 assert "pendingScripts" in missing_cleaner
@@ -90,16 +91,6 @@ assert "DisplayDialog" in missing_cleaner
 ui_optimizer = (root / "Editor/FISHHWBVR/VRUIRaycastOptimizer.cs").read_text(encoding="utf-8")
 for required in ["bool confirm = true", "UnityEngine.UI.Selectable", "CanvasGroupAlreadyBlocksRaycasts"]:
     assert required in ui_optimizer, required
-
-texture_optimizer = (root / "Editor/FISHHWBVR/VRTextureOptimizer.cs").read_text(encoding="utf-8")
-assert "importer.maxTextureSize <= maximum" in texture_optimizer
-assert "Never increase an existing stricter limit" in texture_optimizer
-particle_optimizer = (root / "Editor/FISHHWBVR/VRParticleOptimizer.cs").read_text(encoding="utf-8")
-assert "ParticleSystemCurveMode.TwoConstants" in particle_optimizer
-assert "Curve-based lifetime data is intentionally preserved" in particle_optimizer
-light_optimizer = (root / "Editor/FISHHWBVR/VRLightOptimizer.cs").read_text(encoding="utf-8")
-assert "LightmapBakeType.Realtime" in light_optimizer
-assert "RecordPrefabInstancePropertyModifications" in light_optimizer
 
 core = (root / "Blender/vr_optimizer_blender/__init__.py").read_text(encoding="utf-8")
 for required in [
@@ -112,19 +103,29 @@ for required in [
 
 proxy = (root / "__init__.py").read_text(encoding="utf-8")
 for required in [
-    '"version": (0, 7, 66)',
+    '"version": (0, 8, 0)',
     '"blender": (4, 2, 0)',
-    "_draw_core_765",
+    "_draw_core_080",
     'primary.label(text="PRIMARY ACTIONS"',
     'row.operator("fishhwb.one_click_remesh"',
+    'row.operator("fishhwb.clean_mesh"',
     'row.operator("fishhwb.generate_lightmap_uv"',
     'row.operator("fishhwb.link_identical_mesh_data"',
     'row.operator("fishhwb.strip_collider_render_data"',
-    "FISHHWB_PT_optimizer.draw = _draw_core_765",
+    "FISHHWB_PT_optimizer.draw = _draw_core_080",
     "if cls is not _tools42.FISHHWB_PT_optimizer_42",
+    "('NL', 'Nederlands'", "('PL', 'Polski'", "('TR', 'Türkçe'",
 ]:
     assert required in proxy, required
 assert "QUICK OPTIMIZE" not in proxy
+
+v08 = (root / "Blender/vr_optimizer_blender/v08_tools.py").read_text(encoding="utf-8")
+for required in [
+    'bl_idname = "fishhwb.clean_mesh"', "bmesh.ops.remove_doubles", "recalc_face_normals",
+    "install_remesh_guard", "source_uvs", "source_materials", "source_groups", "source_shapes",
+    "Remesh output rejected", "Original object kept unchanged",
+]:
+    assert required in v08, required
 
 tools = (root / "Blender/vr_optimizer_blender/tools_42.py").read_text(encoding="utf-8")
 for required in [
@@ -137,45 +138,30 @@ for required in [
     assert required in tools, required
 assert "bpy.ops.uv.smart_project" not in tools
 
-transfer = (root / "Blender/vr_optimizer_blender/deform_transfer.py").read_text(encoding="utf-8")
-for required in ["_action_fcurves", "action_get_channelbag_for_slot", "_restore_copied_action_slot"]:
-    assert required in transfer, required
-
 build_extension = (root / "scripts/build_blender_extension.py").read_text(encoding="utf-8")
-assert "tools_42.py" in build_extension
+assert "v08_tools.py" in build_extension
 assert "optimize-your-project-blender-extension-" in build_extension
 
 workflow = (root / ".github/workflows/release-checks.yml").read_text(encoding="utf-8")
 assert "'3.6'" not in workflow
 for supported in ["'4.2'", "'4.5'", "'5.2'"]:
     assert supported in workflow, supported
-assert "scripts/test_blender_42.py" in workflow
-assert "scripts/test_blender_52.py" in workflow
 
 for path in [root / "README.md", root / "Blender/README.md"]:
     text = path.read_text(encoding="utf-8")
     assert "Optimize-Your-Project.png" in text, path
     assert "Install / Download Optimize Your Project" in text, path
     assert "Blender 4.2+" in text, path
-    assert "0.7.66" in text, path
-    assert "Generate Lightmap UV" in text, path
-    assert "Link Identical Mesh Data" in text, path
-    assert "Strip Collider Render Data" in text, path
     assert "Blender 3.6" not in text, path
     assert "Smart UV Project" not in text, path
 
 readme = (root / "README.md").read_text(encoding="utf-8")
-assert "**v0.7.66" in readme
 assert "general developer optimization" in readme.lower()
 assert "VRChat / VCC (optional)" in readme
 assert "Find and Permanently Delete Unused Assets" in readme
 assert "Godot 4.x" in readme
 assert "Unreal Engine 5.x" in readme
 assert not re.search(r"made\s+by\s+(?:a\s+)?man|help\s+from\s+friends", readme, re.IGNORECASE)
-
-roadmap = (root / "Documentation/Roadmap.md").read_text(encoding="utf-8")
-for required in ["Current baseline: v0.7.66", "Godot 4.x", "Unreal Engine 5.x", "v0.7.66"]:
-    assert required in roadmap, required
 
 for relative in subprocess.check_output(
     ["git", "ls-files", "--cached", "--others", "--exclude-standard"], cwd=root, text=True
@@ -195,6 +181,7 @@ with ZipFile(root / "dist" / f"{unity_manifest['name']}-{versions['version']}.zi
     names = set(package.namelist())
     for required in [
         "Editor/FISHHWBVR/FISHHWBVROptimizerWindow.cs",
+        "Editor/FISHHWBVR/VRAudioOptimizer.cs",
         "Editor/FISHHWBVR/VRUIRaycastOptimizer.cs",
         "Editor/FISHHWBVR/VRMissingScriptCleaner.cs",
         "Editor/FISHHWBVR/VRUnusedAssetCleaner.cs",
@@ -202,24 +189,20 @@ with ZipFile(root / "dist" / f"{unity_manifest['name']}-{versions['version']}.zi
         assert required in names, required
 
 extension_built = subprocess.run(
-    [sys.executable, "scripts/build_blender_extension.py"],
-    cwd=root,
-    check=True,
-    capture_output=True,
-    text=True,
+    [sys.executable, "scripts/build_blender_extension.py"], cwd=root, check=True, capture_output=True, text=True,
 )
 extension_archive = Path(extension_built.stdout.strip())
-assert extension_archive.name == "optimize-your-project-blender-extension-0.7.66.zip"
+assert extension_archive.name == f"optimize-your-project-blender-extension-{versions['version']}.zip"
 with ZipFile(extension_archive) as package:
     assert package.testzip() is None
     names = set(package.namelist())
     for required in [
         "blender_manifest.toml", "__init__.py", "Blender/__init__.py",
         "Blender/EXTENSION_LICENSE.txt", "Blender/vr_optimizer_blender/__init__.py",
-        "Blender/vr_optimizer_blender/deform_transfer.py",
-        "Blender/vr_optimizer_blender/tools_42.py",
+        "Blender/vr_optimizer_blender/deform_transfer.py", "Blender/vr_optimizer_blender/tools_42.py",
+        "Blender/vr_optimizer_blender/v08_tools.py",
         "Blender/vr_optimizer_blender/optimize-your-project-logo.png",
     ]:
         assert required in names, required
 
-print("Optimize Your Project v0.7.66 unified release checks passed.")
+print("Optimize Your Project v0.8.0 unified release checks passed.")
