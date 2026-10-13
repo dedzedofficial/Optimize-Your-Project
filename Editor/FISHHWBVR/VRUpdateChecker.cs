@@ -56,7 +56,7 @@ namespace FISHHWB.VROptimizer
             get
             {
                 var info = PackageInfo.FindForAssetPath("Packages/com.fishhwb.vr-optimizer/package.json");
-                return info != null ? info.version : "0.8.0";
+                return info != null ? info.version : "0.8.1";
             }
         }
 
@@ -135,10 +135,10 @@ namespace FISHHWB.VROptimizer
                 {
                     var feed = JsonUtility.FromJson<VersionFeed>(request.downloadHandler.text);
                     string feedVersion = feed == null ? null :
-                        (!string.IsNullOrEmpty(feed.version) ? feed.version : feed.unity);
+                        (!string.IsNullOrEmpty(feed.unity) ? feed.unity : feed.version);
                     if (feed == null || !Version.TryParse(feedVersion, out _))
                     {
-                        message = "The update feed did not contain a valid project version.";
+                        message = "The update feed did not contain a valid Unity version.";
                     }
                     else
                     {
