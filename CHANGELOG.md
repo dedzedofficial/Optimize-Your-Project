@@ -10,6 +10,16 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
+## 0.8.5
+
+### Blender 4.2+
+
+- Upgraded the existing **Remesh to Triangle Target** action with automatic crack welding, small-hole repair, manifold voxel rebuilding and QuadriFlow retopology for supported static meshes before the final triangle-target reduction.
+- Kept deformation-sensitive meshes on the guarded deformation-transfer path rather than forcing destructive topology rebuilding.
+- Added the single new **Merge Textures** action, which creates a preserved copy with rebuilt `AtlasUV`, a packed 2048x2048 texture atlas and one replacement material.
+- Kept the existing simple button-first UI and original-object preservation behaviour.
+- Unified Blender and Unity/package release metadata at **0.8.5**.
+
 ## 0.7.66
 
 ### UI correction
