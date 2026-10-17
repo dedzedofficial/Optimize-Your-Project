@@ -10,7 +10,7 @@ from .Blender.vr_optimizer_blender import v08_tools as _v08
 
 bl_info = dict(_addon.bl_info)
 bl_info.update({
-    "version": (0, 8, 0),
+    "version": (0, 8, 5),
     "blender": (4, 2, 0),
     "description": "One-click Remesh, LOD, Clean Mesh, lightmap and static-mesh optimization tools",
 })
@@ -53,7 +53,7 @@ _set_translation('title', {
     'IT': 'OTTIMIZZA IL PROGETTO', 'NL': 'OPTIMALISEER JE PROJECT', 'PL': 'OPTYMALIZUJ PROJEKT',
     'TR': 'PROJENİ OPTİMİZE ET',
 })
-_set_translation('subtitle', {code: 'Blender v0.8.0' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
+_set_translation('subtitle', {code: 'Blender v0.8.5' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
 _set_translation('selection', {
     'EN': 'CURRENT SELECTION', 'JA': '現在の選択', 'ZH': '当前选择', 'ZT': '目前選取', 'KO': '현재 선택',
     'ES': 'SELECCIÓN ACTUAL', 'FR': 'SÉLECTION ACTUELLE', 'DE': 'AKTUELLE AUSWAHL', 'PT': 'SELEÇÃO ATUAL',
