@@ -360,6 +360,11 @@ class FISHHWB_OT_merge_textures(bpy.types.Operator):
             output.matrix_world = source.matrix_world.copy()
             context.collection.objects.link(output)
 
+            # Work on private material copies so baking setup never mutates the source.
+            for slot in output.material_slots:
+                if slot.material:
+                    slot.material = slot.material.copy()
+
             _ensure_atlas_uv(output, context)
             image, material = _bake_material_atlas(output, context, 2048)
             output.data.name = output.name
@@ -476,6 +481,12 @@ def register(addon):
 
 
 def unregister():
+    try:
+        for panel in (getattr(bpy.types, "FISHHWB_PT_optimizer", None),):
+            if panel:
+                panel.remove(_draw_merge_button)
+    except Exception:
+        pass
     for cls in reversed(classes):
         try:
             bpy.utils.unregister_class(cls)
