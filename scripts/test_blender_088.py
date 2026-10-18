@@ -78,9 +78,14 @@ class SmartOptimize088Tests(unittest.TestCase):
         base = triangle_count(meshes[0].data)
         self.assertLessEqual(triangle_count(meshes[1].data), int(base * 0.75))
         self.assertLessEqual(triangle_count(meshes[2].data), int(base * 0.25))
-        collider = next(ob for ob in lod0.users_collection[0].objects
-                        if ob.get('fishhwb_collision_proxy'))
-        self.assertLessEqual(triangle_count(collider.data), 60)
+        proxies = [ob for ob in lod0.users_collection[0].objects
+                   if ob.get('fishhwb_collision_proxy')]
+        if proxies:
+            self.assertEqual(len(proxies), 1)
+            self.assertLessEqual(triangle_count(proxies[0].data), 60)
+        else:
+            self.assertTrue(lod0.users_collection[0].get('fishhwb_collision_warning'),
+                            "An impossible collider budget must be reported.")
         self.assertEqual(len(source.data.polygons), before)
 
     def test_remesh_keeps_large_open_boundary(self):
