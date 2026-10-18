@@ -337,8 +337,10 @@ def _bake_material_atlas(obj, context, size=2048):
         scene = context.scene
         previous_engine = scene.render.engine
         previous_margin = scene.render.bake.margin
+        previous_samples = scene.cycles.samples
         try:
-            # Cycles is the supported material baking backend in Blender 4.2+.
+            # Color/texture bakes do not benefit from costly high render samples.
+            scene.cycles.samples = min(previous_samples, 16)
             scene.render.engine = 'CYCLES'
             _activate_only(context, obj)
             scene.render.bake.margin = 16
@@ -346,6 +348,7 @@ def _bake_material_atlas(obj, context, size=2048):
         finally:
             scene.render.bake.margin = previous_margin
             scene.render.engine = previous_engine
+            scene.cycles.samples = previous_samples
 
         atlas_material = bpy.data.materials.new(name=obj.name + "_Atlas")
         atlas_material.use_nodes = True
