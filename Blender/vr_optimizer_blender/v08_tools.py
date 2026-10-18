@@ -338,14 +338,11 @@ def _bake_material_atlas(obj, context, size=2048):
         previous_engine = scene.render.engine
         previous_margin = scene.render.bake.margin
         try:
-            scene.render.engine = 'BLENDER_EEVEE_NEXT'
+            # Cycles is the supported material baking backend in Blender 4.2+.
+            scene.render.engine = 'CYCLES'
             _activate_only(context, obj)
             scene.render.bake.margin = 16
-            try:
-                bpy.ops.object.bake(type='DIFFUSE', pass_filter={'COLOR'}, use_clear=True)
-            except Exception:
-                scene.render.engine = 'CYCLES'
-                bpy.ops.object.bake(type='DIFFUSE', pass_filter={'COLOR'}, use_clear=True)
+            bpy.ops.object.bake(type='DIFFUSE', pass_filter={'COLOR'}, use_clear=True)
         finally:
             scene.render.bake.margin = previous_margin
             scene.render.engine = previous_engine
