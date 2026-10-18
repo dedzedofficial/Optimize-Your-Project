@@ -332,7 +332,10 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
             created.append(copy)
 
             target = max(1, int(base_count * fraction))
-            actual = _reduce_copy_to_limit(copy, target, context)
+            try:
+                actual = _reduce_copy_to_limit(copy, target, context)
+            except ValueError as exc:
+                raise ValueError(f"LOD{level} reduction: {exc}") from exc
             copy['fishhwb_lod_level'] = level
             copy['fishhwb_triangle_target'] = target
             copy['fishhwb_triangle_result'] = actual
@@ -350,7 +353,10 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
             collider.show_in_front = True
             collider['fishhwb_collision_proxy'] = True
             if triangle_count(collider.data) > collision_target:
-                _reduce_copy_to_limit(collider, collision_target, context)
+                try:
+                    _reduce_copy_to_limit(collider, collision_target, context)
+                except ValueError as exc:
+                    raise ValueError(f"Collision reduction to {collision_target} triangles: {exc}") from exc
             collider['fishhwb_collision_source'] = lod2.name_full
             collider['fishhwb_triangle_result'] = triangle_count(collider.data)
             collection.objects.link(collider)
