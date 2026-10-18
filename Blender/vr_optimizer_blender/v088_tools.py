@@ -66,7 +66,9 @@ def _bake_extra_channel(obj, context, graphs, image, socket_name=None, normal=Fa
     scene = context.scene
     old_engine = scene.render.engine
     old_margin = scene.render.bake.margin
+    old_samples = scene.cycles.samples
     try:
+        scene.cycles.samples = min(old_samples, 16)
         for mat, shader, output in graphs:
             nodes = mat.node_tree.nodes
             links = mat.node_tree.links
@@ -106,6 +108,7 @@ def _bake_extra_channel(obj, context, graphs, image, socket_name=None, normal=Fa
     finally:
         scene.render.engine = old_engine
         scene.render.bake.margin = old_margin
+        scene.cycles.samples = old_samples
         for mat, tex, active, emission, old_surface in temporary:
             links = mat.node_tree.links
             nodes = mat.node_tree.nodes
