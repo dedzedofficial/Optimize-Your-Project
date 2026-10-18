@@ -363,6 +363,7 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
                 if triangle_count(collider.data) > collision_target:
                     _reduce_copy_to_limit(collider, collision_target, context)
                 collider['fishhwb_collision_source'] = lod2.name_full
+                collider['fishhwb_collision_mesh_source'] = start.name_full
                 collider['fishhwb_triangle_result'] = triangle_count(collider.data)
                 collider.hide_set(False)
             except ValueError as exc:
@@ -621,7 +622,12 @@ class FISHHWB_OT_create_lods(bpy.types.Operator):
             base = triangle_count(created[0].data)
             lod1 = triangle_count(created[1].data)
             lod2 = triangle_count(created[2].data)
-            collider_detail = " Collision proxy created." if len(created) > 3 and created[3].get('fishhwb_collision_proxy') else ""
+            collider_detail = ""
+            if len(created) > 3 and created[3].get('fishhwb_collision_proxy'):
+                if created[3].get('fishhwb_collision_mesh_source') == created[2].name_full:
+                    collider_detail = " Collision proxy created from LOD2."
+                else:
+                    collider_detail = " Collision proxy created from LOD0 for the tighter triangle budget."
             if collection.get('fishhwb_collision_warning'):
                 collider_detail = " " + collection['fishhwb_collision_warning']
             _action_report(
