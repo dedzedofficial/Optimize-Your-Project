@@ -7,10 +7,11 @@ import bpy
 from .Blender import vr_optimizer_blender as _addon
 from .Blender.vr_optimizer_blender import tools_42 as _tools42
 from .Blender.vr_optimizer_blender import v08_tools as _v08
+from .Blender.vr_optimizer_blender import v088_tools as _v088
 
 bl_info = dict(_addon.bl_info)
 bl_info.update({
-    "version": (0, 8, 5),
+    "version": (0, 8, 8),
     "blender": (4, 2, 0),
     "description": "One-click Remesh, LOD, Clean Mesh, lightmap and static-mesh optimization tools",
 })
@@ -183,6 +184,9 @@ def _draw_core_080(self, context):
 
     primary = layout.box()
     primary.label(text=_addon.tr(context, "primary_actions"), icon="TOOL_SETTINGS")
+    row = primary.row()
+    row.scale_y = 1.5
+    row.operator("fishhwb.smart_optimize", text="SMART OPTIMIZE (PREVIEW)", icon="TOOL_SETTINGS")
 
     remesh = primary.box()
     remesh.prop(context.scene, "fishhwb_triangle_target", text=_addon.tr(context, "triangle_target"), slider=True)
@@ -193,6 +197,11 @@ def _draw_core_080(self, context):
     lod = primary.box()
     lod.prop(context.scene, "fishhwb_apply_modifiers", text=_addon.tr(context, "apply_modifiers"))
     lod.prop(context.scene, "fishhwb_create_collision_proxy", text=_addon.tr(context, "collision_proxy"))
+    ratios = lod.row(align=True)
+    ratios.prop(context.scene, "fishhwb_lod1_percent", text="LOD1 %")
+    ratios.prop(context.scene, "fishhwb_lod2_percent", text="LOD2 %")
+    if context.scene.fishhwb_create_collision_proxy:
+        lod.prop(context.scene, "fishhwb_collision_target", text="Collider Triangles")
     row = lod.row()
     row.scale_y = 1.5
     row.operator(
@@ -235,8 +244,13 @@ def register():
     try:
         _tools42.register()
         _v08.register(_addon)
+        _v088.register(_addon)
     except Exception:
         try:
+            try:
+                _v088.unregister()
+            except Exception:
+                pass
             _v08.unregister()
             _tools42.unregister()
         finally:
@@ -245,6 +259,7 @@ def register():
 
 
 def unregister():
+    _v088.unregister()
     _v08.unregister()
     _tools42.unregister()
     _addon.unregister()
