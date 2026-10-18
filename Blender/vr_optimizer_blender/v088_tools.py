@@ -235,9 +235,9 @@ class FISHHWB_OT_smart_optimize(bpy.types.Operator):
     def draw(self, context):
         layout = self.layout
         meshes = [obj for obj in context.selected_objects if obj.type == 'MESH']
-        triangles = sum(len(obj.data.loop_triangles) if False else
-                        sum(max(0, len(poly.vertices) - 2) for poly in obj.data.polygons)
-                        for obj in meshes)
+        triangles = sum(
+            sum(max(0, len(poly.vertices) - 2) for poly in obj.data.polygons)
+            for obj in meshes)
         layout.label(text=f'{len(meshes)} selected mesh(es); about {triangles:,} triangles', icon='INFO')
         layout.label(text='Original objects stay untouched; optional jobs are independent.')
         layout.prop(self, 'clean_geometry')
@@ -288,6 +288,9 @@ class FISHHWB_OT_smart_optimize(bpy.types.Operator):
                         current = context.active_object
                         jobs.append('atlas')
                 if self.lightmap and not _v08._has_deformation(current):
+                    if current is source:
+                        current = _copy_mesh_object(source, context, '_OptimizedUV')
+                        current['fishhwb_generated_job'] = 'smart_lightmap'
                     _select_only(context, current)
                     if 'FINISHED' in bpy.ops.fishhwb.generate_lightmap_uv():
                         jobs.append('lightmap UV')
