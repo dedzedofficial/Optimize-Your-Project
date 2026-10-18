@@ -56,6 +56,8 @@ jobs:
         run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender_52.py'
       - name: Test Blender 4.2+ optimization tools
         run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender_42.py'
+      - name: Test Blender 0.8.8 Smart Optimize and LOD regressions
+        run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender_088.py'
       - name: Validate Blender Extensions package
         if: matrix.blender.series == '4.2'
         run: |
