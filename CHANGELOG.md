@@ -10,6 +10,26 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
+## 0.8.8
+
+### Blender 4.2+
+
+- Added **Smart Optimize (Preview)**: inspect selected mesh count and choose source-preserving cleanup, Remesh, LOD, texture-atlas and LightmapUV operations before execution. Rigged or protected inputs are skipped where actions cannot preserve them.
+- Upgraded **Remesh** to fill only tiny closed boundary loops and avoid automatic voxel closure of intentional large openings. Existing UV/material/shape-key preservation guards remain active.
+- Added configurable **LOD1** and **LOD2** triangle percentages, plus a separate triangle cap for generated collider proxies. Generated-output caching now respects these settings.
+- Expanded **Merge Textures** to bake supported Principled material roughness, metallic, alpha, emission and tangent-normal channels where needed, alongside Base Color. Complex mixed shaders are explicitly rejected.
+- Added configurable 1024/2048/4096 atlas sizes and kept input texture sampling on the source UV map during baking.
+- Preserved original objects for Smart Optimize lightmap operations and made the batch result summary report changed, skipped and failed inputs.
+
+### Unity
+
+- Added **Export Unused Asset Report (No Deletion)**, a CSV dry run of conservative cleanup candidates and protected/unsupported counts, separate from the existing two-confirmation permanent deletion.
+- Retained existing texture, audio, particle, material, script and UI optimization actions without changing their conservative defaults.
+
+### Packaging and documentation
+
+- Updated the Blender Extensions bundle, release metadata, readmes, and static/runtime verification for 0.8.8.
+
 ## 0.8.5
 
 ### Blender 4.2+
