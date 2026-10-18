@@ -88,6 +88,33 @@ class SmartOptimize088Tests(unittest.TestCase):
                             "An impossible collider budget must be reported.")
         self.assertEqual(len(source.data.polygons), before)
 
+    def test_pbr_atlas_bakes_multi_material_scalar_channels(self):
+        obj = self.cube()
+        obj.name = "AtlasSource"
+        m1 = bpy.data.materials.new("Atlas_A")
+        m2 = bpy.data.materials.new("Atlas_B")
+        for mat in (m1, m2):
+            mat.use_nodes = True
+        m1.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value = 0.2
+        m2.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value = 0.8
+        m2.node_tree.nodes.get('Principled BSDF').inputs['Metallic'].default_value = 0.4
+        m2.node_tree.nodes.get('Principled BSDF').inputs['Alpha'].default_value = 0.5
+        obj.data.materials.append(m1)
+        obj.data.materials.append(m2)
+        for index, poly in enumerate(obj.data.polygons):
+            poly.material_index = index % 2
+        bpy.context.scene.fishhwb_atlas_size = '1024'
+        result = bpy.ops.fishhwb.merge_textures()
+        self.assertEqual(result, {'FINISHED'})
+        output = bpy.context.active_object
+        self.assertIsNot(output, obj)
+        self.assertEqual(len(obj.data.materials), 2)
+        self.assertEqual(len(output.data.materials), 1)
+        self.assertIn('Roughness', output.get('fishhwb_pbr_atlas_channels', ''))
+        self.assertIn('Metallic', output.get('fishhwb_pbr_atlas_channels', ''))
+        self.assertIn('Alpha', output.get('fishhwb_pbr_atlas_channels', ''))
+        self.assertIn('AtlasUV', output.data.uv_layers)
+
     def test_remesh_keeps_large_open_boundary(self):
         from optimize_your_project_v088.Blender.vr_optimizer_blender import v08_tools
         bpy.ops.mesh.primitive_plane_add(size=4)
