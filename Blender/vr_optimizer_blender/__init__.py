@@ -343,8 +343,11 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
 
         if create_collision_proxy:
             lod2 = created[2]
-            collider = lod2.copy()
-            collider.data = lod2.data.copy()
+            # A second decimation of LOD2 may reach a topology floor. When the
+            # collider budget is tighter than LOD2, reduce a fresh LOD0 copy.
+            start = lod0 if triangle_count(lod2.data) > collision_target else lod2
+            collider = start.copy()
+            collider.data = start.data.copy()
             collider.name = source.name + "_COLLIDER"
             collider.data.name = collider.name
             collider.matrix_world = source.matrix_world.copy()
@@ -352,16 +355,21 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
             collider.display_type = 'WIRE'
             collider.show_in_front = True
             collider['fishhwb_collision_proxy'] = True
-            if triangle_count(collider.data) > collision_target:
-                try:
-                    _reduce_copy_to_limit(collider, collision_target, context)
-                except ValueError as exc:
-                    raise ValueError(f"Collision reduction to {collision_target} triangles: {exc}") from exc
-            collider['fishhwb_collision_source'] = lod2.name_full
-            collider['fishhwb_triangle_result'] = triangle_count(collider.data)
+            if 'fishhwb_lod_level' in collider:
+                del collider['fishhwb_lod_level']
             collection.objects.link(collider)
-            collider.hide_set(False)
             created.append(collider)
+            try:
+                if triangle_count(collider.data) > collision_target:
+                    _reduce_copy_to_limit(collider, collision_target, context)
+                collider['fishhwb_collision_source'] = lod2.name_full
+                collider['fishhwb_triangle_result'] = triangle_count(collider.data)
+                collider.hide_set(False)
+            except ValueError as exc:
+                _remove_object_and_mesh(collider)
+                created.remove(collider)
+                collection['fishhwb_collision_warning'] = (
+                    f"Collider target {collision_target} was not safely achievable: {exc}")
 
         _remember_outputs(source, context, "lod", policy, created)
         return collection, created
@@ -603,7 +611,7 @@ class FISHHWB_OT_create_lods(bpy.types.Operator):
         original_active = context.view_layer.objects.active
 
         try:
-            _, created = _create_lod_set(
+            collection, created = _create_lod_set(
                 source,
                 context,
                 context.scene.fishhwb_apply_modifiers,
@@ -613,7 +621,9 @@ class FISHHWB_OT_create_lods(bpy.types.Operator):
             base = triangle_count(created[0].data)
             lod1 = triangle_count(created[1].data)
             lod2 = triangle_count(created[2].data)
-            collider_detail = " Collision proxy created from LOD2." if len(created) > 3 and created[3].get('fishhwb_collision_proxy') else ""
+            collider_detail = " Collision proxy created." if len(created) > 3 and created[3].get('fishhwb_collision_proxy') else ""
+            if collection.get('fishhwb_collision_warning'):
+                collider_detail = " " + collection['fishhwb_collision_warning']
             _action_report(
                 self,
                 context,
