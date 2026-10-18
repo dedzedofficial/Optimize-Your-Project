@@ -10,7 +10,7 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-**v0.8.0 | Unity + Blender 4.2+ | General developer optimization tools | FISHHWB | Ded Zed**
+**v0.8.8 | Unity + Blender 4.2+ | General developer optimization tools | FISHHWB | Ded Zed**
 
 Optimize Your Project is a free general developer optimization toolkit focused on turning repetitive project cleanup and optimization work into clear, guarded actions. Unity and Blender share one project release version, with more engine integrations planned under the same safety and localization rules.
 
@@ -24,10 +24,10 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For fixed v0.8.0:
+For fixed v0.8.8:
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.8.0
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.8.8
 ```
 
 ### Blender 4.2+
@@ -38,10 +38,10 @@ Open the latest successful release-check workflow:
 
 https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
 
-Download the `optimize-your-project-blender-0.8.0` artifact and install:
+Download the `optimize-your-project-blender-0.8.8` artifact and install:
 
 ```text
-optimize-your-project-blender-extension-0.8.0.zip
+optimize-your-project-blender-extension-0.8.8.zip
 ```
 
 Use **Edit > Preferences > Get Extensions > Install from Disk** and choose the ZIP without extracting it. Then press **N** in the 3D Viewport and open the **FISHHWB** tab.
@@ -54,7 +54,17 @@ vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Pro
 
 The Unity package does not require a VR SDK for normal projects.
 
-## Unity v0.8.0
+## What's new in v0.8.8
+
+Blender now includes a **Smart Optimize** preview dialog. Select meshes and choose safe copy-based cleanup, guarded Remesh, LOD generation, optional PBR texture merging and LightmapUV creation. Defaults are conservative; the original meshes are preserved.
+
+LOD1 and LOD2 detail ratios are adjustable (66% and 33% by default), with an independent collider triangle limit. Remesh no longer voxel-seals obvious intentional openings. Merge Textures now supports eligible Principled roughness, metallic, alpha, emission and tangent-normal channels and offers 1024/2048/4096 atlas resolutions. Complex mixed shaders are rejected.
+
+Unity adds **Export Unused Asset Report (No Deletion)** in the Project Danger Zone. It saves a CSV of conservative unused-asset candidates without altering project assets. Permanent deletion remains a separate two-confirmation action.
+
+The standalone optimizers remain available, and source protection/Undo limitations still apply. See [CHANGELOG.md](CHANGELOG.md) and [Blender/README.md](Blender/README.md) for details.
+
+## Unity v0.8.8
 
 The Unity window stays button-first and keeps project-wide destructive actions separate from normal optimization jobs.
 
@@ -67,7 +77,7 @@ The Unity window stays button-first and keeps project-wide destructive actions s
 - **Optimize Lighting** retains its guarded baked-light workflow as an explicit project action.
 - **Disable Realtime Shadows** only changes supported realtime lights on character/avatar scope.
 - **Optimize UI Raycasts** preserves Selectable hierarchies and CanvasGroup-blocked UI while keeping EventSystem handler detection.
-- **Optimize Audio** is new in v0.8.0. Long clips use Streaming and shorter clips use Compressed In Memory with Vorbis compression and conservative quality settings.
+- **Optimize Audio** is new in v0.8.8. Long clips use Streaming and shorter clips use Compressed In Memory with Vorbis compression and conservative quality settings.
 - **Clean Missing Scripts** previews the affected object/script count before removing broken MonoBehaviour entries.
 
 ### Permanent unused-asset cleanup
@@ -86,13 +96,13 @@ The cleaner is intentionally conservative:
 
 Use source control or a backup before any permanent cleanup.
 
-## Blender v0.8.0
+## Blender v0.8.8
 
 Blender remains focused on **4.2+** and keeps Remesh, LOD and modern static-mesh tools in one readable **Primary Actions** panel.
 
 - **One-Click Remesh** keeps the original object and now runs an additional v0.8 preservation validation before accepting generated output.
 - UV maps, material slots, vertex groups and shape keys are checked after Remesh. If preservation validation fails, the generated result is rejected and the original is reselected.
-- **Clean Mesh** is new in v0.8.0. Static meshes can merge duplicate vertices, remove loose/degenerate geometry and recalculate face normals.
+- **Clean Mesh** is new in v0.8.8. Static meshes can merge duplicate vertices, remove loose/degenerate geometry and recalculate face normals.
 - Clean Mesh avoids topology-changing cleanup on shape-key, vertex-group or armature-bound meshes so vertex correspondence is not intentionally destroyed.
 - **Create LOD0 / LOD1 / LOD2** remains source-preserving and can optionally create a collision proxy from LOD2.
 - **Generate Lightmap UV**, **Link Identical Mesh Data** and **Strip Collider Render Data** remain in the same primary panel.
@@ -114,7 +124,7 @@ Blender remains focused on **4.2+** and keeps Remesh, LOD and modern static-mesh
 
 ## Languages
 
-Unity and Blender now have matching language coverage in v0.8.0:
+Unity and Blender now have matching language coverage in v0.8.8:
 
 - Auto
 - English
