@@ -129,6 +129,12 @@ def _bake_pbr_atlas(obj, context, size=2048):
         ('Emission', 'Emission Color', 'Emission Color'),
         ('Normal', 'Normal', None),
     )
+    strengths = [
+        float(shader.inputs['Emission Strength'].default_value)
+        for _, shader, _ in graphs if shader.inputs.get('Emission Strength')
+    ]
+    if len({round(strength, 5) for strength in strengths}) > 1:
+        raise ValueError("Different Emission Strength values require separate materials; PBR merge skipped.")
     baked = {}
     created = []
     try:
@@ -178,8 +184,7 @@ def _bake_pbr_atlas(obj, context, size=2048):
                         links.new(tex.outputs['Color'], shader.inputs['Emission Color'])
                         strength = first.inputs.get('Emission Strength')
                         if strength:
-                            shader.inputs['Emission Strength'].default_value = max(
-                                1.0, float(strength.default_value))
+                            shader.inputs['Emission Strength'].default_value = float(strength.default_value)
                     else:
                         separate = nodes.new('ShaderNodeSeparateColor')
                         links.new(tex.outputs['Color'], separate.inputs['Color'])
@@ -288,12 +293,17 @@ class FISHHWB_OT_smart_optimize(bpy.types.Operator):
                         current = context.active_object
                         jobs.append('atlas')
                 if self.lightmap and not _v08._has_deformation(current):
+                    lightmap_copy = None
                     if current is source:
-                        current = _copy_mesh_object(source, context, '_OptimizedUV')
-                        current['fishhwb_generated_job'] = 'smart_lightmap'
+                        lightmap_copy = _copy_mesh_object(source, context, '_OptimizedUV')
+                        lightmap_copy['fishhwb_generated_job'] = 'smart_lightmap'
+                        current = lightmap_copy
                     _select_only(context, current)
                     if 'FINISHED' in bpy.ops.fishhwb.generate_lightmap_uv():
                         jobs.append('lightmap UV')
+                    elif lightmap_copy is not None:
+                        _remove_object_and_mesh(lightmap_copy)
+                        current = source
                 if self.lods and not _v08._has_deformation(current):
                     if _static_mesh_reason(current) is None:
                         _select_only(context, current)
