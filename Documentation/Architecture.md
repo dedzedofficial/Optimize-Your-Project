@@ -12,9 +12,15 @@
 
 ## Release identity
 
-Optimize Your Project is a general developer optimization toolkit. Unity and Blender share one public release version. In v0.7.66 both integrations report **0.7.66**.
+Optimize Your Project is a general developer optimization toolkit. Unity and Blender share one public release version. Both current integrations report **0.8.8**.
 
 Blender support starts at **4.2** and uses the Blender Extensions system. The legacy pre-4.2 add-on path is not supported.
+
+## Changes in v0.8.8
+
+The Blender 4.2+ extension entry point registers v08_tools and v088_tools. The newer layer coordinates existing operators behind a preview dialog, wraps compatible Principled PBR texture baking, and retains the standalone actions. LOD and collider triangle budgets are saved in scene settings and included in LOD cache policies.
+
+The Unity unused-asset cleaner also supports a non-destructive CSV dry run via SaveFilePanel; the existing permanent-delete confirmation path is unchanged.
 
 ## Unity architecture
 

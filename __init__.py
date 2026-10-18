@@ -7,10 +7,11 @@ import bpy
 from .Blender import vr_optimizer_blender as _addon
 from .Blender.vr_optimizer_blender import tools_42 as _tools42
 from .Blender.vr_optimizer_blender import v08_tools as _v08
+from .Blender.vr_optimizer_blender import v088_tools as _v088
 
 bl_info = dict(_addon.bl_info)
 bl_info.update({
-    "version": (0, 8, 5),
+    "version": (0, 8, 8),
     "blender": (4, 2, 0),
     "description": "One-click Remesh, LOD, Clean Mesh, lightmap and static-mesh optimization tools",
 })
@@ -53,7 +54,16 @@ _set_translation('title', {
     'IT': 'OTTIMIZZA IL PROGETTO', 'NL': 'OPTIMALISEER JE PROJECT', 'PL': 'OPTYMALIZUJ PROJEKT',
     'TR': 'PROJENİ OPTİMİZE ET',
 })
-_set_translation('subtitle', {code: 'Blender v0.8.5' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
+_set_translation('subtitle', {code: 'Blender v0.8.8' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
+_set_translation('smart_optimize', {
+    'EN': 'SMART OPTIMIZE (PREVIEW)', 'JA': 'スマート最適化 (プレビュー)',
+    'ZH': '智能优化 (预览)', 'ZT': '智慧最佳化 (預覽)', 'KO': '스마트 최적화 (미리보기)',
+    'ES': 'OPTIMIZACIÓN INTELIGENTE', 'FR': 'OPTIMISATION INTELLIGENTE',
+    'DE': 'SMART OPTIMIEREN', 'PT': 'OTIMIZAÇÃO INTELIGENTE',
+    'RU': 'УМНАЯ ОПТИМИЗАЦИЯ', 'IT': 'OTTIMIZZAZIONE SMART',
+    'NL': 'SLIM OPTIMALISEREN', 'PL': 'INTELIGENTNA OPTYMALIZACJA',
+    'TR': 'AKILLI OPTİMİZASYON',
+})
 _set_translation('selection', {
     'EN': 'CURRENT SELECTION', 'JA': '現在の選択', 'ZH': '当前选择', 'ZT': '目前選取', 'KO': '현재 선택',
     'ES': 'SELECCIÓN ACTUAL', 'FR': 'SÉLECTION ACTUELLE', 'DE': 'AKTUELLE AUSWAHL', 'PT': 'SELEÇÃO ATUAL',
@@ -183,6 +193,9 @@ def _draw_core_080(self, context):
 
     primary = layout.box()
     primary.label(text=_addon.tr(context, "primary_actions"), icon="TOOL_SETTINGS")
+    row = primary.row()
+    row.scale_y = 1.5
+    row.operator("fishhwb.smart_optimize", text=_addon.tr(context, "smart_optimize"), icon="TOOL_SETTINGS")
 
     remesh = primary.box()
     remesh.prop(context.scene, "fishhwb_triangle_target", text=_addon.tr(context, "triangle_target"), slider=True)
@@ -193,6 +206,11 @@ def _draw_core_080(self, context):
     lod = primary.box()
     lod.prop(context.scene, "fishhwb_apply_modifiers", text=_addon.tr(context, "apply_modifiers"))
     lod.prop(context.scene, "fishhwb_create_collision_proxy", text=_addon.tr(context, "collision_proxy"))
+    ratios = lod.row(align=True)
+    ratios.prop(context.scene, "fishhwb_lod1_percent", text="LOD1 %")
+    ratios.prop(context.scene, "fishhwb_lod2_percent", text="LOD2 %")
+    if context.scene.fishhwb_create_collision_proxy:
+        lod.prop(context.scene, "fishhwb_collision_target", text="Collider Triangles")
     row = lod.row()
     row.scale_y = 1.5
     row.operator(
@@ -235,8 +253,13 @@ def register():
     try:
         _tools42.register()
         _v08.register(_addon)
+        _v088.register(_addon)
     except Exception:
         try:
+            try:
+                _v088.unregister()
+            except Exception:
+                pass
             _v08.unregister()
             _tools42.unregister()
         finally:
@@ -245,6 +268,7 @@ def register():
 
 
 def unregister():
+    _v088.unregister()
     _v08.unregister()
     _tools42.unregister()
     _addon.unregister()

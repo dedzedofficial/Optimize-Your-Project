@@ -8,6 +8,39 @@ namespace FISHHWB.VROptimizer
 {
     internal static class VRUnusedAssetCleaner
     {
+        internal static string ExportDryRunReport(string folder)
+        {
+            if (!ValidFolder(folder))
+                return "Unused asset report: choose an existing folder under Assets first.";
+
+            var candidates = FindUnused(folder, out int protectedDynamic, out int unsupported);
+            string filename = EditorUtility.SaveFilePanel(
+                "Export unused asset dry-run report", "", "OptimizeYourProject-UnusedAssets.csv", "csv");
+            if (string.IsNullOrEmpty(filename))
+                return "Unused asset report cancelled. No assets were modified.";
+
+            try
+            {
+                using (var writer = new StreamWriter(filename, false, System.Text.Encoding.UTF8))
+                {
+                    writer.WriteLine("Status,Asset Path");
+                    foreach (string path in candidates)
+                        writer.WriteLine("\"Candidate\",\"" + path.Replace("\"", "\"\"") + "\"");
+                    writer.WriteLine("\"Protected dynamic-use assets\",\"" + protectedDynamic + "\"");
+                    writer.WriteLine("\"Unsupported asset types\",\"" + unsupported + "\"");
+                    writer.WriteLine("\"Caution\",\"Runtime-only references cannot always be detected\"");
+                }
+                return "Unused asset dry-run report exported: " + candidates.Count +
+                       " candidates; " + protectedDynamic + " protected dynamic-use assets; " +
+                       unsupported + " unsupported. Nothing deleted. File: " + filename;
+            }
+            catch (Exception error)
+            {
+                Debug.LogWarning("Optimize Your Project report export failed: " + error);
+                return "Unused asset report export failed: " + error.Message;
+            }
+        }
+
         internal static string DeleteUnused(string folder)
         {
             if (!ValidFolder(folder))

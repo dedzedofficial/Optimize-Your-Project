@@ -344,6 +344,8 @@ namespace FISHHWB.VROptimizer
             EditorGUILayout.HelpBox(T("unused_assets_warning"), MessageType.Warning);
             using (new EditorGUI.DisabledScope(!valid))
             {
+                if (GUILayout.Button(T("export_unused_assets_report"), heroButtonStyle))
+                    summary = VRUnusedAssetCleaner.ExportDryRunReport(projectFolder);
                 if (GUILayout.Button(T("delete_unused_assets"), heroButtonStyle))
                     summary = VRUnusedAssetCleaner.DeleteUnused(projectFolder);
             }

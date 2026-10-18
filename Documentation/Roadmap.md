@@ -23,7 +23,13 @@ Unity and Blender share one project version. Blender support starts at **4.2** a
 - **P2 - Medium priority:** new integrations or deeper automation that need more validation before becoming default behavior.
 - **P3 - Later / experimental:** useful ideas that should not delay the main Unity, Blender, Godot and Unreal work.
 
-## Current baseline: v0.7.66
+## Current baseline: v0.8.8
+
+Blender 0.8.8 implements the Smart Optimize preview, source-preserving optional combined workflows, guarded PBR atlases and configurable LOD/collider budgets. Unity 0.8.8 adds a non-destructive CSV report of unused-asset candidates. Existing Unity and Blender actions remain available.
+
+The paragraphs below retain the earlier feature inventory and milestone history for reference; individual entries may describe previous behavior.
+
+## Previous baseline: v0.7.66
 
 ### Unity
 

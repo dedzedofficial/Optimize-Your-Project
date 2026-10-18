@@ -10,7 +10,7 @@
   <a href="../CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-**Current Blender release: v0.8.0**
+**Current Blender release: v0.8.8**
 
 The Blender integration targets **Blender 4.2 and newer** through the Blender Extensions system. The supported download is one modern extension ZIP.
 
@@ -20,17 +20,17 @@ Open the latest successful **Check release packages** workflow:
 
 https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
 
-Download the `optimize-your-project-blender-0.8.0` artifact and install:
+Download the `optimize-your-project-blender-0.8.8` artifact and install:
 
 ```text
-optimize-your-project-blender-extension-0.8.0.zip
+optimize-your-project-blender-extension-0.8.8.zip
 ```
 
 Use **Edit > Preferences > Get Extensions > Install from Disk**. Do not extract the ZIP.
 
 After enabling the extension, press **N** in the 3D Viewport and open the **FISHHWB** tab.
 
-## v0.8.0 interface
+## v0.8.8 interface
 
 The Blender sidebar keeps one readable **Primary Actions** panel.
 
@@ -48,13 +48,29 @@ The panel includes:
 - wrapped last-result text,
 - Auto plus the same 14 languages exposed by Unity.
 
+## Smart Optimize (v0.8.8)
+
+Select one or more objects, then click **SMART OPTIMIZE (PREVIEW)** in the FISHHWB sidebar. In the dialog, select the desired jobs:
+
+- **Clean Geometry**: operates only on a newly generated copy of each eligible static mesh.
+- **Remesh if Above Triangle Target**: delegates to the existing guarded Remesh operation.
+- **Generate LODs**: delegates to the existing LOD operation, skipping unsupported deformation meshes.
+- **Merge PBR Textures**: optional Cycles bake. Supports direct Principled BSDF shader graphs only and may take time.
+- **Generate Lightmap UV**: creates a private copy if needed to keep the original UVs unchanged.
+
+The result panel displays completed, skipped and failed operations. This is not an unattended project-wide optimizer: review the preview and outputs before exporting to your engine. Undo can restore Blender changes; save a backup for important assets.
+
+## PBR atlas improvements
+
+The Merge Textures button supports **1024**, **2048** and **4096** atlas sizes. Base Color is baked as before; compatible Principled materials can also bake varying roughness, metallic, alpha, emission and normal channels. Constant scalar values remain constants where possible. Materials with complex mixed shader output, unconnected or non-Principled outputs are rejected to avoid a false sense of fidelity. Check normals, transparency and color space in your target engine.
+
 ## One-Click Remesh
 
 Select a supported mesh and choose a triangle target.
 
 **One-Click Remesh** creates a separate reduced copy while preserving the source. Supported UV layers and material assignments are retained. Supported relative shape keys, armature bindings and vertex weights are transferred through the existing surface-preserving reduction path.
 
-v0.8.0 adds a preservation validation pass after generation. The result is checked for required UV layers, material slots, vertex groups and shape keys. If required data is missing, the generated copy is rejected and the original source is reselected instead of leaving a known-bad optimized result.
+v0.8.8 adds a preservation validation pass after generation. The result is checked for required UV layers, material slots, vertex groups and shape keys. If required data is missing, the generated copy is rejected and the original source is reselected instead of leaving a known-bad optimized result.
 
 Unsupported deformation cases are rejected instead of silently damaging output.
 
@@ -62,7 +78,7 @@ Blender 5.x animation transfer uses the modern slotted Action/channelbag API. Bl
 
 ## Clean Mesh
 
-**Clean Mesh** is new in v0.8.0.
+**Clean Mesh** is new in v0.8.8.
 
 For selected static meshes it can:
 
@@ -162,6 +178,6 @@ Blender now matches Unity with Auto plus 14 manually selectable languages:
 
 ## Verification
 
-Automated Blender runtime checks cover Remesh, deformation transfer, LODs, collision proxies, generated-output reuse, Lightmap UV generation, exact mesh-data linking, collider render-data stripping, Blender 5.x slotted Actions and extension validation. v0.8.0 release checks also verify Clean Mesh packaging, Remesh preservation guard wiring and language parity entries.
+Automated Blender runtime checks cover Remesh, deformation transfer, LODs, collision proxies, generated-output reuse, Lightmap UV generation, exact mesh-data linking, collider render-data stripping, Blender 5.x slotted Actions and extension validation. v0.8.8 release checks also verify Clean Mesh packaging, Remesh preservation guard wiring and language parity entries.
 
 The Blender extension package is licensed under **GPL-3.0-or-later**.

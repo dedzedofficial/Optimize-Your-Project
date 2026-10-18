@@ -2,8 +2,8 @@
 bl_info = {
     "name": "Optimize Your Project for Blender",
     "author": "FISHHWB | Ded Zed",
-    "version": (0, 7, 60),
-    "blender": (3, 6, 0),
+    "version": (0, 8, 8),
+    "blender": (4, 2, 0),
     "location": "View3D > Sidebar > FISHHWB",
     "description": "Remesh, LOD and optional collision proxy tools",
     "category": "Mesh",
@@ -287,7 +287,10 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
     if source.modifiers and not apply_modifiers:
         raise ValueError("Enable Apply Existing Modifiers or use a mesh with no modifiers.")
 
-    policy = 'lod-v0760:' + str(apply_modifiers) + ':' + str(create_collision_proxy)
+    lod1_ratio = max(0.05, min(0.99, context.scene.fishhwb_lod1_percent / 100.0))
+    lod2_ratio = max(0.02, min(lod1_ratio, context.scene.fishhwb_lod2_percent / 100.0))
+    collision_target = max(4, context.scene.fishhwb_collision_target)
+    policy = f'lod-v088:{apply_modifiers}:{create_collision_proxy}:{lod1_ratio:.3f}:{lod2_ratio:.3f}:{collision_target}'
     cached = _cached_outputs(source, context, 'lod', policy)
     source['fishhwb_lod_reused'] = bool(cached)
     if cached:
@@ -320,7 +323,7 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
         lod0['fishhwb_lod_level'] = 0
         lod0['fishhwb_triangle_target'] = base_count
 
-        for level, fraction in ((1, 0.66), (2, 0.33)):
+        for level, fraction in ((1, lod1_ratio), (2, lod2_ratio)):
             copy = lod0.copy()
             copy.data = lod0.data.copy()
             copy.name = source.name + f"_LOD{level}"
@@ -329,7 +332,10 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
             created.append(copy)
 
             target = max(1, int(base_count * fraction))
-            actual = _reduce_copy_to_limit(copy, target, context)
+            try:
+                actual = _reduce_copy_to_limit(copy, target, context)
+            except ValueError as exc:
+                raise ValueError(f"LOD{level} reduction: {exc}") from exc
             copy['fishhwb_lod_level'] = level
             copy['fishhwb_triangle_target'] = target
             copy['fishhwb_triangle_result'] = actual
@@ -337,8 +343,11 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
 
         if create_collision_proxy:
             lod2 = created[2]
-            collider = lod2.copy()
-            collider.data = lod2.data.copy()
+            # A second decimation of LOD2 may reach a topology floor. When the
+            # collider budget is tighter than LOD2, reduce a fresh LOD0 copy.
+            start = lod0 if triangle_count(lod2.data) > collision_target else lod2
+            collider = start.copy()
+            collider.data = start.data.copy()
             collider.name = source.name + "_COLLIDER"
             collider.data.name = collider.name
             collider.matrix_world = source.matrix_world.copy()
@@ -346,11 +355,22 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
             collider.display_type = 'WIRE'
             collider.show_in_front = True
             collider['fishhwb_collision_proxy'] = True
-            collider['fishhwb_collision_source'] = lod2.name_full
-            collider['fishhwb_triangle_result'] = triangle_count(collider.data)
+            if 'fishhwb_lod_level' in collider:
+                del collider['fishhwb_lod_level']
             collection.objects.link(collider)
-            collider.hide_set(False)
             created.append(collider)
+            try:
+                if triangle_count(collider.data) > collision_target:
+                    _reduce_copy_to_limit(collider, collision_target, context)
+                collider['fishhwb_collision_source'] = lod2.name_full
+                collider['fishhwb_collision_mesh_source'] = start.name_full
+                collider['fishhwb_triangle_result'] = triangle_count(collider.data)
+                collider.hide_set(False)
+            except ValueError as exc:
+                _remove_object_and_mesh(collider)
+                created.remove(collider)
+                collection['fishhwb_collision_warning'] = (
+                    f"Collider target {collision_target} was not safely achievable: {exc}")
 
         _remember_outputs(source, context, "lod", policy, created)
         return collection, created
@@ -592,7 +612,7 @@ class FISHHWB_OT_create_lods(bpy.types.Operator):
         original_active = context.view_layer.objects.active
 
         try:
-            _, created = _create_lod_set(
+            collection, created = _create_lod_set(
                 source,
                 context,
                 context.scene.fishhwb_apply_modifiers,
@@ -602,7 +622,14 @@ class FISHHWB_OT_create_lods(bpy.types.Operator):
             base = triangle_count(created[0].data)
             lod1 = triangle_count(created[1].data)
             lod2 = triangle_count(created[2].data)
-            collider_detail = " Collision proxy created from LOD2." if len(created) > 3 and created[3].get('fishhwb_collision_proxy') else ""
+            collider_detail = ""
+            if len(created) > 3 and created[3].get('fishhwb_collision_proxy'):
+                if created[3].get('fishhwb_collision_mesh_source') == created[2].name_full:
+                    collider_detail = " Collision proxy created from LOD2."
+                else:
+                    collider_detail = " Collision proxy created from LOD0 for the tighter triangle budget."
+            if collection.get('fishhwb_collision_warning'):
+                collider_detail = " " + collection['fishhwb_collision_warning']
             _action_report(
                 self,
                 context,
@@ -817,6 +844,18 @@ def register():
         default=False,
         description="Create a separate wireframe, render-disabled collider candidate copied from LOD2 while preserving the source",
     )
+    bpy.types.Scene.fishhwb_lod1_percent = IntProperty(
+        name="LOD1 Detail %", default=66, min=5, max=99,
+        description="Target proportion of LOD0 triangles for LOD1",
+    )
+    bpy.types.Scene.fishhwb_lod2_percent = IntProperty(
+        name="LOD2 Detail %", default=33, min=2, max=95,
+        description="Target proportion of LOD0 triangles for LOD2 (clamped to LOD1)",
+    )
+    bpy.types.Scene.fishhwb_collision_target = IntProperty(
+        name="Collision Triangle Limit", default=500, min=4, max=100000,
+        description="Independent triangle limit for generated collision proxies",
+    )
 
 
 def unregister():
@@ -834,6 +873,9 @@ def unregister():
         del bpy.types.Scene.fishhwb_apply_modifiers
     if hasattr(bpy.types.Scene, "fishhwb_create_collision_proxy"):
         del bpy.types.Scene.fishhwb_create_collision_proxy
+    for prop in ("fishhwb_lod1_percent", "fishhwb_lod2_percent", "fishhwb_collision_target"):
+        if hasattr(bpy.types.Scene, prop):
+            delattr(bpy.types.Scene, prop)
 
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

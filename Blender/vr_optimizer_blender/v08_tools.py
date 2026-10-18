@@ -38,6 +38,32 @@ def _mesh_diagonal(mesh):
     )
 
 
+def _small_hole_edges(bm, diagonal):
+    """Only fill closed, tiny boundary loops; leave intentional openings alone."""
+    remaining = {edge for edge in bm.edges if edge.is_boundary}
+    fill_edges = []
+    while remaining:
+        first = remaining.pop()
+        component = {first}
+        pending = [first]
+        while pending:
+            edge = pending.pop()
+            for vert in edge.verts:
+                for other in vert.link_edges:
+                    if other in remaining:
+                        remaining.remove(other)
+                        component.add(other)
+                        pending.append(other)
+        vertices = {vert for edge in component for vert in edge.verts}
+        perimeter = sum(edge.calc_length() for edge in component)
+        if (3 <= len(component) <= 8 and len(vertices) == len(component)
+                and all(sum(1 for edge in vert.link_edges if edge in component) == 2
+                        for vert in vertices)
+                and perimeter < max(1.0e-5, diagonal * 0.35)):
+            fill_edges.extend(component)
+    return fill_edges
+
+
 def _repair_static_mesh(mesh, fill_holes=True):
     """Repair obvious cracks and broken topology without touching another object."""
     before = (len(mesh.vertices), len(mesh.edges), len(mesh.polygons))
@@ -64,9 +90,9 @@ def _repair_static_mesh(mesh, fill_holes=True):
             bmesh.ops.delete(bm, geom=loose_verts, context='VERTS')
 
         if fill_holes:
-            boundary = [e for e in bm.edges if e.is_boundary]
-            if boundary:
-                bmesh.ops.holes_fill(bm, edges=boundary, sides=64)
+            tiny_holes = _small_hole_edges(bm, diagonal)
+            if tiny_holes:
+                bmesh.ops.holes_fill(bm, edges=tiny_holes, sides=8)
 
         if bm.faces:
             bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
@@ -173,8 +199,19 @@ def install_smart_reducer(addon):
 
         if is_remesh and not _has_deformation(obj):
             _repair_static_mesh(obj.data, fill_holes=True)
-            _voxel_rebuild(obj, context, target)
-            _repair_static_mesh(obj.data, fill_holes=True)
+            # Open boundaries may be deliberate: never voxel-close them by default.
+            check = bmesh.new()
+            try:
+                check.from_mesh(obj.data)
+                closed_but_broken = (
+                    not any(edge.is_boundary for edge in check.edges)
+                    and any(not edge.is_manifold for edge in check.edges)
+                )
+            finally:
+                check.free()
+            if closed_but_broken:
+                _voxel_rebuild(obj, context, target)
+                _repair_static_mesh(obj.data, fill_holes=False)
 
         return original_reduce(obj, target, context)
 
@@ -234,6 +271,20 @@ class FISHHWB_OT_clean_mesh(bpy.types.Operator):
 
 def _ensure_atlas_uv(obj, context):
     mesh = obj.data
+    original_uv = mesh.uv_layers.active.name if mesh.uv_layers.active else None
+    # Preserve the sampling UV for input textures when the bake target changes.
+    if original_uv:
+        for slot in obj.material_slots:
+            mat = slot.material
+            if not mat or not mat.use_nodes or not mat.node_tree:
+                continue
+            nodes = mat.node_tree.nodes
+            links = mat.node_tree.links
+            for tex in list(nodes):
+                if tex.type == 'TEX_IMAGE' and tex.inputs.get('Vector') and not tex.inputs['Vector'].is_linked:
+                    uv_node = nodes.new('ShaderNodeUVMap')
+                    uv_node.uv_map = original_uv
+                    links.new(uv_node.outputs['UV'], tex.inputs['Vector'])
     atlas = mesh.uv_layers.get("AtlasUV")
     if atlas is None:
         atlas = mesh.uv_layers.new(name="AtlasUV")
@@ -286,18 +337,18 @@ def _bake_material_atlas(obj, context, size=2048):
         scene = context.scene
         previous_engine = scene.render.engine
         previous_margin = scene.render.bake.margin
+        previous_samples = scene.cycles.samples
         try:
-            scene.render.engine = 'BLENDER_EEVEE_NEXT'
+            # Color/texture bakes do not benefit from costly high render samples.
+            scene.cycles.samples = min(previous_samples, 16)
+            scene.render.engine = 'CYCLES'
             _activate_only(context, obj)
             scene.render.bake.margin = 16
-            try:
-                bpy.ops.object.bake(type='DIFFUSE', pass_filter={'COLOR'}, use_clear=True)
-            except Exception:
-                scene.render.engine = 'CYCLES'
-                bpy.ops.object.bake(type='DIFFUSE', pass_filter={'COLOR'}, use_clear=True)
+            bpy.ops.object.bake(type='DIFFUSE', pass_filter={'COLOR'}, use_clear=True)
         finally:
             scene.render.bake.margin = previous_margin
             scene.render.engine = previous_engine
+            scene.cycles.samples = previous_samples
 
         atlas_material = bpy.data.materials.new(name=obj.name + "_Atlas")
         atlas_material.use_nodes = True
@@ -366,7 +417,8 @@ class FISHHWB_OT_merge_textures(bpy.types.Operator):
                     slot.material = slot.material.copy()
 
             _ensure_atlas_uv(output, context)
-            image, material = _bake_material_atlas(output, context, 2048)
+            atlas_size = int(getattr(context.scene, "fishhwb_atlas_size", "2048"))
+            image, material = _bake_material_atlas(output, context, atlas_size)
             output.data.name = output.name
             output["fishhwb_generated_job"] = "texture_atlas"
 
@@ -374,7 +426,7 @@ class FISHHWB_OT_merge_textures(bpy.types.Operator):
             _action_report(
                 self,
                 context,
-                f"Texture merge created {output.name}: one 2048x2048 packed atlas ({image.name}), one material ({material.name}) and rebuilt AtlasUV. Original preserved.",
+                f"Texture merge created {output.name}: packed {atlas_size}x{atlas_size} atlas ({image.name}), one material ({material.name}) and rebuilt AtlasUV. Original preserved.",
                 changed=1,
             )
             return {'FINISHED'}
@@ -397,6 +449,8 @@ class FISHHWB_OT_merge_textures(bpy.types.Operator):
 def _draw_merge_button(self, context):
     layout = self.layout
     box = layout.box()
+    if hasattr(context.scene, "fishhwb_atlas_size"):
+        box.prop(context.scene, "fishhwb_atlas_size", text="Atlas Resolution")
     row = box.row()
     row.scale_y = 1.35
     row.operator("fishhwb.merge_textures", text="MERGE TEXTURES", icon="TEXTURE")

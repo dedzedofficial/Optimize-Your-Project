@@ -69,6 +69,7 @@ for required in [
     "VRMissingScriptCleaner.Clean",
     "VRUIRaycastOptimizer.Optimize",
     "VRUnusedAssetCleaner.DeleteUnused",
+    "VRUnusedAssetCleaner.ExportDryRunReport",
 ]:
     assert required in window, required
 assert "RunQuickOptimize" not in window
@@ -111,6 +112,7 @@ for required in [
     assert required in unused_cleaner, required
 
 missing_cleaner = (root / "Editor/FISHHWBVR/VRMissingScriptCleaner.cs").read_text(encoding="utf-8")
+assert "ExportDryRunReport" in unused_cleaner and "SaveFilePanel" in unused_cleaner
 for required in ["pendingScripts", "bool confirm = true", "DisplayDialog"]:
     assert required in missing_cleaner, required
 
@@ -126,6 +128,7 @@ assert f'"version": ({blender_tuple[0]}, {blender_tuple[1]}, {blender_tuple[2]})
 assert '"blender": (4, 2, 0)' in proxy
 for required in [
     "_draw_core_080",
+    'row.operator("fishhwb.smart_optimize"',
     'row.operator("fishhwb.one_click_remesh"',
     'row.operator("fishhwb.clean_mesh"',
     'row.operator("fishhwb.generate_lightmap_uv"',
@@ -147,6 +150,10 @@ for required in [
     "_COLLIDER",
 ]:
     assert required in core, required
+
+v088 = (root / "Blender/vr_optimizer_blender/v088_tools.py").read_text(encoding="utf-8")
+for required in ['fishhwb.smart_optimize', 'invoke_props_dialog', '_bake_pbr_atlas', 'Original sources preserved']:
+    assert required in v088, required
 
 v08 = (root / "Blender/vr_optimizer_blender/v08_tools.py").read_text(encoding="utf-8")
 for required in [
@@ -241,6 +248,7 @@ with ZipFile(extension_archive) as package:
         "Blender/vr_optimizer_blender/deform_transfer.py",
         "Blender/vr_optimizer_blender/tools_42.py",
         "Blender/vr_optimizer_blender/v08_tools.py",
+        "Blender/vr_optimizer_blender/v088_tools.py",
         "Blender/vr_optimizer_blender/optimize-your-project-logo.png",
     ]:
         assert required in names, required
