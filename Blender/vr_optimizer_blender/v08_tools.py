@@ -271,6 +271,20 @@ class FISHHWB_OT_clean_mesh(bpy.types.Operator):
 
 def _ensure_atlas_uv(obj, context):
     mesh = obj.data
+    original_uv = mesh.uv_layers.active.name if mesh.uv_layers.active else None
+    # Preserve the sampling UV for input textures when the bake target changes.
+    if original_uv:
+        for slot in obj.material_slots:
+            mat = slot.material
+            if not mat or not mat.use_nodes or not mat.node_tree:
+                continue
+            nodes = mat.node_tree.nodes
+            links = mat.node_tree.links
+            for tex in list(nodes):
+                if tex.type == 'TEX_IMAGE' and tex.inputs.get('Vector') and not tex.inputs['Vector'].is_linked:
+                    uv_node = nodes.new('ShaderNodeUVMap')
+                    uv_node.uv_map = original_uv
+                    links.new(uv_node.outputs['UV'], tex.inputs['Vector'])
     atlas = mesh.uv_layers.get("AtlasUV")
     if atlas is None:
         atlas = mesh.uv_layers.new(name="AtlasUV")
