@@ -54,7 +54,16 @@ _set_translation('title', {
     'IT': 'OTTIMIZZA IL PROGETTO', 'NL': 'OPTIMALISEER JE PROJECT', 'PL': 'OPTYMALIZUJ PROJEKT',
     'TR': 'PROJENİ OPTİMİZE ET',
 })
-_set_translation('subtitle', {code: 'Blender v0.8.5' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
+_set_translation('subtitle', {code: 'Blender v0.8.8' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
+_set_translation('smart_optimize', {
+    'EN': 'SMART OPTIMIZE (PREVIEW)', 'JA': 'スマート最適化 (プレビュー)',
+    'ZH': '智能优化 (预览)', 'ZT': '智慧最佳化 (預覽)', 'KO': '스마트 최적화 (미리보기)',
+    'ES': 'OPTIMIZACIÓN INTELIGENTE', 'FR': 'OPTIMISATION INTELLIGENTE',
+    'DE': 'SMART OPTIMIEREN', 'PT': 'OTIMIZAÇÃO INTELIGENTE',
+    'RU': 'УМНАЯ ОПТИМИЗАЦИЯ', 'IT': 'OTTIMIZZAZIONE SMART',
+    'NL': 'SLIM OPTIMALISEREN', 'PL': 'INTELIGENTNA OPTYMALIZACJA',
+    'TR': 'AKILLI OPTİMİZASYON',
+})
 _set_translation('selection', {
     'EN': 'CURRENT SELECTION', 'JA': '現在の選択', 'ZH': '当前选择', 'ZT': '目前選取', 'KO': '현재 선택',
     'ES': 'SELECCIÓN ACTUAL', 'FR': 'SÉLECTION ACTUELLE', 'DE': 'AKTUELLE AUSWAHL', 'PT': 'SELEÇÃO ATUAL',
@@ -186,7 +195,7 @@ def _draw_core_080(self, context):
     primary.label(text=_addon.tr(context, "primary_actions"), icon="TOOL_SETTINGS")
     row = primary.row()
     row.scale_y = 1.5
-    row.operator("fishhwb.smart_optimize", text="SMART OPTIMIZE (PREVIEW)", icon="TOOL_SETTINGS")
+    row.operator("fishhwb.smart_optimize", text=_addon.tr(context, "smart_optimize"), icon="TOOL_SETTINGS")
 
     remesh = primary.box()
     remesh.prop(context.scene, "fishhwb_triangle_target", text=_addon.tr(context, "triangle_target"), slider=True)
