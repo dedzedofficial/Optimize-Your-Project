@@ -164,10 +164,14 @@ def _reproject_custom_normals(source_mesh, target_mesh, sample, vertex_matches):
     encodes them for the *new* topology.
     """
     original = source_mesh.attributes.get('custom_normal')
-    if original is None:
+    # Blender 4.2 stores custom split normals in a legacy mesh layer.
+    # Blender 4.4+ exposes that layer as CORNER/INT16_2D.
+    if original is None and not source_mesh.has_custom_normals:
         return False
-    encoded = original.data_type == 'INT16_2D' and original.domain == 'CORNER'
-    vector_attr = (original.data_type == 'FLOAT_VECTOR'
+    encoded = (original is None or (
+        original.data_type == 'INT16_2D' and original.domain == 'CORNER'))
+    vector_attr = (original is not None
+                   and original.data_type == 'FLOAT_VECTOR'
                    and original.domain in {'POINT', 'CORNER'})
     if not (encoded or vector_attr):
         raise ValueError('Unsupported custom_normal domain or storage type.')
@@ -264,6 +268,7 @@ def _project_details(source, output, neutral_mesh, deforming, context):
     for face in output_mesh.polygons:
         tri, _, _ = sample(face.center)
         face.material_index = neutral_mesh.polygons[tri.polygon_index].material_index
+        face.use_smooth = neutral_mesh.polygons[tri.polygon_index].use_smooth
         for loop_idx in face.loop_indices:
             if not source_uvs:
                 continue
@@ -321,13 +326,17 @@ def _project_details(source, output, neutral_mesh, deforming, context):
     else:
         groups, shapes = 0, 0
     if custom_normals_preserved:
-        source_attr = neutral_mesh.attributes['custom_normal']
+        source_attr = neutral_mesh.attributes.get('custom_normal')
         new_attr = output_mesh.attributes.get('custom_normal')
-        if source_attr.data_type == 'INT16_2D':
-            if (not output_mesh.has_custom_normals or new_attr is None
-                    or new_attr.domain != 'CORNER'
-                    or new_attr.data_type != 'INT16_2D'):
+        if source_attr is None or source_attr.data_type == 'INT16_2D':
+            if not output_mesh.has_custom_normals:
                 raise ValueError('Blender-native split normals were not preserved.')
+            # Blender 4.2 stores them in a legacy custom-data layer,
+            # not a visible generic mesh attribute.
+            if source_attr is not None and (
+                    new_attr is None or new_attr.domain != 'CORNER'
+                    or new_attr.data_type != 'INT16_2D'):
+                raise ValueError('Retopology did not retain encoded split normals.')
         elif (new_attr is None or new_attr.domain != source_attr.domain
               or new_attr.data_type != source_attr.data_type):
             raise ValueError('Authored custom normals were not transferred.')
@@ -432,8 +441,9 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                 f'(target {target:,}); repaired and rebuilt with {method}. '
                 f'Projected {len(neutral.uv_layers)} UV layers, '
                 f'{groups} vertex groups and {shapes} blendshapes. '
-                + ('Authored custom_normal data reprojected. '
-                   if neutral.attributes.get('custom_normal') else '')
+                + ('Custom split normals reprojected. '
+                   if (neutral.attributes.get('custom_normal')
+                       or neutral.has_custom_normals) else '')
                 + 'Compatible armature bindings restored; source untouched. '
                 'Inspect UV seams, deformation and small details before export.',
                 changed=1)
