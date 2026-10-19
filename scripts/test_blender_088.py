@@ -25,6 +25,7 @@ class SmartOptimize088Tests(unittest.TestCase):
         scene.fishhwb_collision_target = 500
         scene.fishhwb_create_collision_proxy = False
         scene.fishhwb_triangle_target = 10000
+        scene.fishhwb_remesh_method = 'SURFACE'
 
     def cube(self):
         bpy.ops.mesh.primitive_cube_add()
@@ -44,6 +45,75 @@ class SmartOptimize088Tests(unittest.TestCase):
             lods=False, atlas=False, lightmap=False)
         self.assertEqual(result, {'CANCELLED'})
         self.assertEqual(before, [(tuple(v.co)) for v in obj.data.vertices])
+
+    def test_smart_diagnoses_under_target_instead_of_silent_no_changes(self):
+        source = self.cube()
+        bpy.context.scene.fishhwb_triangle_target = 10000
+        result = bpy.ops.fishhwb.smart_optimize(
+            'EXEC_DEFAULT', clean_geometry=False, remesh=True,
+            lods=False, atlas=False, lightmap=False)
+        self.assertEqual(result, {'CANCELLED'})
+        message = bpy.context.scene.fishhwb_last_result
+        self.assertIn('12 triangles already within 10,000 target', message)
+        self.assertIn('0 optimized', message)
+        self.assertIs(bpy.context.active_object, source)
+
+    def test_smart_rebuilds_under_triangle_target_when_opted_in(self):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
+        source = bpy.context.active_object
+        source.name = 'BelowTargetStatic'
+        first_count = len(source.data.polygons)
+        bpy.context.scene.fishhwb_triangle_target = 10000
+        bpy.context.scene.fishhwb_remesh_method = 'REBUILD'
+        self.assertEqual(bpy.ops.fishhwb.smart_optimize(
+            'EXEC_DEFAULT', clean_geometry=False, remesh=True,
+            lods=False, atlas=False, lightmap=False), {'FINISHED'})
+        output = bpy.context.active_object
+        self.assertIsNot(output, source)
+        self.assertEqual(len(source.data.polygons), first_count)
+        self.assertIn('remesh / retopology', bpy.context.scene.fishhwb_last_result)
+        self.assertEqual(output.get('fishhwb_remesh_method_used'), 'REBUILD')
+
+    def test_smart_rebuild_existing_remesh_preserves_old_result(self):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
+        source = bpy.context.active_object
+        source.name = 'Body.001'
+        bpy.context.scene.fishhwb_triangle_target = 120
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {'FINISHED'})
+        previous = bpy.context.active_object
+        self.assertIsNot(previous, source)
+        original_count = len(source.data.polygons)
+        previous_coords = [tuple(vertex.co) for vertex in previous.data.vertices]
+        bpy.context.scene.fishhwb_triangle_target = 10000
+        bpy.context.scene.fishhwb_remesh_method = 'REBUILD'
+        self.assertEqual(bpy.ops.fishhwb.smart_optimize(
+            'EXEC_DEFAULT', clean_geometry=False, remesh=True,
+            lods=False, atlas=False, lightmap=False), {'FINISHED'})
+        new_result = bpy.context.active_object
+        self.assertIsNot(new_result, previous)
+        self.assertIsNot(new_result, source)
+        self.assertIn(source.name, bpy.data.objects)
+        self.assertIn(previous.name, bpy.data.objects)
+        self.assertEqual(len(source.data.polygons), original_count)
+        self.assertEqual(previous_coords,
+                         [tuple(vertex.co) for vertex in previous.data.vertices])
+        self.assertEqual(new_result.get('fishhwb_remesh_method_used'), 'REBUILD')
+        self.assertNotIn('fishhwb_output_id', new_result)
+        self.assertFalse(any('_SmartRebuildInput' in obj.name
+                             for obj in bpy.data.objects))
+
+    def test_smart_explains_rigged_retopology_skip(self):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
+        source = bpy.context.active_object
+        source.shape_key_add(name='Basis')
+        source.shape_key_add(name='Smile')
+        bpy.context.scene.fishhwb_triangle_target = 10000
+        bpy.context.scene.fishhwb_remesh_method = 'REBUILD'
+        self.assertEqual(bpy.ops.fishhwb.smart_optimize(
+            'EXEC_DEFAULT', clean_geometry=False, remesh=True,
+            lods=False, atlas=False, lightmap=False), {'CANCELLED'})
+        self.assertIn('rigged/shape-key mesh cannot be rebuilt',
+                      bpy.context.scene.fishhwb_last_result)
 
     def test_smart_lightmap_uses_separate_copy(self):
         obj = self.cube()
