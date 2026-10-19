@@ -54,7 +54,7 @@ _set_translation('title', {
     'IT': 'OTTIMIZZA IL PROGETTO', 'NL': 'OPTIMALISEER JE PROJECT', 'PL': 'OPTYMALIZUJ PROJEKT',
     'TR': 'PROJENİ OPTİMİZE ET',
 })
-_set_translation('subtitle', {code: 'Blender v0.8.8' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
+_set_translation('subtitle', {code: 'Blender v0.8.8 (Remesh Fix)' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
 _set_translation('smart_optimize', {
     'EN': 'SMART OPTIMIZE (PREVIEW)', 'JA': 'スマート最適化 (プレビュー)',
     'ZH': '智能优化 (预览)', 'ZT': '智慧最佳化 (預覽)', 'KO': '스마트 최적화 (미리보기)',
@@ -198,6 +198,8 @@ def _draw_core_080(self, context):
     row.operator("fishhwb.smart_optimize", text=_addon.tr(context, "smart_optimize"), icon="TOOL_SETTINGS")
 
     remesh = primary.box()
+    remesh.label(text="REMESH: Repair / Rebuild", icon="MOD_REMESH")
+    remesh.prop(context.scene, "fishhwb_remesh_method", text="Mode")
     remesh.prop(context.scene, "fishhwb_triangle_target", text=_addon.tr(context, "triangle_target"), slider=True)
     row = remesh.row()
     row.scale_y = 1.5
