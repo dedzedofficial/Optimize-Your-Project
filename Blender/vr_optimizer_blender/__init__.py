@@ -551,6 +551,7 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
             copy = _copy_mesh_object(source, context, "_Remesh")
             transfer_deformation = deform_transfer.has_deformation(source)
             if transfer_deformation:
+                copy['fishhwb_source_deformation_sensitive'] = True
                 shape_attributes = deform_transfer.prepare_neutral_copy(source, copy, context)
             before = triangle_count(copy.data)
 
