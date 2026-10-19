@@ -577,7 +577,12 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
             method_used = copy.get('fishhwb_remesh_method_used', 'SURFACE')
             rebuild_detail = ""
             if method_used == 'REBUILD':
-                rebuild_detail = " Voxel/QuadriFlow topology rebuild completed with source attributes reprojected."
+                retopo = copy.get('fishhwb_retopology_status', 'VOXEL_QUADS')
+                rebuild_detail = (
+                    " Voxel reconstruction and "
+                    + ("QuadriFlow retopology" if retopo == 'QUADRIFLOW' else "voxel quad topology")
+                    + " completed; UVs/material IDs reprojected where supported."
+                )
             elif copy.get('fishhwb_remesh_fallback_reason'):
                 rebuild_detail = " Rebuild was not compatible; used surface-preserving fallback: " + copy['fishhwb_remesh_fallback_reason']
             _action_report(
