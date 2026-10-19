@@ -12,7 +12,7 @@ from .Blender.vr_optimizer_blender import smart_remesh as _smart
 
 bl_info = dict(_addon.bl_info)
 bl_info.update({
-    "version": (0, 8, 9),
+    "version": (8, 8, 3),
     "blender": (4, 2, 0),
     "description": "One-click Remesh, LOD, Clean Mesh, lightmap and static-mesh optimization tools",
 })
@@ -55,7 +55,7 @@ _set_translation('title', {
     'IT': 'OTTIMIZZA IL PROGETTO', 'NL': 'OPTIMALISEER JE PROJECT', 'PL': 'OPTYMALIZUJ PROJEKT',
     'TR': 'PROJENİ OPTİMİZE ET',
 })
-_set_translation('subtitle', {code: 'Blender v0.8.8 (Remesh Fix)' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
+_set_translation('subtitle', {code: 'Blender v8.8.3' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
 _set_translation('smart_optimize', {
     'EN': 'SMART OPTIMIZE (PREVIEW)', 'JA': 'スマート最適化 (プレビュー)',
     'ZH': '智能优化 (预览)', 'ZT': '智慧最佳化 (預覽)', 'KO': '스마트 최적화 (미리보기)',

@@ -27,9 +27,19 @@ def _custom_data_reason(mesh):
         '.hide_vert', '.hide_edge', '.hide_poly',
     }
     uvs = {layer.name for layer in mesh.uv_layers}
+    custom_normal = mesh.attributes.get('custom_normal')
+    if custom_normal is not None and (
+            custom_normal.data_type != 'FLOAT_VECTOR'
+            or custom_normal.domain not in {'POINT', 'CORNER'}):
+        return (
+            "Cannot preserve custom_normal: expected a FLOAT_VECTOR attribute "
+            "on the POINT or CORNER domain, got "
+            + custom_normal.data_type + " on " + custom_normal.domain
+        )
     unsupported = [
         item.name for item in mesh.attributes
         if not item.is_internal and item.name not in builtin and item.name not in uvs
+        and item.name != 'custom_normal'
     ]
     if mesh.color_attributes:
         unsupported.extend(item.name for item in mesh.color_attributes)
@@ -142,6 +152,64 @@ def _retopology_geometry(output, context, target):
     return quadriflow, actual
 
 
+def _reproject_custom_normals(source_mesh, target_mesh, sample, vertex_matches):
+    """Carry authored custom_normal data over topology changes.
+
+    Blender/game meshes may store custom_normal as a FLOAT_VECTOR attribute
+    on vertices (POINT) or face corners (CORNER). Barycentric projection
+    preserves the vector field across retopology; normalize its direction
+    because interpolation otherwise shortens the vectors.
+    """
+    original = source_mesh.attributes.get('custom_normal')
+    if original is None:
+        return False
+    if original.data_type != 'FLOAT_VECTOR' or original.domain not in {'POINT', 'CORNER'}:
+        raise ValueError('Unsupported custom_normal domain or storage type.')
+
+    previous = target_mesh.attributes.get('custom_normal')
+    if previous is not None:
+        target_mesh.attributes.remove(previous)
+    target = target_mesh.attributes.new(
+        name='custom_normal', type='FLOAT_VECTOR', domain=original.domain)
+
+    def weighted_vector(tri, weights):
+        if original.domain == 'POINT':
+            indexes = tri.vertices
+        else:
+            indexes = tri.loops
+        # Avoid changing handedness, smoothing groups or artistic direction;
+        # source normals are already in the mesh's local coordinate system.
+        vector = sum(
+            (original.data[index].vector * weight
+             for index, weight in zip(indexes, weights)),
+            original.data[indexes[0]].vector * 0.0,
+        )
+        if vector.length_squared > 1.0e-12:
+            vector.normalize()
+        return vector
+
+    if original.domain == 'POINT':
+        if len(target.data) != len(vertex_matches):
+            raise ValueError('Custom normals could not be matched to all output vertices.')
+        for element, (tri, weights, _distance) in zip(target.data, vertex_matches):
+            element.vector = weighted_vector(tri, weights)
+    else:
+        # Shift each corner's sample slightly into its corresponding face
+        # to reduce ambiguity when two source faces share a split normal seam.
+        for face in target_mesh.polygons:
+            for loop_index in face.loop_indices:
+                vertex = target_mesh.vertices[target_mesh.loops[loop_index].vertex_index]
+                query_point = vertex.co.lerp(face.center, 0.001)
+                tri, weights, _distance = sample(query_point)
+                target.data[loop_index].vector = weighted_vector(tri, weights)
+
+    if len(target.data) != (
+            len(target_mesh.vertices) if original.domain == 'POINT'
+            else len(target_mesh.loops)):
+        raise ValueError('Custom normal data count differs from remeshed topology.')
+    return True
+
+
 def _project_details(source, output, neutral_mesh, deforming, context):
     """Project material/UV/weight and relative key data by nearest triangle."""
     sample = _triangle_samples(neutral_mesh)
@@ -159,6 +227,8 @@ def _project_details(source, output, neutral_mesh, deforming, context):
     # from its vertex position can be ambiguous at UV seams: warn users to
     # visually inspect them; the original mesh/UVs remain intact.
     vertex_matches = [sample(vertex.co) for vertex in output_mesh.vertices]
+    custom_normals_preserved = _reproject_custom_normals(
+        neutral_mesh, output_mesh, sample, vertex_matches)
     for face in output_mesh.polygons:
         tri, _, _ = sample(face.center)
         face.material_index = neutral_mesh.polygons[tri.polygon_index].material_index
@@ -218,6 +288,12 @@ def _project_details(source, output, neutral_mesh, deforming, context):
         groups, shapes = deform_transfer.transfer(source, output, attr_names)
     else:
         groups, shapes = 0, 0
+    if custom_normals_preserved:
+        source_attr = neutral_mesh.attributes['custom_normal']
+        new_attr = output_mesh.attributes.get('custom_normal')
+        if (new_attr is None or new_attr.domain != source_attr.domain
+                or new_attr.data_type != source_attr.data_type):
+            raise ValueError('Authored custom normals were not transferred.')
     if set(source_uvs) != {layer.name for layer in output_mesh.uv_layers}:
         raise ValueError('Rebuilt output did not preserve UV layer names.')
     if tuple(source_materials) != tuple(output_mesh.materials):
@@ -319,7 +395,9 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                 f'(target {target:,}); repaired and rebuilt with {method}. '
                 f'Projected {len(neutral.uv_layers)} UV layers, '
                 f'{groups} vertex groups and {shapes} blendshapes. '
-                'Compatible armature bindings restored; source untouched. '
+                + ('Authored custom_normal data reprojected. '
+                   if neutral.attributes.get('custom_normal') else '')
+                + 'Compatible armature bindings restored; source untouched. '
                 'Inspect UV seams, deformation and small details before export.',
                 changed=1)
             return {'FINISHED'}

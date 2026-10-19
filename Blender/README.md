@@ -2,7 +2,7 @@
 
 <img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project" width="112">
 
-**Current Blender version: 0.8.9**
+**Current Blender version: 8.8.3**
 
 The sidebar is intentionally minimal. Select a mesh in **Object Mode**, press **N** in the 3D Viewport, and open the **FISHHWB** tab.
 
@@ -12,9 +12,9 @@ Supported Blender 4.2+ builds can install this ZIP as an extension.
 
 1. Open the latest successful **Check release packages** build on GitHub:
    https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
-2. Download artifact **optimize-your-project-blender-0.8.9** and extract the artifact container ZIP if GitHub wraps it.
-3. Install **optimize-your-project-blender-extension-0.8.9.zip** using **Edit > Preferences > Get Extensions > Install from Disk**. Do not unzip the extension ZIP itself.
-4. Disable/remove any previously installed 0.8.5/0.8.8 duplicate extension, restart Blender, and enable the 0.8.9 extension.
+2. Download artifact **optimize-your-project-blender-8.8.3** and extract the artifact container ZIP if GitHub wraps it.
+3. Install **optimize-your-project-blender-extension-8.8.3.zip** using **Edit > Preferences > Get Extensions > Install from Disk**. Do not unzip the extension ZIP itself.
+4. Disable/remove any previously installed 0.8.5/0.8.8 duplicate extension, restart Blender, and enable the 8.8.3 extension.
 
 ## Sidebar layout
 
@@ -49,7 +49,7 @@ Triangle Limit: ...
 - Reprojects supported UVs, material slots and face material IDs.
 - For compatible relative shape keys, vertex groups and armature modifiers, reprojects blendshape deltas and weights onto the new vertices, and restores the original relative shape-key configuration and supported animation bindings. **Review the result**: nearest-surface interpolation can distort weights, facial expression shapes, texture seams and details.
 
-Unsupported custom mesh attributes, absolute shape keys, shape-key NLA tracks and non-armature modifier stacks on rigged sources are **not silently destroyed**. The operator refuses those cases with a reason and preserves the source. Models with highly intricate geometry may require manual retopology and corrections.
+Smart Remesh supports authored `custom_normal` FLOAT_VECTOR attributes on mesh vertices (POINT) or face corners (CORNER). Their directions are projected onto rebuilt topology and normalized. Because topology and seams change, inspect shading and hard-normal boundaries before exporting. Other custom mesh attributes are still rejected unless their transfer is supported.\n\nUnsupported custom mesh attributes, absolute shape keys, shape-key NLA tracks and non-armature modifier stacks on rigged sources are **not silently destroyed**. The operator refuses those cases with a reason and preserves the source. Models with highly intricate geometry may require manual retopology and corrections.
 
 Very high target limits (above 500,000) are rejected for memory/performance safety.
 

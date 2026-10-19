@@ -1,4 +1,4 @@
-"""Blender 4.2+ smoke/regression tests for 0.8.8 Smart Optimize workflows."""
+"""Blender 4.2+ runtime tests for Smart Remesh 8.8.3."""
 import importlib.util
 from pathlib import Path
 import sys
@@ -32,7 +32,7 @@ class SmartOptimize088Tests(unittest.TestCase):
         return bpy.context.active_object
 
     def test_version_and_operator_registered(self):
-        self.assertEqual(extension.bl_info["version"], (0, 8, 9))
+        self.assertEqual(extension.bl_info["version"], (8, 8, 3))
         obj = self.cube()
         self.assertTrue(bpy.ops.fishhwb.smart_optimize.poll())
         self.assertIsNotNone(obj)
@@ -220,6 +220,63 @@ class SmartOptimize088Tests(unittest.TestCase):
         self.assertIsNotNone(result.data.shape_keys)
         self.assertIn('Smile', result.data.shape_keys.key_blocks)
 
+    def test_smart_remesh_reprojects_custom_normal_on_vertices_and_corners(self):
+        from mathutils import Vector
+        from optimize_your_project_v088.Blender.vr_optimizer_blender import triangle_count
+        for domain in ('POINT', 'CORNER'):
+            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
+            source = bpy.context.active_object
+            source.name = 'CustomNormal_' + domain
+            attr = source.data.attributes.new(
+                name='custom_normal', type='FLOAT_VECTOR', domain=domain)
+            for index, item in enumerate(attr.data):
+                # Nonconstant authored direction to verify barycentric transfer.
+                item.vector = Vector((0.15 + index % 7 * 0.02,
+                                      0.25 + index % 5 * 0.03, 0.9)).normalized()
+            initial = [tuple(item.vector) for item in attr.data]
+            source_count = triangle_count(source.data)
+            bpy.context.scene.fishhwb_triangle_target = 130
+            self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'FINISHED'})
+            output = bpy.context.active_object
+            rebuilt = output.data.attributes.get('custom_normal')
+            self.assertIsNotNone(rebuilt)
+            self.assertEqual(rebuilt.data_type, 'FLOAT_VECTOR')
+            self.assertEqual(rebuilt.domain, domain)
+            self.assertEqual(len(rebuilt.data),
+                             len(output.data.vertices) if domain == 'POINT'
+                             else len(output.data.loops))
+            lengths = [item.vector.length for item in rebuilt.data]
+            self.assertTrue(lengths)
+            self.assertTrue(all(abs(length - 1.0) < 0.01 for length in lengths))
+            self.assertEqual([tuple(item.vector) for item in attr.data], initial)
+            self.assertEqual(triangle_count(source.data), source_count)
+            self.assertIsNot(source, output)
+            self.assertIn('Authored custom_normal data reprojected',
+                          bpy.context.scene.fishhwb_last_result)
+
+    def test_smart_remesh_rejects_invalid_custom_normal_type_without_damage(self):
+        source = self.cube()
+        attr = source.data.attributes.new(
+            name='custom_normal', type='FLOAT', domain='POINT')
+        attr.data[0].value = 0.75
+        original_faces = len(source.data.polygons)
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'CANCELLED'})
+        self.assertIn('expected a FLOAT_VECTOR attribute',
+                      bpy.context.scene.fishhwb_last_result)
+        self.assertEqual(len(source.data.polygons), original_faces)
+        self.assertAlmostEqual(attr.data[0].value, 0.75)
+        self.assertIs(source, bpy.context.active_object)
+
+    def test_smart_remesh_still_rejects_unknown_attributes(self):
+        source = self.cube()
+        attr = source.data.attributes.new(
+            name='arbitrary_uv_sensitive_data', type='FLOAT_VECTOR',
+            domain='POINT')
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'CANCELLED'})
+        self.assertIn('arbitrary_uv_sensitive_data',
+                      bpy.context.scene.fishhwb_last_result)
+        self.assertIsNotNone(source.data.attributes.get(attr.name))
+
     def test_smart_remesh_always_retops_above_and_below_target(self):
         from optimize_your_project_v088.Blender.vr_optimizer_blender import triangle_count
         for limit in (160, 350):
@@ -317,4 +374,4 @@ finally:
     extension.unregister()
 
 if not outcome.wasSuccessful():
-    raise RuntimeError("Blender 0.8.8 regression suite failed.")
+    raise RuntimeError("Blender 8.8.3 regression suite failed.")
