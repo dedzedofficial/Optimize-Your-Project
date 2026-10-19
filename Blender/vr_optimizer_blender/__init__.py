@@ -537,7 +537,8 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
         copy = None
 
         try:
-            policy = 'remesh-correspondence-v0755:' + str(context.scene.fishhwb_triangle_target)
+            mode = getattr(context.scene, "fishhwb_remesh_method", "SURFACE")
+            policy = 'remesh-v088-rebuild-fix:' + mode + ':' + str(context.scene.fishhwb_triangle_target)
             try:
                 cached = _cached_outputs(source, context, 'remesh', policy)
             except ValueError as exc:
@@ -550,6 +551,7 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
             copy = _copy_mesh_object(source, context, "_Remesh")
             transfer_deformation = deform_transfer.has_deformation(source)
             if transfer_deformation:
+                copy['fishhwb_source_deformation_sensitive'] = True
                 shape_attributes = deform_transfer.prepare_neutral_copy(source, copy, context)
             before = triangle_count(copy.data)
 
@@ -573,10 +575,21 @@ class FISHHWB_OT_one_click_remesh(bpy.types.Operator):
                 transfer_detail = f" Transferred {groups} weight groups, {shapes} relative blendshapes and armature bindings through the same surface reduction. Test deformation before replacing the source."
             _remember_outputs(source, context, "remesh", policy, [copy])
             _select_only(context, copy)
+            method_used = copy.get('fishhwb_remesh_method_used', 'SURFACE')
+            rebuild_detail = ""
+            if method_used == 'REBUILD':
+                retopo = copy.get('fishhwb_retopology_status', 'VOXEL_QUADS')
+                rebuild_detail = (
+                    " Voxel reconstruction and "
+                    + ("QuadriFlow retopology" if retopo == 'QUADRIFLOW' else "voxel quad topology")
+                    + " completed; UVs/material IDs reprojected where supported."
+                )
+            elif copy.get('fishhwb_remesh_fallback_reason'):
+                rebuild_detail = " Rebuild was not compatible; used surface-preserving fallback: " + copy['fishhwb_remesh_fallback_reason']
             _action_report(
                 self,
                 context,
-                f"Surface-preserving copy created: {before:,} -> {after:,} triangles. UVs and material assignments retained. Original object preserved." + transfer_detail,
+                f"Remesh ({method_used}): {before:,} -> {after:,} triangles. Original object preserved." + rebuild_detail + transfer_detail,
                 changed=1,
             )
             return {'FINISHED'}
@@ -827,6 +840,15 @@ def register():
         soft_min=100, soft_max=100000,
         description="Maximum triangle budget for the remeshed copy; preserves the original",
     )
+    bpy.types.Scene.fishhwb_remesh_method = EnumProperty(
+        name="Remesh Method",
+        items=(
+            ('SURFACE', "Preserve Surface", "Keep UVs, material islands and compatible shape keys while repairing small mesh defects and reducing triangles"),
+            ('REBUILD', "Repair & Rebuild", "Rebuild a static mesh using voxel remesh and QuadriFlow, then reproject UVs/material assignments when possible; falls back safely if unsupported"),
+        ),
+        default='SURFACE',
+        description="Choose whether Remesh preserves existing topology detail or reconstructs a new static mesh",
+    )
     bpy.types.Scene.fishhwb_last_result = StringProperty(options={'SKIP_SAVE'})
     bpy.types.Scene.fishhwb_language = EnumProperty(
         name="Language",
@@ -865,6 +887,8 @@ def unregister():
         del bpy.types.Object.fishhwb_protect_detail
     if hasattr(bpy.types.Scene, "fishhwb_triangle_target"):
         del bpy.types.Scene.fishhwb_triangle_target
+    if hasattr(bpy.types.Scene, "fishhwb_remesh_method"):
+        del bpy.types.Scene.fishhwb_remesh_method
     if hasattr(bpy.types.Scene, "fishhwb_last_result"):
         del bpy.types.Scene.fishhwb_last_result
     if hasattr(bpy.types.Scene, "fishhwb_language"):

@@ -115,6 +115,41 @@ class SmartOptimize088Tests(unittest.TestCase):
         self.assertIn('Alpha', output.get('fishhwb_pbr_atlas_channels', ''))
         self.assertIn('AtlasUV', output.data.uv_layers)
 
+    def test_remesh_rebuild_repairs_and_retops_on_copy(self):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
+        source = bpy.context.active_object
+        source.name = "RebuildSource"
+        source_faces = len(source.data.polygons)
+        source_coords = [tuple(vertex.co) for vertex in source.data.vertices]
+        bpy.context.scene.fishhwb_remesh_method = 'REBUILD'
+        bpy.context.scene.fishhwb_triangle_target = 100
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {'FINISHED'})
+        result = bpy.context.active_object
+        self.assertIsNot(source, result)
+        self.assertEqual(len(source.data.polygons), source_faces)
+        self.assertEqual(source_coords,
+                         [tuple(vertex.co) for vertex in source.data.vertices])
+        self.assertLessEqual(
+            sum(max(0, len(poly.vertices)-2) for poly in result.data.polygons), 100)
+        self.assertEqual(result.get('fishhwb_remesh_method_used'), 'REBUILD')
+        self.assertIn(result.get('fishhwb_retopology_status'),
+                      {'QUADRIFLOW', 'VOXEL_QUADS'})
+
+    def test_remesh_rebuild_protects_rigged_shape_key_workflow(self):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
+        source = bpy.context.active_object
+        source.shape_key_add(name='Basis')
+        key = source.shape_key_add(name='Smile')
+        key.data[0].co.x += 0.1
+        bpy.context.scene.fishhwb_remesh_method = 'REBUILD'
+        bpy.context.scene.fishhwb_triangle_target = 100
+        self.assertEqual(bpy.ops.fishhwb.one_click_remesh(), {'FINISHED'})
+        result = bpy.context.active_object
+        self.assertIsNot(result, source)
+        self.assertEqual(result.get('fishhwb_remesh_method_used'), 'SURFACE')
+        self.assertIsNotNone(result.data.shape_keys)
+        self.assertIn('Smile', result.data.shape_keys.key_blocks)
+
     def test_remesh_keeps_large_open_boundary(self):
         from optimize_your_project_v088.Blender.vr_optimizer_blender import v08_tools
         bpy.ops.mesh.primitive_plane_add(size=4)

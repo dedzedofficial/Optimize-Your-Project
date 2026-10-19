@@ -10,7 +10,7 @@
   <a href="../CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-**Current Blender release: v0.8.8**
+**Current Blender release: v0.8.8 (Remesh correction)**
 
 The Blender integration targets **Blender 4.2 and newer** through the Blender Extensions system. The supported download is one modern extension ZIP.
 
@@ -29,6 +29,18 @@ optimize-your-project-blender-extension-0.8.8.zip
 Use **Edit > Preferences > Get Extensions > Install from Disk**. Do not extract the ZIP.
 
 After enabling the extension, press **N** in the 3D Viewport and open the **FISHHWB** tab.
+
+### If Blender still shows v0.8.5
+
+Blender does **not** automatically update an extension when its GitHub repository changes. The old version may still be enabled, or both the legacy add-on and the ZIP extension may be installed.
+
+1. Open **Edit > Preferences > Get Extensions** (or **Add-ons** in versions that use that panel).
+2. Search for **Optimize Your Project** and disable/uninstall the existing old v0.8.5 entry. Check for duplicate entries installed through a local scripts directory.
+3. Restart Blender before reinstalling.
+4. Download the ZIP artifact from a **successful build on the main branch** and use **Install from Disk**; do not extract the ZIP.
+5. Re-enable the extension and inspect the FISHHWB tab. It should read **Blender v0.8.8 (Remesh Fix)** and expose **Mode: Preserve Surface / Repair & Rebuild** above Remesh.
+
+Do not use an older ZIP with the same name saved in your Downloads folder. The internal extension version remains 0.8.8; the hotfix label distinguishes the updated build.
 
 ## v0.8.8 interface
 
@@ -68,7 +80,9 @@ The Merge Textures button supports **1024**, **2048** and **4096** atlas sizes. 
 
 Select a supported mesh and choose a triangle target.
 
-**One-Click Remesh** creates a separate reduced copy while preserving the source. Supported UV layers and material assignments are retained. Supported relative shape keys, armature bindings and vertex weights are transferred through the existing surface-preserving reduction path.
+**One-Click Remesh** now has two modes in its existing panel. **Preserve Surface** retains the existing source-preserving reduction behavior. **Repair & Rebuild** is an explicit opt-in for supported static meshes: weld near-duplicate geometry, fill only small closed boundary loops, reconstruct the surface with voxel remeshing, attempt QuadriFlow quad retopology, and project supported UV layers/material assignments back to the rebuilt surface. The output remains a separate object; the original source is not modified.
+
+Complex custom attributes and shape-key/rigged meshes use guarded surface reduction instead, with an on-screen explanation. For a successful rebuild, the result reports whether QuadriFlow ran or whether the voxel quad mesh was kept. Topology is not guaranteed to have animation-ready edge loops; review hard edges and texture seams before export.
 
 v0.8.8 adds a preservation validation pass after generation. The result is checked for required UV layers, material slots, vertex groups and shape keys. If required data is missing, the generated copy is rejected and the original source is reselected instead of leaving a known-bad optimized result.
 

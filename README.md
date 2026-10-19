@@ -101,6 +101,7 @@ Use source control or a backup before any permanent cleanup.
 Blender remains focused on **4.2+** and keeps Remesh, LOD and modern static-mesh tools in one readable **Primary Actions** panel.
 
 - **One-Click Remesh** keeps the original object and now runs an additional v0.8 preservation validation before accepting generated output.
+- **Remesh correction:** Explicit Preserve Surface / Repair & Rebuild selector restores optional voxel reconstruction and QuadriFlow retopology on supported static copies, with UV/material reprojection or guarded fallback. Blender should display v0.8.8 (Remesh Fix).
 - UV maps, material slots, vertex groups and shape keys are checked after Remesh. If preservation validation fails, the generated result is rejected and the original is reselected.
 - **Clean Mesh** is new in v0.8.8. Static meshes can merge duplicate vertices, remove loose/degenerate geometry and recalculate face normals.
 - Clean Mesh avoids topology-changing cleanup on shape-key, vertex-group or armature-bound meshes so vertex correspondence is not intentionally destroyed.

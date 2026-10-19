@@ -12,6 +12,13 @@
 
 ## 0.8.8
 
+### Blender Remesh correction (same version)
+
+- Restored a visible **Preserve Surface / Repair & Rebuild** control above One-Click Remesh. The rebuild option performs controlled static-mesh voxel reconstruction, attempts QuadriFlow quad retopology, and reprojects UVs/material IDs when supported.
+- Kept original objects intact; topology-sensitive shape keys and unsupported custom attributes trigger a surface-preserving fallback instead of destructive rebuilding.
+- Added a distinct sidebar subtitle **Blender v0.8.8 (Remesh Fix)** to help identify whether Blender is still loading the older installed v0.8.5.
+- Added runtime checks for rebuilt output and shape-key fallback on supported Blender versions.
+
 ### Blender 4.2+
 
 - Added **Smart Optimize (Preview)**: inspect selected mesh count and choose source-preserving cleanup, Remesh, LOD, texture-atlas and LightmapUV operations before execution. Rigged or protected inputs are skipped where actions cannot preserve them.
