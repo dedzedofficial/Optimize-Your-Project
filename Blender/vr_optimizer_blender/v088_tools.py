@@ -329,6 +329,9 @@ class FISHHWB_OT_smart_optimize(bpy.types.Operator):
                                 result['fishhwb_generated_job'] = 'smart_remesh'
                                 if 'fishhwb_output_id' in result:
                                     del result['fishhwb_output_id']
+                                result.name = source.name + (
+                                    '_Retopo' if rebuild else '_SmartRemesh')
+                                result.data.name = result.name
                                 current = result
                                 jobs.append('remesh / retopology' if rebuild else 'remesh')
                             elif ('Unchanged source/settings' in
