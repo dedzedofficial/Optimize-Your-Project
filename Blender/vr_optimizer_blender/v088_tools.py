@@ -250,6 +250,11 @@ class FISHHWB_OT_smart_optimize(bpy.types.Operator):
         layout.label(text='Original objects stay untouched; optional jobs are independent.')
         layout.prop(self, 'clean_geometry')
         layout.prop(self, 'remesh')
+        if self.remesh:
+            layout.prop(context.scene, 'fishhwb_remesh_method', text='Remesh Mode')
+            layout.prop(context.scene, 'fishhwb_triangle_target', text='Triangle Target')
+            if context.scene.fishhwb_remesh_method == 'REBUILD':
+                layout.label(text='Rebuild/retopology runs even below target on static meshes.', icon='INFO')
         layout.prop(self, 'lods')
         layout.prop(self, 'atlas')
         layout.prop(self, 'lightmap')
@@ -270,58 +275,138 @@ class FISHHWB_OT_smart_optimize(bpy.types.Operator):
             if (source.library or source.data.library or
                     getattr(source, 'fishhwb_protect_detail', False)):
                 skipped += 1
-                results.append(source.name + ': linked/protected')
+                results.append(source.name + ': protected or library-linked; skipped')
                 continue
             current = source
             jobs = []
+            reasons = []
+            # A selected output from a previous Remesh must never cause that
+            # output to be overwritten or its source history to be replaced.
+            # Use an independent private intermediate copy instead.
+            remesh_input = None
             try:
-                if self.clean_geometry and not _v08._has_deformation(current):
-                    clean = _copy_mesh_object(current, context, '_Clean')
-                    if _v08._repair_static_mesh(clean.data, fill_holes=False):
-                        current = clean
-                        current['fishhwb_generated_job'] = 'smart_clean'
-                        jobs.append('clean')
+                if self.clean_geometry:
+                    if _v08._has_deformation(current):
+                        reasons.append('clean: armature/shape keys or weights')
                     else:
-                        _remove_object_and_mesh(clean)
-                if self.remesh and triangle_count(current.data) > context.scene.fishhwb_triangle_target:
-                    _select_only(context, current)
-                    if 'FINISHED' in bpy.ops.fishhwb.one_click_remesh():
-                        current = context.active_object
-                        jobs.append('remesh')
+                        clean = _copy_mesh_object(current, context, '_Clean')
+                        if _v08._repair_static_mesh(clean.data, fill_holes=False):
+                            current = clean
+                            current['fishhwb_generated_job'] = 'smart_clean'
+                            jobs.append('clean')
+                        else:
+                            _remove_object_and_mesh(clean)
+                            reasons.append('clean: no removable mesh defects')
+
+                if self.remesh:
+                    count = triangle_count(current.data)
+                    target = context.scene.fishhwb_triangle_target
+                    rebuild = context.scene.fishhwb_remesh_method == 'REBUILD'
+                    if count <= target and not rebuild:
+                        reasons.append(f'remesh: {count:,} triangles already within {target:,} target')
+                    elif count <= target and rebuild and _v08._has_deformation(current):
+                        reasons.append('remesh: rigged/shape-key mesh cannot be rebuilt; '
+                                       'use Preserve Surface and a lower triangle target')
                     else:
-                        results.append(source.name + ': remesh skipped/rejected')
-                if self.atlas and any(slot.material for slot in current.material_slots):
-                    _select_only(context, current)
-                    if 'FINISHED' in bpy.ops.fishhwb.merge_textures():
-                        current = context.active_object
-                        jobs.append('atlas')
-                if self.lightmap and not _v08._has_deformation(current):
-                    lightmap_copy = None
-                    if current is source:
-                        lightmap_copy = _copy_mesh_object(source, context, '_OptimizedUV')
-                        lightmap_copy['fishhwb_generated_job'] = 'smart_lightmap'
-                        current = lightmap_copy
-                    _select_only(context, current)
-                    if 'FINISHED' in bpy.ops.fishhwb.generate_lightmap_uv():
-                        jobs.append('lightmap UV')
-                    elif lightmap_copy is not None:
-                        _remove_object_and_mesh(lightmap_copy)
-                        current = source
-                if self.lods and not _v08._has_deformation(current):
-                    if _static_mesh_reason(current) is None:
+                        candidate = current
+                        if current.get('fishhwb_generated_job') == 'remesh':
+                            remesh_input = _copy_mesh_object(
+                                current, context, '_SmartRebuildInput')
+                            for metadata_key in (
+                                    'fishhwb_generated_job', 'fishhwb_output_id',
+                                    'fishhwb_remesh_history', 'fishhwb_lod_history'):
+                                if metadata_key in remesh_input:
+                                    del remesh_input[metadata_key]
+                            candidate = remesh_input
+                        _select_only(context, candidate)
+                        if 'FINISHED' in bpy.ops.fishhwb.one_click_remesh():
+                            result = context.active_object
+                            if result is candidate:
+                                reasons.append('remesh: no new output created')
+                            elif remesh_input is not None:
+                                # Keep the newly rebuilt mesh as an independent
+                                # optimized result, not an orphaned remesh history.
+                                result['fishhwb_generated_job'] = 'smart_remesh'
+                                if 'fishhwb_output_id' in result:
+                                    del result['fishhwb_output_id']
+                                result.name = source.name + (
+                                    '_Retopo' if rebuild else '_SmartRemesh')
+                                result.data.name = result.name
+                                current = result
+                                jobs.append('remesh / retopology' if rebuild else 'remesh')
+                            elif ('Unchanged source/settings' in
+                                  context.scene.fishhwb_last_result):
+                                current = result
+                                reasons.append('remesh: existing result reused')
+                            else:
+                                current = result
+                                jobs.append('remesh / retopology' if rebuild else 'remesh')
+                        else:
+                            reasons.append('remesh: ' + context.scene.fishhwb_last_result)
+                        if remesh_input is not None:
+                            _remove_object_and_mesh(remesh_input)
+                            remesh_input = None
+
+                if self.atlas:
+                    if not any(slot.material for slot in current.material_slots):
+                        reasons.append('atlas: no materials assigned')
+                    else:
+                        _select_only(context, current)
+                        if 'FINISHED' in bpy.ops.fishhwb.merge_textures():
+                            current = context.active_object
+                            jobs.append('atlas')
+                        else:
+                            reasons.append('atlas: ' + context.scene.fishhwb_last_result)
+
+                if self.lightmap:
+                    if _v08._has_deformation(current):
+                        reasons.append('lightmap UV: deformed mesh is protected')
+                    else:
+                        lightmap_copy = None
+                        if current is source:
+                            lightmap_copy = _copy_mesh_object(source, context, '_OptimizedUV')
+                            lightmap_copy['fishhwb_generated_job'] = 'smart_lightmap'
+                            current = lightmap_copy
+                        _select_only(context, current)
+                        if 'FINISHED' in bpy.ops.fishhwb.generate_lightmap_uv():
+                            jobs.append('lightmap UV')
+                        else:
+                            reasons.append('lightmap UV: ' + context.scene.fishhwb_last_result)
+                            if lightmap_copy is not None:
+                                _remove_object_and_mesh(lightmap_copy)
+                                current = source
+
+                if self.lods:
+                    reason = _static_mesh_reason(current)
+                    if reason:
+                        reasons.append('LODs: ' + reason)
+                    else:
                         _select_only(context, current)
                         if 'FINISHED' in bpy.ops.fishhwb.create_lods():
                             current = context.active_object
-                            jobs.append('LODs')
+                            if ('Unchanged source/settings' in
+                                    context.scene.fishhwb_last_result):
+                                reasons.append('LODs: existing result reused')
+                            else:
+                                jobs.append('LODs')
+                        else:
+                            reasons.append('LODs: ' + context.scene.fishhwb_last_result)
+
                 if jobs:
                     optimized.append(current)
                     completed += 1
                 else:
                     skipped += 1
-                results.append(source.name + ': ' + (', '.join(jobs) or 'no safe changes'))
+                outcome = ', '.join(jobs) if jobs else 'no changes'
+                if reasons:
+                    outcome += ' (' + '; '.join(reasons) + ')'
+                results.append(source.name + ': ' + outcome)
             except Exception as exc:
                 failed += 1
                 results.append(source.name + ': error: ' + str(exc))
+            finally:
+                if remesh_input is not None:
+                    _remove_object_and_mesh(remesh_input)
         for item in list(context.selected_objects):
             item.select_set(False)
         for obj in optimized:
@@ -339,7 +424,6 @@ class FISHHWB_OT_smart_optimize(bpy.types.Operator):
         context.scene.fishhwb_last_result = summary
         self.report({'WARNING'} if failed or skipped else {'INFO'}, summary[:900])
         return {'FINISHED'} if completed else {'CANCELLED'}
-
 
 classes = (FISHHWB_OT_smart_optimize,)
 

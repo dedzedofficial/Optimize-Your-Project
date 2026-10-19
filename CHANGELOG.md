@@ -12,6 +12,13 @@
 
 ## 0.8.8
 
+### Blender Smart Optimize diagnostics and rebuild correction (same version)
+
+- Smart Optimize now attempts Repair & Rebuild retopology when explicitly chosen even on meshes below the triangle target. Preserve Surface still skips needless remeshing below target.
+- Safe independent copy-based rebuild of a previously generated Remesh output without silently replacing that output or changing its original source.
+- Added per-operation reasons when Smart Optimize does nothing (below triangle target, shape keys/rigging, protected/linked input, no materials, or unsupported LOD/atlas job).
+- Exposed Remesh Mode and Triangle Target in the Smart Optimize preview dialog.
+
 ### Blender Remesh correction (same version)
 
 - Restored a visible **Preserve Surface / Repair & Rebuild** control above One-Click Remesh. The rebuild option performs controlled static-mesh voxel reconstruction, attempts QuadriFlow quad retopology, and reprojects UVs/material IDs when supported.

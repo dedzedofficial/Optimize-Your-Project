@@ -62,7 +62,13 @@ The panel includes:
 
 ## Smart Optimize (v0.8.8)
 
-Select one or more objects, then click **SMART OPTIMIZE (PREVIEW)** in the FISHHWB sidebar. In the dialog, select the desired jobs:
+Select one or more objects, then click **SMART OPTIMIZE (PREVIEW)** in the FISHHWB sidebar. In the dialog, select the desired jobs. **Smart Optimize now exposes Remesh Mode and Triangle Target in the dialog**. Choose **Repair & Rebuild** to attempt static-mesh repair and quad retopology even if the mesh is already under the triangle target. Preserve Surface remains the conservative default and only runs when reduction is needed.
+
+Previously generated Remesh outputs can also be selected: Smart Optimize works on a private copy so the prior output and its source remain untouched. Shape-key/rigged meshes cannot use destructive retopology; switch to Preserve Surface with a smaller triangle target to use guarded reduction.
+
+If no work is possible, the **Last Result** field explains why, including below-target meshes, protected geometry, unsupported deformation data, or already-reused results.
+
+Available jobs:
 
 - **Clean Geometry**: operates only on a newly generated copy of each eligible static mesh.
 - **Remesh if Above Triangle Target**: delegates to the existing guarded Remesh operation.
