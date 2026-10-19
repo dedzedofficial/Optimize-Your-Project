@@ -10,7 +10,7 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-## Blender 0.8.9 | Smart Remesh, simplified UI
+## Blender 8.8.3 | Smart Remesh and custom normal fix\n\n- Smart Remesh now projects supported authored `custom_normal` FLOAT_VECTOR POINT/CORNER attributes onto rebuilt topology rather than rejecting the mesh. Projected directions are normalized; source mesh and attribute data are unchanged.\n- Unsupported custom-normal storage and other unknown attributes still produce a clear, non-destructive rejection.\n- Restored the Blender extension version to the user-requested **8.8.3**; Unity remains **0.8.8**.\n\n### Smart Remesh and simplified UI (features retained from the previous development build)
 
 - Redesigned the Blender sidebar to show language, active mesh statistics and exactly three main operations: **Smart Remesh**, **Create LODs** and **Merge Materials**.
 - Smart Remesh always creates an independent output copy and attempts geometry repair, voxel-based surface reconstruction and QuadriFlow retopology, even when an input is under the triangle target or a prior Remesh output.
