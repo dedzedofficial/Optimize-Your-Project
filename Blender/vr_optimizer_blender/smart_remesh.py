@@ -441,7 +441,7 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                 f'(target {target:,}); repaired and rebuilt with {method}. '
                 f'Projected {len(neutral.uv_layers)} UV layers, '
                 f'{groups} vertex groups and {shapes} blendshapes. '
-                + ('Custom split normals reprojected. '
+                + ('Authored custom_normal data reprojected. '
                    if (neutral.attributes.get('custom_normal')
                        or neutral.has_custom_normals) else '')
                 + 'Compatible armature bindings restored; source untouched. '
