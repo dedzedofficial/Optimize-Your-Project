@@ -1,5 +1,7 @@
 # Optimize Your Project for Blender 4.2+
 
+<img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project" width="112">
+
 **Current Blender version: 0.8.9**
 
 The sidebar is intentionally minimal. Select a mesh in **Object Mode**, press **N** in the 3D Viewport, and open the **FISHHWB** tab.
