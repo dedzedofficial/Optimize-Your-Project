@@ -6,7 +6,9 @@
 
 The sidebar is intentionally minimal. Select a mesh in **Object Mode**, press **N** in the 3D Viewport, and open the **FISHHWB** tab.
 
-## Installation
+## Install / Download Optimize Your Project
+
+Supported Blender 4.2+ builds can install this ZIP as an extension.
 
 1. Open the latest successful **Check release packages** build on GitHub:
    https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
