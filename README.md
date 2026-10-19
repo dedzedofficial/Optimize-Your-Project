@@ -10,7 +10,7 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-**v0.8.8 | Unity + Blender 4.2+ | General developer optimization tools | FISHHWB | Ded Zed**
+**Unity v0.8.8 + Blender v0.8.9 | General developer optimization tools | FISHHWB | Ded Zed**
 
 Optimize Your Project is a free general developer optimization toolkit focused on turning repetitive project cleanup and optimization work into clear, guarded actions. Unity and Blender share one project release version, with more engine integrations planned under the same safety and localization rules.
 
@@ -38,10 +38,10 @@ Open the latest successful release-check workflow:
 
 https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
 
-Download the `optimize-your-project-blender-0.8.8` artifact and install:
+Download the `optimize-your-project-blender-0.8.9` artifact and install:
 
 ```text
-optimize-your-project-blender-extension-0.8.8.zip
+optimize-your-project-blender-extension-0.8.9.zip
 ```
 
 Use **Edit > Preferences > Get Extensions > Install from Disk** and choose the ZIP without extracting it. Then press **N** in the 3D Viewport and open the **FISHHWB** tab.
@@ -96,7 +96,11 @@ The cleaner is intentionally conservative:
 
 Use source control or a backup before any permanent cleanup.
 
-## Blender v0.8.8
+## Blender v0.8.9
+
+**The Blender sidebar is now limited to the requested actions:** Language selector, current mesh with triangle/vertex/face counts, **Smart Remesh** with Triangle Limit, **Create LODs** and **Merge Materials**. Smart Remesh now attempts rebuilding regardless of previous Remesh history or input triangle count and can reproject supported relative blendshapes, UVs, vertex weights and armature modifiers onto rebuilt topology. The original is never modified. See [the Blender guide](Blender/README.md) for safeguards and unsupported cases.
+
+
 
 Blender remains focused on **4.2+** and keeps Remesh, LOD and modern static-mesh tools in one readable **Primary Actions** panel.
 
