@@ -28,12 +28,14 @@ def _custom_data_reason(mesh):
     }
     uvs = {layer.name for layer in mesh.uv_layers}
     custom_normal = mesh.attributes.get('custom_normal')
-    if custom_normal is not None and (
-            custom_normal.data_type != 'FLOAT_VECTOR'
-            or custom_normal.domain not in {'POINT', 'CORNER'}):
+    if custom_normal is not None and not (
+            (custom_normal.data_type == 'FLOAT_VECTOR'
+             and custom_normal.domain in {'POINT', 'CORNER'})
+            or (custom_normal.data_type == 'INT16_2D'
+                and custom_normal.domain == 'CORNER')):
         return (
             "Cannot preserve custom_normal: expected a FLOAT_VECTOR attribute "
-            "on the POINT or CORNER domain, got "
+            "on POINT/CORNER or Blender's native INT16_2D on CORNER, got "
             + custom_normal.data_type + " on " + custom_normal.domain
         )
     unsupported = [
@@ -153,60 +155,94 @@ def _retopology_geometry(output, context, target):
 
 
 def _reproject_custom_normals(source_mesh, target_mesh, sample, vertex_matches):
-    """Carry authored custom_normal data over topology changes.
+    """Transfer decoded corner normals, not Blender's encoded INT16_2D storage.
 
-    Blender/game meshes may store custom_normal as a FLOAT_VECTOR attribute
-    on vertices (POINT) or face corners (CORNER). Barycentric projection
-    preserves the vector field across retopology; normalize its direction
-    because interpolation otherwise shortens the vectors.
+    Blender's native `custom_normal` is a CORNER/INT16_2D spherical encoding
+    relative to a split normal's corner fan. These integers are NOT normal XY
+    components. Decode them through Mesh.corner_normals and install the new
+    corner normals through Mesh.normals_split_custom_set so Blender correctly
+    encodes them for the *new* topology.
     """
     original = source_mesh.attributes.get('custom_normal')
-    if original is None:
+    # Blender 4.2 stores custom split normals in a legacy mesh layer.
+    # Blender 4.4+ exposes that layer as CORNER/INT16_2D.
+    if original is None and not source_mesh.has_custom_normals:
         return False
-    if original.data_type != 'FLOAT_VECTOR' or original.domain not in {'POINT', 'CORNER'}:
+    encoded = (original is None or (
+        original.data_type == 'INT16_2D' and original.domain == 'CORNER'))
+    vector_attr = (original is not None
+                   and original.data_type == 'FLOAT_VECTOR'
+                   and original.domain in {'POINT', 'CORNER'})
+    if not (encoded or vector_attr):
         raise ValueError('Unsupported custom_normal domain or storage type.')
+
+    # Blender's native packed normals must be read through the evaluated
+    # per-corner vectors rather than .value (which contains two short ints).
+    native_corner_vectors = None
+    if encoded:
+        native_corner_vectors = [
+            item.vector.copy() for item in source_mesh.corner_normals
+        ]
+        if len(native_corner_vectors) != len(source_mesh.loops):
+            raise ValueError('Unable to decode every custom split normal.')
+
+    def weighted_vector(tri, weights):
+        if encoded:
+            vectors = [native_corner_vectors[index] for index in tri.loops]
+        elif original.domain == 'POINT':
+            vectors = [original.data[index].vector for index in tri.vertices]
+        else:
+            vectors = [original.data[index].vector for index in tri.loops]
+        result = sum(
+            (vec * weight for vec, weight in zip(vectors, weights)),
+            vectors[0] * 0.0,
+        )
+        if result.length_squared > 1.0e-12:
+            result.normalize()
+        else:
+            result = vectors[0].normalized()
+        return result
 
     previous = target_mesh.attributes.get('custom_normal')
     if previous is not None:
         target_mesh.attributes.remove(previous)
-    target = target_mesh.attributes.new(
-        name='custom_normal', type='FLOAT_VECTOR', domain=original.domain)
 
-    def weighted_vector(tri, weights):
-        if original.domain == 'POINT':
-            indexes = tri.vertices
-        else:
-            indexes = tri.loops
-        # Avoid changing handedness, smoothing groups or artistic direction;
-        # source normals are already in the mesh's local coordinate system.
-        vector = sum(
-            (original.data[index].vector * weight
-             for index, weight in zip(indexes, weights)),
-            original.data[indexes[0]].vector * 0.0,
-        )
-        if vector.length_squared > 1.0e-12:
-            vector.normalize()
-        return vector
-
-    if original.domain == 'POINT':
-        if len(target.data) != len(vertex_matches):
-            raise ValueError('Custom normals could not be matched to all output vertices.')
-        for element, (tri, weights, _distance) in zip(target.data, vertex_matches):
-            element.vector = weighted_vector(tri, weights)
-    else:
-        # Shift each corner's sample slightly into its corresponding face
-        # to reduce ambiguity when two source faces share a split normal seam.
+    if encoded:
+        # Every destination loop gets a real 3D custom split normal. Let
+        # Blender encode it in the correct tangent frame of the rebuilt mesh.
+        normals = [None] * len(target_mesh.loops)
         for face in target_mesh.polygons:
             for loop_index in face.loop_indices:
                 vertex = target_mesh.vertices[target_mesh.loops[loop_index].vertex_index]
-                query_point = vertex.co.lerp(face.center, 0.001)
-                tri, weights, _distance = sample(query_point)
-                target.data[loop_index].vector = weighted_vector(tri, weights)
-
-    if len(target.data) != (
-            len(target_mesh.vertices) if original.domain == 'POINT'
-            else len(target_mesh.loops)):
-        raise ValueError('Custom normal data count differs from remeshed topology.')
+                query = vertex.co.lerp(face.center, 0.001)
+                tri, weights, _distance = sample(query)
+                vec = weighted_vector(tri, weights)
+                normals[loop_index] = (vec.x, vec.y, vec.z)
+        if any(item is None for item in normals):
+            raise ValueError('One or more custom normals could not be projected.')
+        target_mesh.normals_split_custom_set(normals)
+        target_mesh.update()
+        if not target_mesh.has_custom_normals:
+            raise ValueError('Blender did not retain the transferred custom normals.')
+    else:
+        target = target_mesh.attributes.new(
+            name='custom_normal', type='FLOAT_VECTOR', domain=original.domain)
+        if original.domain == 'POINT':
+            if len(target.data) != len(vertex_matches):
+                raise ValueError('Custom normals could not be matched to every output vertex.')
+            for element, (tri, weights, _distance) in zip(target.data, vertex_matches):
+                element.vector = weighted_vector(tri, weights)
+        else:
+            for face in target_mesh.polygons:
+                for loop_index in face.loop_indices:
+                    vertex = target_mesh.vertices[target_mesh.loops[loop_index].vertex_index]
+                    query = vertex.co.lerp(face.center, 0.001)
+                    tri, weights, _distance = sample(query)
+                    target.data[loop_index].vector = weighted_vector(tri, weights)
+        if len(target.data) != (
+                len(target_mesh.vertices) if original.domain == 'POINT'
+                else len(target_mesh.loops)):
+            raise ValueError('Custom normal data count differs from remeshed topology.')
     return True
 
 
@@ -232,6 +268,7 @@ def _project_details(source, output, neutral_mesh, deforming, context):
     for face in output_mesh.polygons:
         tri, _, _ = sample(face.center)
         face.material_index = neutral_mesh.polygons[tri.polygon_index].material_index
+        face.use_smooth = neutral_mesh.polygons[tri.polygon_index].use_smooth
         for loop_idx in face.loop_indices:
             if not source_uvs:
                 continue
@@ -289,10 +326,19 @@ def _project_details(source, output, neutral_mesh, deforming, context):
     else:
         groups, shapes = 0, 0
     if custom_normals_preserved:
-        source_attr = neutral_mesh.attributes['custom_normal']
+        source_attr = neutral_mesh.attributes.get('custom_normal')
         new_attr = output_mesh.attributes.get('custom_normal')
-        if (new_attr is None or new_attr.domain != source_attr.domain
-                or new_attr.data_type != source_attr.data_type):
+        if source_attr is None or source_attr.data_type == 'INT16_2D':
+            if not output_mesh.has_custom_normals:
+                raise ValueError('Blender-native split normals were not preserved.')
+            # Blender 4.2 stores them in a legacy custom-data layer,
+            # not a visible generic mesh attribute.
+            if source_attr is not None and (
+                    new_attr is None or new_attr.domain != 'CORNER'
+                    or new_attr.data_type != 'INT16_2D'):
+                raise ValueError('Retopology did not retain encoded split normals.')
+        elif (new_attr is None or new_attr.domain != source_attr.domain
+              or new_attr.data_type != source_attr.data_type):
             raise ValueError('Authored custom normals were not transferred.')
     if set(source_uvs) != {layer.name for layer in output_mesh.uv_layers}:
         raise ValueError('Rebuilt output did not preserve UV layer names.')
@@ -396,7 +442,8 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                 f'Projected {len(neutral.uv_layers)} UV layers, '
                 f'{groups} vertex groups and {shapes} blendshapes. '
                 + ('Authored custom_normal data reprojected. '
-                   if neutral.attributes.get('custom_normal') else '')
+                   if (neutral.attributes.get('custom_normal')
+                       or neutral.has_custom_normals) else '')
                 + 'Compatible armature bindings restored; source untouched. '
                 'Inspect UV seams, deformation and small details before export.',
                 changed=1)
