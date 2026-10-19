@@ -254,6 +254,82 @@ class SmartOptimize088Tests(unittest.TestCase):
             self.assertIn('Authored custom_normal data reprojected',
                           bpy.context.scene.fishhwb_last_result)
 
+    def test_smart_remesh_reprojects_blender_native_int16_corner_normals(self):
+        """Match actual Blender-authored custom normals, not a fake 2D vector."""
+        from mathutils import Vector
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
+        source = bpy.context.active_object
+        source.name = "UserNativeCustomNormal"
+        mesh = source.data
+        for face in mesh.polygons:
+            face.use_smooth = True
+        initial = [item.vector.copy() for item in mesh.corner_normals]
+        authored = [
+            (v + Vector((0.08, -0.04, 0.03))).normalized()
+            for v in initial
+        ]
+        mesh.normals_split_custom_set(authored)
+        mesh.update()
+        self.assertTrue(mesh.has_custom_normals)
+        original_attr = mesh.attributes.get('custom_normal')
+        if original_attr is not None:
+            # Blender 4.4+ uses native compressed spherical corner encoding.
+            self.assertEqual(original_attr.domain, 'CORNER')
+            self.assertEqual(original_attr.data_type, 'INT16_2D')
+        original_normals = [tuple(item.vector) for item in mesh.corner_normals]
+        source_faces = len(mesh.polygons)
+
+        bpy.context.scene.fishhwb_triangle_target = 140
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'FINISHED'})
+        result = bpy.context.active_object
+        self.assertIsNot(result, source)
+        self.assertTrue(result.data.has_custom_normals)
+        self.assertEqual(len(result.data.corner_normals), len(result.data.loops))
+        self.assertEqual([tuple(item.vector) for item in mesh.corner_normals],
+                         original_normals)
+        self.assertEqual(len(mesh.polygons), source_faces)
+        self.assertIn('Authored custom_normal data reprojected',
+                      bpy.context.scene.fishhwb_last_result)
+
+        from math import isfinite
+        self.assertTrue(all(
+            all(isfinite(component) for component in normal.vector)
+            and 0.9 < normal.vector.length < 1.1
+            for normal in result.data.corner_normals
+        ))
+        rebuilt_attr = result.data.attributes.get('custom_normal')
+        if original_attr is not None:
+            self.assertIsNotNone(rebuilt_attr)
+            self.assertEqual(rebuilt_attr.data_type, 'INT16_2D')
+            self.assertEqual(rebuilt_attr.domain, 'CORNER')
+
+    def test_smart_remesh_native_normals_with_blendshape_and_weights(self):
+        from mathutils import Vector
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
+        source = bpy.context.active_object
+        for face in source.data.polygons:
+            face.use_smooth = True
+        authored = [
+            (item.vector + Vector((0.05, 0.0, 0.0))).normalized()
+            for item in source.data.corner_normals
+        ]
+        source.data.normals_split_custom_set(authored)
+        source.shape_key_add(name='Basis')
+        key = source.shape_key_add(name='Blink')
+        key.data[0].co.z += 0.2
+        group = source.vertex_groups.new(name='Face')
+        group.add(list(range(len(source.data.vertices))), 0.6, 'REPLACE')
+        self.assertTrue(source.data.has_custom_normals)
+        bpy.context.scene.fishhwb_triangle_target = 120
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'FINISHED'})
+        result = bpy.context.active_object
+        self.assertTrue(result.data.has_custom_normals)
+        self.assertEqual([block.name for block in result.data.shape_keys.key_blocks],
+                         ['Basis', 'Blink'])
+        self.assertEqual([g.name for g in result.vertex_groups], ['Face'])
+        self.assertTrue(any(v.groups for v in result.data.vertices))
+        self.assertIsNot(result, source)
+
     def test_smart_remesh_rejects_invalid_custom_normal_type_without_damage(self):
         source = self.cube()
         attr = source.data.attributes.new(
