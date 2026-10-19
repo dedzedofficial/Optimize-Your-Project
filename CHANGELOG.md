@@ -10,6 +10,16 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
+## Blender 0.8.9 | Smart Remesh, simplified UI
+
+- Redesigned the Blender sidebar to show language, active mesh statistics and exactly three main operations: **Smart Remesh**, **Create LODs** and **Merge Materials**.
+- Smart Remesh always creates an independent output copy and attempts geometry repair, voxel-based surface reconstruction and QuadriFlow retopology, even when an input is under the triangle target or a prior Remesh output.
+- Uses best-effort triangle budget adjustment and nearest-surface reprojection of UV maps, face material IDs, vertex-group weights and supported relative shape-key deltas. Supported armature modifiers and relative shape-key animation configuration are restored on the output.
+- On static meshes, modifier effects are evaluated on a private copy before remeshing. Unsupported custom attributes, destructive modifier/deformation combinations and unsupported shape-key arrangements are rejected safely.
+- Removed advanced tools from the main sidebar without deleting their existing operator registrations.
+- Added Blender runtime regression cases for repeat remesh, shape keys, rigging, vertex groups, modifier effects and original preservation.
+- Maintains separate Unity v0.8.8 metadata until a Unity-specific update.
+
 ## 0.8.8
 
 ### Blender Smart Optimize diagnostics and rebuild correction (same version)
