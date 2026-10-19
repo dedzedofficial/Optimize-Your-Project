@@ -120,9 +120,22 @@ def _activate_only(context, obj):
 
 
 def _voxel_rebuild(obj, context, target):
-    """Best-effort manifold rebuild and quad retopology for the Remesh output copy."""
+    """Rebuild a static output copy; project original UVs/material IDs back safely.
+
+    This is an opt-in destructive-topology operation on a generated object,
+    never on the source. Unsupported attributes cause a clean fallback.
+    """
+    from mathutils.bvhtree import BVHTree
+
     mesh = obj.data
-    if _has_deformation(obj) or not mesh.vertices:
+    if _has_deformation(obj) or not mesh.vertices or not mesh.polygons:
+        return False
+    if len(mesh.color_attributes) or any(
+        attr.name not in {'.position', '.edge_verts', '.corner_vert', '.corner_edge', '.material_index', '.select_vert', '.select_edge', '.select_poly', '.hide_vert', '.hide_edge', '.hide_poly', 'position'}
+        and not attr.is_internal and attr.name not in mesh.uv_layers
+        for attr in mesh.attributes
+    ):
+        # Arbitrary custom data cannot be accurately reconstructed here.
         return False
 
     diagonal = _mesh_diagonal(mesh)
@@ -130,13 +143,14 @@ def _voxel_rebuild(obj, context, target):
         return False
 
     target = max(128, int(target))
-    cells = max(48.0, min(320.0, math.sqrt(target) * 1.8))
+    cells = max(48.0, min(256.0, math.sqrt(target) * 1.8))
     voxel_size = max(0.0001, diagonal / cells)
-
     original_selection = list(context.selected_objects)
     original_active = context.view_layer.objects.active
     backup_mesh = mesh.copy()
-    required_uvs = {layer.name for layer in mesh.uv_layers}
+    expected_materials = list(backup_mesh.materials)
+    expected_uvs = [layer.name for layer in backup_mesh.uv_layers]
+
     try:
         _activate_only(context, obj)
         mesh.remesh_voxel_size = voxel_size
@@ -152,6 +166,7 @@ def _voxel_rebuild(obj, context, target):
         if 'FINISHED' not in result or len(obj.data.polygons) < 1:
             raise RuntimeError("Voxel remesh produced no usable surface.")
 
+        # QuadriFlow is optional; if it fails we retain the valid voxel result.
         try:
             bpy.ops.object.quadriflow_remesh(
                 use_mesh_symmetry=False,
@@ -166,16 +181,84 @@ def _voxel_rebuild(obj, context, target):
         except Exception:
             pass
 
-        output_uvs = {layer.name for layer in obj.data.uv_layers}
-        if required_uvs and not required_uvs.issubset(output_uvs):
-            raise RuntimeError("Rebuild could not preserve the source UV layers.")
+        output_mesh = obj.data
+        if len(output_mesh.polygons) < 1:
+            raise RuntimeError("QuadriFlow returned an empty mesh.")
+
+        # Voxel remeshing normally discards loop UVs. Reproject from the
+        # original output mesh by nearest-point barycentric interpolation.
+        # This also restores correct material indices on rebuilt faces.
+        if expected_uvs or len(expected_materials) > 1:
+            backup_mesh.calc_loop_triangles()
+            triangles = list(backup_mesh.loop_triangles)
+            if not triangles:
+                raise RuntimeError("Cannot project attributes from an empty input surface.")
+            source_verts = [vert.co.copy() for vert in backup_mesh.vertices]
+            tree = BVHTree.FromPolygons(
+                source_verts, [tuple(tri.vertices) for tri in triangles],
+                all_triangles=True)
+            if tree is None:
+                raise RuntimeError("Could not construct a surface projection index.")
+
+            if expected_uvs:
+                for name in expected_uvs:
+                    if name not in output_mesh.uv_layers:
+                        output_mesh.uv_layers.new(name=name)
+            source_layers = [backup_mesh.uv_layers[name] for name in expected_uvs]
+            target_layers = [output_mesh.uv_layers[name] for name in expected_uvs]
+
+            def nearest_triangle(point):
+                closest, _normal, index, _distance = tree.find_nearest(point)
+                if closest is None or index is None:
+                    raise RuntimeError("Attribute projection could not find a source triangle.")
+                tri = triangles[index]
+                a, b, c = (source_verts[vi] for vi in tri.vertices)
+                v0 = b - a
+                v1 = c - a
+                v2 = closest - a
+                d00 = v0.dot(v0)
+                d01 = v0.dot(v1)
+                d11 = v1.dot(v1)
+                d20 = v2.dot(v0)
+                d21 = v2.dot(v1)
+                denom = d00 * d11 - d01 * d01
+                if abs(denom) < 1.0e-14:
+                    return tri, (1.0, 0.0, 0.0)
+                v = (d11 * d20 - d01 * d21) / denom
+                w = (d00 * d21 - d01 * d20) / denom
+                return tri, (1.0 - v - w, v, w)
+
+            for face in output_mesh.polygons:
+                tri, _ = nearest_triangle(face.center)
+                face.material_index = backup_mesh.polygons[tri.polygon_index].material_index
+                for loop_id in face.loop_indices:
+                    if not expected_uvs:
+                        continue
+                    point = output_mesh.vertices[output_mesh.loops[loop_id].vertex_index].co
+                    tri, weights = nearest_triangle(point)
+                    for src, dst in zip(source_layers, target_layers):
+                        uv = src.data[tri.loops[0]].uv * weights[0]
+                        uv += src.data[tri.loops[1]].uv * weights[1]
+                        uv += src.data[tri.loops[2]].uv * weights[2]
+                        dst.data[loop_id].uv = uv
+
+        if list(output_mesh.materials) != expected_materials:
+            output_mesh.materials.clear()
+            for material in expected_materials:
+                output_mesh.materials.append(material)
+        if set(expected_uvs) != {layer.name for layer in output_mesh.uv_layers}:
+            raise RuntimeError("Rebuilt mesh lost required UV layers.")
+        if any(face.material_index >= max(1, len(expected_materials)) for face in output_mesh.polygons):
+            raise RuntimeError("Rebuilt mesh has invalid material assignments.")
+        obj['fishhwb_remesh_method_used'] = 'REBUILD'
         return True
-    except Exception:
+    except Exception as error:
         failed_mesh = obj.data
         obj.data = backup_mesh
         backup_mesh = None
         if failed_mesh.users == 0:
             bpy.data.meshes.remove(failed_mesh)
+        obj['fishhwb_remesh_fallback_reason'] = str(error)[:280]
         return False
     finally:
         if backup_mesh is not None and backup_mesh.users == 0:
@@ -197,20 +280,23 @@ def install_smart_reducer(addon):
     def smart_reduce(obj, target, context):
         is_remesh = obj.name.endswith("_Remesh") or obj.get("fishhwb_generated_job") == "remesh"
 
-        if is_remesh and not _has_deformation(obj):
-            _repair_static_mesh(obj.data, fill_holes=True)
-            # Open boundaries may be deliberate: never voxel-close them by default.
-            check = bmesh.new()
-            try:
-                check.from_mesh(obj.data)
-                closed_but_broken = (
-                    not any(edge.is_boundary for edge in check.edges)
-                    and any(not edge.is_manifold for edge in check.edges)
-                )
-            finally:
-                check.free()
-            if closed_but_broken:
-                _voxel_rebuild(obj, context, target)
+        if is_remesh:
+            method = getattr(context.scene, 'fishhwb_remesh_method', 'SURFACE')
+            if _has_deformation(obj):
+                obj['fishhwb_remesh_method_used'] = 'SURFACE'
+                if method == 'REBUILD':
+                    obj['fishhwb_remesh_fallback_reason'] = (
+                        'Rigged or shape-key meshes require surface-preserving reduction.')
+            else:
+                _repair_static_mesh(obj.data, fill_holes=(method == 'REBUILD'))
+                if method == 'REBUILD':
+                    if not _voxel_rebuild(obj, context, target):
+                        obj['fishhwb_remesh_method_used'] = 'SURFACE'
+                        if 'fishhwb_remesh_fallback_reason' not in obj:
+                            obj['fishhwb_remesh_fallback_reason'] = (
+                                'Unsupported vertex/color attributes; preserved original topology.')
+                else:
+                    obj['fishhwb_remesh_method_used'] = 'SURFACE'
                 _repair_static_mesh(obj.data, fill_holes=False)
 
         return original_reduce(obj, target, context)
