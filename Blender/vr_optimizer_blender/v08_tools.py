@@ -637,19 +637,12 @@ def register(addon):
     install_remesh_guard(addon)
     for cls in classes:
         bpy.utils.register_class(cls)
-    try:
-        # The compact sidebar provides one MERGE MATERIALS control itself.
-        # Keep the legacy operator registered without adding a second button.
-    except Exception:
-        pass
+    # The compact sidebar provides one MERGE MATERIALS control itself.
+    # Keep the legacy operator registered without appending a second UI button.
 
 
 def unregister():
-    try:
-        # Legacy callback was not appended in the compact UI.
-        pass
-    except Exception:
-        pass
+    # No legacy callback was appended to the compact panel.
     for cls in reversed(classes):
         try:
             bpy.utils.unregister_class(cls)
