@@ -638,16 +638,16 @@ def register(addon):
     for cls in classes:
         bpy.utils.register_class(cls)
     try:
-        addon.FISHHWB_PT_optimizer.append(_draw_merge_button)
+        # The compact sidebar provides one MERGE MATERIALS control itself.
+        # Keep the legacy operator registered without adding a second button.
     except Exception:
         pass
 
 
 def unregister():
     try:
-        for panel in (getattr(bpy.types, "FISHHWB_PT_optimizer", None),):
-            if panel:
-                panel.remove(_draw_merge_button)
+        # Legacy callback was not appended in the compact UI.
+        pass
     except Exception:
         pass
     for cls in reversed(classes):
