@@ -167,8 +167,9 @@ def _voxel_rebuild(obj, context, target):
             raise RuntimeError("Voxel remesh produced no usable surface.")
 
         # QuadriFlow is optional; if it fails we retain the valid voxel result.
+        quadriflow_completed = False
         try:
-            bpy.ops.object.quadriflow_remesh(
+            quadriflow_result = bpy.ops.object.quadriflow_remesh(
                 use_mesh_symmetry=False,
                 use_preserve_sharp=True,
                 use_preserve_boundary=False,
@@ -178,6 +179,7 @@ def _voxel_rebuild(obj, context, target):
                 target_faces=max(4, target // 2),
                 seed=0,
             )
+            quadriflow_completed = 'FINISHED' in quadriflow_result
         except Exception:
             pass
 
@@ -251,6 +253,9 @@ def _voxel_rebuild(obj, context, target):
         if any(face.material_index >= max(1, len(expected_materials)) for face in output_mesh.polygons):
             raise RuntimeError("Rebuilt mesh has invalid material assignments.")
         obj['fishhwb_remesh_method_used'] = 'REBUILD'
+        obj['fishhwb_retopology_status'] = (
+            'QUADRIFLOW' if quadriflow_completed else 'VOXEL_QUADS'
+        )
         return True
     except Exception as error:
         failed_mesh = obj.data
