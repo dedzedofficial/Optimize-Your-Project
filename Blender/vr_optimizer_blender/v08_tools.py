@@ -128,14 +128,32 @@ def _voxel_rebuild(obj, context, target):
     from mathutils.bvhtree import BVHTree
 
     mesh = obj.data
-    if _has_deformation(obj) or not mesh.vertices or not mesh.polygons:
+    if obj.get('fishhwb_source_deformation_sensitive') or _has_deformation(obj):
+        obj['fishhwb_remesh_fallback_reason'] = (
+            'Original contains shape keys, weight groups or an armature; topology preserved.')
         return False
-    if len(mesh.color_attributes) or any(
-        attr.name not in {'.position', '.edge_verts', '.corner_vert', '.corner_edge', '.material_index', '.select_vert', '.select_edge', '.select_poly', '.hide_vert', '.hide_edge', '.hide_poly', 'position'}
-        and not attr.is_internal and attr.name not in mesh.uv_layers
-        for attr in mesh.attributes
-    ):
-        # Arbitrary custom data cannot be accurately reconstructed here.
+    if not mesh.vertices or not mesh.polygons:
+        return False
+    built_in_attributes = {
+        'position', 'material_index', 'sharp_face', 'sharp_edge',
+        'crease_edge', 'crease_vert', 'bevel_weight_edge', 'bevel_weight_vert',
+        '.position', '.edge_verts', '.corner_vert', '.corner_edge',
+        '.material_index', '.select_vert', '.select_edge', '.select_poly',
+        '.hide_vert', '.hide_edge', '.hide_poly',
+    }
+    uv_layer_names = {layer.name for layer in mesh.uv_layers}
+    unsupported = [
+        attr.name for attr in mesh.attributes
+        if not attr.is_internal
+        and attr.name not in built_in_attributes
+        and attr.name not in uv_layer_names
+    ]
+    if mesh.color_attributes or unsupported:
+        # Arbitrary authored attributes cannot be reconstructed accurately.
+        obj['fishhwb_remesh_fallback_reason'] = (
+            'Custom color/mesh attributes require topology preservation'
+            + (': ' + ', '.join(unsupported[:5]) if unsupported else '') + '.'
+        )
         return False
 
     diagonal = _mesh_diagonal(mesh)
@@ -287,7 +305,7 @@ def install_smart_reducer(addon):
 
         if is_remesh:
             method = getattr(context.scene, 'fishhwb_remesh_method', 'SURFACE')
-            if _has_deformation(obj):
+            if _has_deformation(obj) or obj.get('fishhwb_source_deformation_sensitive'):
                 obj['fishhwb_remesh_method_used'] = 'SURFACE'
                 if method == 'REBUILD':
                     obj['fishhwb_remesh_fallback_reason'] = (
