@@ -637,19 +637,12 @@ def register(addon):
     install_remesh_guard(addon)
     for cls in classes:
         bpy.utils.register_class(cls)
-    try:
-        addon.FISHHWB_PT_optimizer.append(_draw_merge_button)
-    except Exception:
-        pass
+    # The compact sidebar provides one MERGE MATERIALS control itself.
+    # Keep the legacy operator registered without appending a second UI button.
 
 
 def unregister():
-    try:
-        for panel in (getattr(bpy.types, "FISHHWB_PT_optimizer", None),):
-            if panel:
-                panel.remove(_draw_merge_button)
-    except Exception:
-        pass
+    # No legacy callback was appended to the compact panel.
     for cls in reversed(classes):
         try:
             bpy.utils.unregister_class(cls)

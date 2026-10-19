@@ -128,12 +128,12 @@ assert f'"version": ({blender_tuple[0]}, {blender_tuple[1]}, {blender_tuple[2]})
 assert '"blender": (4, 2, 0)' in proxy
 for required in [
     "_draw_core_080",
-    'row.operator("fishhwb.smart_optimize"',
-    'row.operator("fishhwb.one_click_remesh"',
-    'row.operator("fishhwb.clean_mesh"',
-    'row.operator("fishhwb.generate_lightmap_uv"',
-    'row.operator("fishhwb.link_identical_mesh_data"',
-    'row.operator("fishhwb.strip_collider_render_data"',
+    "row.operator('fishhwb.smart_remesh'",
+    "row.operator('fishhwb.merge_textures'",
+    "row.operator(",
+    "'fishhwb.create_lods_selected'",
+    "'fishhwb_triangle_target'",
+
     "FISHHWB_PT_optimizer.draw = _draw_core_080",
     "_effective_language",
     "_LOCALE_MAP",
@@ -150,6 +150,10 @@ for required in [
     "_COLLIDER",
 ]:
     assert required in core, required
+
+smart_remesh = (root / "Blender/vr_optimizer_blender/smart_remesh.py").read_text(encoding="utf-8")
+for required in ["fishhwb.smart_remesh", "_retopology_geometry", "_project_details", "deform_transfer.transfer"]:
+    assert required in smart_remesh, required
 
 v088 = (root / "Blender/vr_optimizer_blender/v088_tools.py").read_text(encoding="utf-8")
 for required in ['fishhwb.smart_optimize', 'invoke_props_dialog', '_bake_pbr_atlas', 'Original sources preserved']:
@@ -249,6 +253,7 @@ with ZipFile(extension_archive) as package:
         "Blender/vr_optimizer_blender/tools_42.py",
         "Blender/vr_optimizer_blender/v08_tools.py",
         "Blender/vr_optimizer_blender/v088_tools.py",
+        "Blender/vr_optimizer_blender/smart_remesh.py",
         "Blender/vr_optimizer_blender/optimize-your-project-logo.png",
     ]:
         assert required in names, required

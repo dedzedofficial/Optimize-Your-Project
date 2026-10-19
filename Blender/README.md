@@ -1,203 +1,74 @@
 # Optimize Your Project for Blender 4.2+
 
-<img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project logo" width="112">
+<img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project" width="112">
 
-<p align="center">
-  <a href="../README.md"><strong>Overview</strong></a> |
-  <a href="../Blender/README.md"><strong>Blender Guide</strong></a> |
-  <a href="../Documentation/Roadmap.md"><strong>Roadmap</strong></a> |
-  <a href="../Documentation/Architecture.md"><strong>Architecture</strong></a> |
-  <a href="../CHANGELOG.md"><strong>Changelog</strong></a>
-</p>
+**Current Blender version: 0.8.9**
 
-**Current Blender release: v0.8.8 (Remesh correction)**
-
-The Blender integration targets **Blender 4.2 and newer** through the Blender Extensions system. The supported download is one modern extension ZIP.
+The sidebar is intentionally minimal. Select a mesh in **Object Mode**, press **N** in the 3D Viewport, and open the **FISHHWB** tab.
 
 ## Install / Download Optimize Your Project
 
-Open the latest successful **Check release packages** workflow:
+Supported Blender 4.2+ builds can install this ZIP as an extension.
 
-https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
+1. Open the latest successful **Check release packages** build on GitHub:
+   https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
+2. Download artifact **optimize-your-project-blender-0.8.9** and extract the artifact container ZIP if GitHub wraps it.
+3. Install **optimize-your-project-blender-extension-0.8.9.zip** using **Edit > Preferences > Get Extensions > Install from Disk**. Do not unzip the extension ZIP itself.
+4. Disable/remove any previously installed 0.8.5/0.8.8 duplicate extension, restart Blender, and enable the 0.8.9 extension.
 
-Download the `optimize-your-project-blender-0.8.8` artifact and install:
+## Sidebar layout
 
 ```text
-optimize-your-project-blender-extension-0.8.8.zip
+OPTIMIZE YOUR PROJECT
+
+Language: [ Auto / English / ... ]
+
+CURRENT SELECTION
+ObjectName
+Triangles: ...
+Vertices: ...
+Faces: ...
+
+[ SMART REMESH ]
+Triangle Limit: ...
+
+[ CREATE LODS ]
+
+[ MERGE MATERIALS ]
 ```
 
-Use **Edit > Preferences > Get Extensions > Install from Disk**. Do not extract the ZIP.
+### Smart Remesh
 
-After enabling the extension, press **N** in the 3D Viewport and open the **FISHHWB** tab.
+**Runs even when the mesh has fewer triangles than the target and on earlier generated Remesh objects.** The triangle setting is a best-effort **budget**, not a guarantee that a quad topology has precisely that many triangles.
 
-### If Blender still shows v0.8.5
+- Creates a private output copy without modifying the selected mesh or previously generated results.
+- For static meshes, evaluates existing modifiers on the private copy before reconstruction. For rigged meshes, preserves supported armature modifiers instead of baking the pose.
+- Repairs near-duplicate vertices, degenerate/loose geometry and small boundary loops, and attempts to join nearby surface gaps with controlled voxel reconstruction. It does not indiscriminately connect legitimate separate mesh islands or seal every intentional opening.
+- Runs voxel reconstruction and attempts QuadriFlow quad retopology. If QuadriFlow fails but the voxel output is valid, it reports **voxel quad topology**, not QuadriFlow success.
+- Attempts triangle reduction or adds topology where useful, staying within safety and detail limits; subdivision does not invent new sculpted detail.
+- Reprojects supported UVs, material slots and face material IDs.
+- For compatible relative shape keys, vertex groups and armature modifiers, reprojects blendshape deltas and weights onto the new vertices, and restores the original relative shape-key configuration and supported animation bindings. **Review the result**: nearest-surface interpolation can distort weights, facial expression shapes, texture seams and details.
 
-Blender does **not** automatically update an extension when its GitHub repository changes. The old version may still be enabled, or both the legacy add-on and the ZIP extension may be installed.
+Unsupported custom mesh attributes, absolute shape keys, shape-key NLA tracks and non-armature modifier stacks on rigged sources are **not silently destroyed**. The operator refuses those cases with a reason and preserves the source. Models with highly intricate geometry may require manual retopology and corrections.
 
-1. Open **Edit > Preferences > Get Extensions** (or **Add-ons** in versions that use that panel).
-2. Search for **Optimize Your Project** and disable/uninstall the existing old v0.8.5 entry. Check for duplicate entries installed through a local scripts directory.
-3. Restart Blender before reinstalling.
-4. Download the ZIP artifact from a **successful build on the main branch** and use **Install from Disk**; do not extract the ZIP.
-5. Re-enable the extension and inspect the FISHHWB tab. It should read **Blender v0.8.8 (Remesh Fix)** and expose **Mode: Preserve Surface / Repair & Rebuild** above Remesh.
+Very high target limits (above 500,000) are rejected for memory/performance safety.
 
-Do not use an older ZIP with the same name saved in your Downloads folder. The internal extension version remains 0.8.8; the hotfix label distinguishes the updated build.
+### Create LODs
 
-## v0.8.8 interface
+Creates LOD0, LOD1 and LOD2 using existing safe triangle budgets. Source mesh is preserved; LODs are static-mesh only. Previous advanced preferences continue to exist but are deliberately not displayed in the main sidebar.
 
-The Blender sidebar keeps one readable **Primary Actions** panel.
+### Merge Materials
 
-The panel includes:
+The button uses the existing **Merge Textures** atlas workflow to reduce compatible materials to one packed material with rebuilt AtlasUV. This operation is not a plain same-material-slot deduplicator: it may bake textures, and it rejects unsupported complex shaders instead of corrupting them. Original materials remain unchanged on the source.
 
-- current selection and triangle/vertex summary,
-- Protect detail and Reset history controls,
-- One-Click Remesh,
-- LOD0 / LOD1 / LOD2 generation,
-- optional collision proxy generation,
-- Clean Mesh,
-- Generate Lightmap UV,
-- Link Identical Mesh Data,
-- Strip Collider Render Data,
-- wrapped last-result text,
-- Auto plus the same 14 languages exposed by Unity.
+## When the target cannot be safely met
 
-## Smart Optimize (v0.8.8)
+The resulting operator message explains whether it used QuadriFlow, kept voxel quads, or rejected an unsupported source. Inspect the output's wireframe, UVs, shape keys, bones/weights and shading before exporting it to Unity or VRChat.
 
-Select one or more objects, then click **SMART OPTIMIZE (PREVIEW)** in the FISHHWB sidebar. In the dialog, select the desired jobs. **Smart Optimize now exposes Remesh Mode and Triangle Target in the dialog**. Choose **Repair & Rebuild** to attempt static-mesh repair and quad retopology even if the mesh is already under the triangle target. Preserve Surface remains the conservative default and only runs when reduction is needed.
+## Other retained tools
 
-Previously generated Remesh outputs can also be selected: Smart Optimize works on a private copy so the prior output and its source remain untouched. Shape-key/rigged meshes cannot use destructive retopology; switch to Preserve Surface with a smaller triangle target to use guarded reduction.
+Legacy Clean Mesh, Lightmap UV, identical mesh linking, collider stripping and the more configurable Remesh workflow remain registered and available through Blender operator search (F3); they are hidden from the compact sidebar rather than deleted.
 
-If no work is possible, the **Last Result** field explains why, including below-target meshes, protected geometry, unsupported deformation data, or already-reused results.
+## Previous version history
 
-Available jobs:
-
-- **Clean Geometry**: operates only on a newly generated copy of each eligible static mesh.
-- **Remesh if Above Triangle Target**: delegates to the existing guarded Remesh operation.
-- **Generate LODs**: delegates to the existing LOD operation, skipping unsupported deformation meshes.
-- **Merge PBR Textures**: optional Cycles bake. Supports direct Principled BSDF shader graphs only and may take time.
-- **Generate Lightmap UV**: creates a private copy if needed to keep the original UVs unchanged.
-
-The result panel displays completed, skipped and failed operations. This is not an unattended project-wide optimizer: review the preview and outputs before exporting to your engine. Undo can restore Blender changes; save a backup for important assets.
-
-## PBR atlas improvements
-
-The Merge Textures button supports **1024**, **2048** and **4096** atlas sizes. Base Color is baked as before; compatible Principled materials can also bake varying roughness, metallic, alpha, emission and normal channels. Constant scalar values remain constants where possible. Materials with complex mixed shader output, unconnected or non-Principled outputs are rejected to avoid a false sense of fidelity. Check normals, transparency and color space in your target engine.
-
-## One-Click Remesh
-
-Select a supported mesh and choose a triangle target.
-
-**One-Click Remesh** now has two modes in its existing panel. **Preserve Surface** retains the existing source-preserving reduction behavior. **Repair & Rebuild** is an explicit opt-in for supported static meshes: weld near-duplicate geometry, fill only small closed boundary loops, reconstruct the surface with voxel remeshing, attempt QuadriFlow quad retopology, and project supported UV layers/material assignments back to the rebuilt surface. The output remains a separate object; the original source is not modified.
-
-Complex custom attributes and shape-key/rigged meshes use guarded surface reduction instead, with an on-screen explanation. For a successful rebuild, the result reports whether QuadriFlow ran or whether the voxel quad mesh was kept. Topology is not guaranteed to have animation-ready edge loops; review hard edges and texture seams before export.
-
-v0.8.8 adds a preservation validation pass after generation. The result is checked for required UV layers, material slots, vertex groups and shape keys. If required data is missing, the generated copy is rejected and the original source is reselected instead of leaving a known-bad optimized result.
-
-Unsupported deformation cases are rejected instead of silently damaging output.
-
-Blender 5.x animation transfer uses the modern slotted Action/channelbag API. Blender 4.2 uses the compatible legacy action access path.
-
-## Clean Mesh
-
-**Clean Mesh** is new in v0.8.8.
-
-For selected static meshes it can:
-
-- merge duplicate vertices within a very small tolerance,
-- remove loose geometry,
-- remove simple degenerate edge data,
-- recalculate face normals,
-- validate and update mesh data without intentionally changing material slots or UV ownership.
-
-For meshes with shape keys, vertex groups or armature modifiers, topology-changing cleanup is intentionally avoided so vertex correspondence is not intentionally damaged. Those meshes use the deformation-safe path instead.
-
-Linked-library meshes and objects marked **Protect detail** are skipped.
-
-## LOD Generation
-
-**Create LOD0 / LOD1 / LOD2** creates a separate LOD collection for supported static meshes:
-
-- **LOD0** keeps evaluated source detail.
-- **LOD1** targets up to 66% of LOD0 triangles.
-- **LOD2** targets up to 33% of LOD0 triangles.
-- **Apply Existing Modifiers** can bake supported modifiers into LOD0 before lower levels are generated.
-
-Select several supported meshes to batch the same workflow.
-
-### Optional collision proxy
-
-Enable **Create Collision Proxy from LOD2** to add a separate `<Source>_COLLIDER` object copied from LOD2.
-
-The collider candidate has its own mesh data, is shown as wireframe, is disabled for rendering and is tracked with generated LOD history. It does not modify or replace the source mesh.
-
-## Generate Lightmap UV
-
-**Generate Lightmap UV** creates a `LightmapUV` channel for selected supported static meshes.
-
-Safety rules:
-
-- an existing primary UV map is required,
-- `LightmapUV` is only created when it can become the second UV channel,
-- geometry is unchanged,
-- the primary UV map is unchanged,
-- existing secondary UV maps are preserved instead of replaced,
-- armature and shape-key meshes are skipped,
-- Blender Undo is available.
-
-The current generator uses a deterministic per-face atlas and prioritizes safety and non-overlap over maximum packing density.
-
-## Link Identical Mesh Data
-
-**Link Identical Mesh Data** scans selected meshes for exact static duplicates and links matching objects to one shared mesh datablock.
-
-The match includes geometry, topology, UV data, mesh attributes and material assignments. The action skips meshes with modifiers, shape keys, linked-library data and object-level material overrides.
-
-Object transforms stay independent.
-
-## Strip Collider Render Data
-
-**Strip Collider Render Data** only works on generated collision proxies carrying the optimizer's collision-proxy marker.
-
-It removes materials, UV layers and color attributes while preserving geometry.
-
-## History and protection
-
-Remesh and LOD generated outputs are fingerprinted. Unchanged repeated actions can reuse existing outputs. Manual edits and protected generated objects are preserved rather than silently replaced.
-
-Use **Protect detail** on important source objects. Use **Reset history** only when you deliberately want a fresh generated set while preserving earlier outputs.
-
-## Blender version policy
-
-The extension manifest minimum is **4.2.0**. Release CI validates the Blender integration on:
-
-- Blender 4.2 LTS
-- Blender 4.5 LTS
-- Blender 5.2 LTS
-
-The minimum stays at 4.2 until a future feature genuinely requires a newer Blender API.
-
-## Languages
-
-Blender now matches Unity with Auto plus 14 manually selectable languages:
-
-- English
-- Japanese
-- Simplified Chinese
-- Traditional Chinese
-- Korean
-- Spanish
-- French
-- German
-- Portuguese
-- Russian
-- Italian
-- Dutch
-- Polish
-- Turkish
-
-**Auto** follows Blender's interface language when it maps to one of the supported languages and falls back to English otherwise.
-
-## Verification
-
-Automated Blender runtime checks cover Remesh, deformation transfer, LODs, collision proxies, generated-output reuse, Lightmap UV generation, exact mesh-data linking, collider render-data stripping, Blender 5.x slotted Actions and extension validation. v0.8.8 release checks also verify Clean Mesh packaging, Remesh preservation guard wiring and language parity entries.
-
-The Blender extension package is licensed under **GPL-3.0-or-later**.
+See [CHANGELOG.md](../CHANGELOG.md) and the [main README](../README.md).

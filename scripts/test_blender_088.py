@@ -32,7 +32,7 @@ class SmartOptimize088Tests(unittest.TestCase):
         return bpy.context.active_object
 
     def test_version_and_operator_registered(self):
-        self.assertEqual(extension.bl_info["version"], (0, 8, 8))
+        self.assertEqual(extension.bl_info["version"], (0, 8, 9))
         obj = self.cube()
         self.assertTrue(bpy.ops.fishhwb.smart_optimize.poll())
         self.assertIsNotNone(obj)
@@ -219,6 +219,86 @@ class SmartOptimize088Tests(unittest.TestCase):
         self.assertEqual(result.get('fishhwb_remesh_method_used'), 'SURFACE')
         self.assertIsNotNone(result.data.shape_keys)
         self.assertIn('Smile', result.data.shape_keys.key_blocks)
+
+    def test_smart_remesh_always_retops_above_and_below_target(self):
+        from optimize_your_project_v088.Blender.vr_optimizer_blender import triangle_count
+        for limit in (160, 350):
+            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
+            source = bpy.context.active_object
+            source.name = f'SmartOriginal_{limit}'
+            original_count = triangle_count(source.data)
+            original_verts = [tuple(v.co) for v in source.data.vertices]
+            bpy.context.scene.fishhwb_triangle_target = limit
+            result = bpy.ops.fishhwb.smart_remesh()
+            self.assertEqual(result, {'FINISHED'})
+            output = bpy.context.active_object
+            self.assertIsNot(output, source)
+            self.assertEqual(triangle_count(source.data), original_count)
+            self.assertEqual(original_verts, [tuple(v.co) for v in source.data.vertices])
+            self.assertEqual(output.get('fishhwb_generated_job'), 'smart_remesh')
+            self.assertIn(output.get('fishhwb_retopology_status'),
+                          {'QUADRIFLOW', 'VOXEL_QUADS'})
+            self.assertGreater(triangle_count(output.data), 0)
+
+    def test_smart_remesh_preserves_shape_keys_groups_and_armature(self):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
+        source = bpy.context.active_object
+        source.name = 'RiggedBody'
+        material = bpy.data.materials.new('BodyMat')
+        source.data.materials.append(material)
+        uv_names = [layer.name for layer in source.data.uv_layers]
+        source.shape_key_add(name='Basis')
+        blink = source.shape_key_add(name='Blink')
+        blink.data[0].co.x += 0.20
+        group = source.vertex_groups.new(name='Main')
+        group.add([v.index for v in source.data.vertices], 0.85, 'REPLACE')
+        arm_data = bpy.data.armatures.new('TestRigData')
+        armature = bpy.data.objects.new('TestRig', arm_data)
+        bpy.context.collection.objects.link(armature)
+        arm = source.modifiers.new('Skin', 'ARMATURE')
+        arm.object = armature
+        bpy.context.scene.fishhwb_triangle_target = 150
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'FINISHED'})
+        result = bpy.context.active_object
+        self.assertIsNot(result, source)
+        self.assertEqual([k.name for k in result.data.shape_keys.key_blocks],
+                         ['Basis', 'Blink'])
+        offsets = [
+            (v.co - result.data.shape_keys.key_blocks[0].data[i].co).length
+            for i, v in enumerate(result.data.shape_keys.key_blocks[1].data)]
+        self.assertGreater(max(offsets), 0.001)
+        self.assertEqual([g.name for g in result.vertex_groups], ['Main'])
+        self.assertTrue(any(v.groups for v in result.data.vertices))
+        self.assertEqual(list(result.data.materials), [material])
+        self.assertEqual([layer.name for layer in result.data.uv_layers], uv_names)
+        self.assertEqual(len(source.data.shape_keys.key_blocks), 2)
+        self.assertTrue(any(mod.type == 'ARMATURE' and mod.object == armature
+                            for mod in result.modifiers))
+
+    def test_smart_remesh_can_reprocess_earlier_output(self):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
+        source = bpy.context.active_object
+        bpy.context.scene.fishhwb_triangle_target = 130
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'FINISHED'})
+        earlier = bpy.context.active_object
+        earlier_count = len(earlier.data.vertices)
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'FINISHED'})
+        new = bpy.context.active_object
+        self.assertIsNot(new, earlier)
+        self.assertIn(earlier.name, bpy.data.objects)
+        self.assertIn(source.name, bpy.data.objects)
+        self.assertEqual(len(earlier.data.vertices), earlier_count)
+
+    def test_smart_remesh_applies_nonarmature_modifier_on_copy(self):
+        source = self.cube()
+        solidify = source.modifiers.new('SolidifyBody', 'SOLIDIFY')
+        solidify.thickness = 0.12
+        bpy.context.scene.fishhwb_triangle_target = 100
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'FINISHED'})
+        output = bpy.context.active_object
+        self.assertIsNot(output, source)
+        self.assertEqual(len(output.modifiers), 0)
+        self.assertEqual(len(source.modifiers), 1)
 
     def test_remesh_keeps_large_open_boundary(self):
         from optimize_your_project_v088.Blender.vr_optimizer_blender import v08_tools

@@ -215,10 +215,12 @@ try:
         raise RuntimeError("Optimize Your Project main panel was not registered")
     if hasattr(bpy.types, "FISHHWB_PT_optimizer_42"):
         raise RuntimeError("The old separate Blender 4.2+ child panel should not be registered in 0.8.0")
-    if extension.bl_info["version"] != (0, 8, 8):
-        raise RuntimeError("Blender extension runtime version is not 0.8.8")
+    if extension.bl_info["version"] != (0, 8, 9):
+        raise RuntimeError("Blender extension runtime version is not 0.8.9")
     if not hasattr(bpy.ops.fishhwb, "smart_optimize"):
-        raise RuntimeError("Smart Optimize operator was not registered")
+        raise RuntimeError("Legacy Smart Optimize operator was not registered")
+    if not hasattr(bpy.ops.fishhwb, "smart_remesh"):
+        raise RuntimeError("New Smart Remesh operator was not registered")
     if extension.bl_info["blender"] != (4, 2, 0):
         raise RuntimeError("Blender extension minimum runtime is not 4.2")
 finally:
