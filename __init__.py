@@ -8,10 +8,11 @@ from .Blender import vr_optimizer_blender as _addon
 from .Blender.vr_optimizer_blender import tools_42 as _tools42
 from .Blender.vr_optimizer_blender import v08_tools as _v08
 from .Blender.vr_optimizer_blender import v088_tools as _v088
+from .Blender.vr_optimizer_blender import smart_remesh as _smart
 
 bl_info = dict(_addon.bl_info)
 bl_info.update({
-    "version": (0, 8, 8),
+    "version": (0, 8, 9),
     "blender": (4, 2, 0),
     "description": "One-click Remesh, LOD, Clean Mesh, lightmap and static-mesh optimization tools",
 })
@@ -162,85 +163,45 @@ def _wrapped(layout, text, context, icon=None):
 
 
 def _draw_core_080(self, context):
+    """Compact public UI: selection, smart remesh, LODs and material merge."""
     layout = self.layout
     layout.use_property_split = False
     layout.use_property_decorate = False
 
-    brand = layout.box()
-    if _addon._brand_preview and "logo" in _addon._brand_preview:
-        brand.template_icon(icon_value=_addon._brand_preview["logo"].icon_id, scale=2.2)
-    brand.label(text=_addon.tr(context, "title"))
-    brand.label(text=_addon.tr(context, "subtitle"))
-    brand.prop(context.scene, "fishhwb_language", text=_addon.tr(context, "language"))
+    layout.label(text=_addon.tr(context, 'title'), icon='MOD_REMESH')
+    layout.prop(context.scene, 'fishhwb_language', text=_addon.tr(context, 'language'))
 
+    selection = layout.box()
+    selection.label(text=_addon.tr(context, 'selection'), icon='MESH_DATA')
     obj = context.active_object
-    selected_meshes = [item for item in context.selected_objects if item.type == "MESH"]
-
-    selected = layout.box()
-    selected.label(text=_addon.tr(context, "selection"), icon="MESH_DATA")
-    if obj and obj.type == "MESH":
-        selected.label(text=obj.name)
-        stats = selected.row(align=True)
-        stats.label(text=f"Triangles: {_addon.triangle_count(obj.data):,}")
-        stats.label(text=f"Vertices: {len(obj.data.vertices):,}")
-        selected.prop(obj, "fishhwb_protect_detail", text=_addon.tr(context, "protect_detail"))
-        if obj.get("fishhwb_remesh_history") or obj.get("fishhwb_lod_history"):
-            selected.operator("fishhwb.reset_optimization_history", text=_addon.tr(context, "reset_history"), icon="FILE_REFRESH")
-        if len(selected_meshes) > 1:
-            selected.label(text=f"{len(selected_meshes)} mesh objects selected")
+    meshes = [item for item in context.selected_objects if item.type == 'MESH']
+    if obj and obj.type == 'MESH':
+        selection.label(text=obj.name, icon='OBJECT_DATA')
+        selection.label(text=f"Triangles: {_addon.triangle_count(obj.data):,}")
+        selection.label(text=f"Vertices: {len(obj.data.vertices):,}")
+        selection.label(text=f"Faces: {len(obj.data.polygons):,}")
+        if len(meshes) > 1:
+            selection.label(text=f"{len(meshes)} mesh objects selected")
     else:
-        _wrapped(selected, _addon.tr(context, "select_mesh"), context, "INFO")
+        selection.label(text=_addon.tr(context, 'select_mesh'), icon='INFO')
 
-    primary = layout.box()
-    primary.label(text=_addon.tr(context, "primary_actions"), icon="TOOL_SETTINGS")
-    row = primary.row()
-    row.scale_y = 1.5
-    row.operator("fishhwb.smart_optimize", text=_addon.tr(context, "smart_optimize"), icon="TOOL_SETTINGS")
+    smart = layout.box()
+    row = smart.row()
+    row.scale_y = 1.55
+    row.operator('fishhwb.smart_remesh', text='SMART REMESH', icon='MOD_REMESH')
+    smart.prop(context.scene, 'fishhwb_triangle_target', text='Triangle Limit')
 
-    remesh = primary.box()
-    remesh.label(text="REMESH: Repair / Rebuild", icon="MOD_REMESH")
-    remesh.prop(context.scene, "fishhwb_remesh_method", text="Mode")
-    remesh.prop(context.scene, "fishhwb_triangle_target", text=_addon.tr(context, "triangle_target"), slider=True)
-    row = remesh.row()
-    row.scale_y = 1.5
-    row.operator("fishhwb.one_click_remesh", text=_addon.tr(context, "remesh_action"), icon="MOD_REMESH")
-
-    lod = primary.box()
-    lod.prop(context.scene, "fishhwb_apply_modifiers", text=_addon.tr(context, "apply_modifiers"))
-    lod.prop(context.scene, "fishhwb_create_collision_proxy", text=_addon.tr(context, "collision_proxy"))
-    ratios = lod.row(align=True)
-    ratios.prop(context.scene, "fishhwb_lod1_percent", text="LOD1 %")
-    ratios.prop(context.scene, "fishhwb_lod2_percent", text="LOD2 %")
-    if context.scene.fishhwb_create_collision_proxy:
-        lod.prop(context.scene, "fishhwb_collision_target", text="Collider Triangles")
-    row = lod.row()
-    row.scale_y = 1.5
-    row.operator(
-        "fishhwb.create_lods_selected" if len(selected_meshes) > 1 else "fishhwb.create_lods",
-        text=_addon.tr(context, "lod_action"), icon="MOD_DECIM",
-    )
-
-    row = primary.row()
+    row = layout.row()
     row.scale_y = 1.45
-    row.operator("fishhwb.clean_mesh", text=_addon.tr(context, "clean_mesh"), icon="BRUSH_DATA")
+    row.operator(
+        'fishhwb.create_lods_selected' if len(meshes) > 1 else 'fishhwb.create_lods',
+        text='CREATE LODS', icon='MOD_DECIM')
 
-    row = primary.row()
-    row.scale_y = 1.35
-    row.operator("fishhwb.generate_lightmap_uv", text=_addon.tr(context, "lightmap_uv"), icon="UV")
+    row = layout.row()
+    row.scale_y = 1.45
+    row.operator('fishhwb.merge_textures', text='MERGE MATERIALS', icon='MATERIAL')
 
-    row = primary.row()
-    row.scale_y = 1.35
-    row.operator("fishhwb.link_identical_mesh_data", text=_addon.tr(context, "link_mesh_data"), icon="LINKED")
 
-    row = primary.row()
-    row.scale_y = 1.35
-    row.operator("fishhwb.strip_collider_render_data", text=_addon.tr(context, "strip_collider"), icon="TRASH")
-
-    if context.scene.fishhwb_last_result:
-        result = layout.box()
-        result.label(text=_addon.tr(context, "last_result"), icon="INFO")
-        for line in context.scene.fishhwb_last_result.splitlines():
-            _wrapped(result, line, context)
 
 
 _addon.FISHHWB_PT_optimizer.draw = _draw_core_080
@@ -256,9 +217,11 @@ def register():
         _tools42.register()
         _v08.register(_addon)
         _v088.register(_addon)
+        _smart.register()
     except Exception:
         try:
             try:
+                _smart.unregister()
                 _v088.unregister()
             except Exception:
                 pass
@@ -270,6 +233,7 @@ def register():
 
 
 def unregister():
+    _smart.unregister()
     _v088.unregister()
     _v08.unregister()
     _tools42.unregister()
