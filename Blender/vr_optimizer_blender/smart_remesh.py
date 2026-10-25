@@ -12,6 +12,7 @@ from mathutils.bvhtree import BVHTree
 
 from . import deform_transfer
 from .smart_budget import allocate_triangle_budgets
+from . import mesh_quality
 from . import v08_tools as _v08
 from . import (
     _copy_mesh_object, _remove_object_and_mesh, _select_only, _evaluated_mesh_copy,
@@ -498,6 +499,9 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
             methods = []
             used_fallback = []
             normals_reprojected = 0
+            max_deviation = 0.0
+            quality_mode = getattr(
+                context.scene, 'fishhwb_remesh_quality', 'AUTO')
 
             for source, ceiling in zip(sources, ceilings):
                 output = _copy_mesh_object(source, context, '_SmartRemesh')
@@ -511,6 +515,7 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
 
                 deforming = deform_transfer.has_deformation(source)
                 neutral = None
+                reference_surface = None
                 try:
                     # Static modifier results are evaluated only on a private
                     # copy. Rigged sources retain their unposed Basis.
@@ -523,9 +528,21 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                             bpy.data.meshes.remove(old)
 
                     islands, unsafe_edges, bounds = _geometry_facts(output.data)
-                    # Voxel welding can erase open sheets or merge separate
-                    # islands. Retain surface topology in those cases instead.
-                    safe_rebuild = islands == 1 and unsafe_edges == 0
+                    reference_surface = output.data.copy()
+                    has_marked_detail = bool(
+                        mesh_quality.protected_positions(output))
+                    has_sharp_or_seams = any(
+                        edge.use_seam or edge.use_edge_sharp
+                        for edge in output.data.edges)
+                    # Voxel reconstruction can remove UV/sharp details or
+                    # erase open and disconnected sheets. User-authored vertex
+                    # protection always wins over automatic retopology.
+                    safe_rebuild = (
+                        islands == 1 and unsafe_edges == 0
+                        and quality_mode != 'SURFACE'
+                        and not has_marked_detail
+                        and not (quality_mode == 'DETAIL'
+                                 and has_sharp_or_seams))
                     if not safe_rebuild:
                         if deforming:
                             if triangle_count(output.data) > ceiling:
@@ -568,16 +585,34 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
 
                     actual = _verify_result(
                         output.data, source.data, ceiling, islands, bounds)
+                    deviation = mesh_quality.surface_deviation_ratio(
+                        reference_surface, output.data, max_samples=768)
+                    if not math.isfinite(deviation):
+                        raise ValueError(
+                            source.name + ': could not validate the output surface.')
+                    if quality_mode == 'DETAIL' and deviation > 0.04:
+                        raise ValueError(
+                            f'{source.name}: sampled surface deviation '
+                            f'{deviation * 100.0:.2f}% exceeds the 4% '
+                            'detail-preservation threshold. Increase the '
+                            'budget or choose Preserve Surface.')
+                    max_deviation = max(max_deviation, deviation)
+                    output['fishhwb_surface_deviation_percent'] = round(
+                        deviation * 100.0, 3)
                     output['fishhwb_generated_job'] = 'smart_remesh'
                     output['fishhwb_retopology_status'] = method
                     output['fishhwb_triangle_target'] = ceiling
                     output['fishhwb_smart_remesh_scope'] = getattr(
                         context.scene, 'fishhwb_remesh_scope', 'ACTIVE')
+                    output['fishhwb_remesh_quality_mode'] = quality_mode
                     total_after += actual
                     methods.append(method)
                 finally:
                     if neutral is not None and neutral.users == 0:
                         bpy.data.meshes.remove(neutral)
+                    if (reference_surface is not None
+                            and reference_surface.users == 0):
+                        bpy.data.meshes.remove(reference_surface)
 
             if total_after > target:
                 raise ValueError(
@@ -596,6 +631,8 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                 f'{total_before:,} -> {total_after:,} triangles '
                 f'(global maximum {target:,}). '
                 f'Methods: {", ".join(sorted(set(methods)))}. '
+                f'Max sampled surface deviation: {max_deviation * 100:.2f}% '
+                'of model diagonal. '
                 'Component counts, output bounds and per-mesh budgets verified. '
                 + ('Authored custom_normal data reprojected. '
                    if normals_reprojected else '')
