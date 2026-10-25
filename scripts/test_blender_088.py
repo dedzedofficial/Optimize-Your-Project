@@ -27,6 +27,8 @@ class SmartOptimize088Tests(unittest.TestCase):
         scene.fishhwb_triangle_target = 10000
         scene.fishhwb_remesh_method = 'SURFACE'
         scene.fishhwb_remesh_scope = 'ACTIVE'
+        scene.fishhwb_remesh_quality = 'AUTO'
+        scene.fishhwb_collision_shape = 'MESH'
 
     def cube(self):
         bpy.ops.mesh.primitive_cube_add()
@@ -433,6 +435,93 @@ class SmartOptimize088Tests(unittest.TestCase):
         self.assertIsNot(output, source)
         self.assertEqual(len(output.modifiers), 0)
         self.assertEqual(len(source.modifiers), 1)
+
+    def test_existing_buttons_expose_advanced_settings(self):
+        scene = bpy.context.scene
+        self.assertFalse(scene.fishhwb_smart_advanced)
+        self.assertFalse(scene.fishhwb_lod_advanced)
+        self.assertFalse(scene.fishhwb_material_advanced)
+        self.assertFalse(scene.fishhwb_show_mesh_inspector)
+        self.assertEqual(scene.fishhwb_remesh_quality, 'AUTO')
+        self.assertEqual(scene.fishhwb_collision_shape, 'MESH')
+
+    def test_mesh_health_inspector_flags_open_edges(self):
+        from optimize_your_project_v088.Blender.vr_optimizer_blender import mesh_quality
+        bpy.ops.mesh.primitive_plane_add()
+        stats = mesh_quality.inspect_mesh(bpy.context.active_object.data)
+        self.assertEqual(stats['triangles'], 2)
+        self.assertEqual(stats['boundary_edges'], 4)
+        self.assertIn('open boundary', ' '.join(mesh_quality.summary_lines(stats)))
+        bpy.ops.mesh.primitive_cube_add()
+        closed = mesh_quality.inspect_mesh(bpy.context.active_object.data)
+        self.assertEqual(closed['boundary_edges'], 0)
+        self.assertEqual(closed['loose_vertices'], 0)
+
+    def test_smart_detail_mode_preserves_marked_sharp_edges(self):
+        obj = self.cube()
+        obj.data.edges[0].use_seam = True
+        bpy.context.scene.fishhwb_remesh_quality = 'DETAIL'
+        bpy.context.scene.fishhwb_triangle_target = 12
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'FINISHED'})
+        output = bpy.context.active_object
+        self.assertEqual(output.get('fishhwb_retopology_status'),
+                         'SURFACE_PRESERVED')
+        self.assertEqual(sum(edge.use_seam for edge in output.data.edges), 1)
+        self.assertEqual(sum(edge.use_seam for edge in obj.data.edges), 1)
+        self.assertEqual(output.get('fishhwb_remesh_quality_mode'), 'DETAIL')
+
+    def test_smart_remesh_respects_protected_vertex_mask(self):
+        source = self.cube()
+        marked = source.vertex_groups.new(name='FISHHWB_Protect')
+        marked.add([0, 1], 1.0, 'REPLACE')
+        original = [tuple(v.co) for v in source.data.vertices]
+        bpy.context.scene.fishhwb_triangle_target = 12
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'FINISHED'})
+        result = bpy.context.active_object
+        self.assertEqual(result.get('fishhwb_retopology_status'),
+                         'SURFACE_PRESERVED')
+        self.assertIn('FISHHWB_Protect', result.vertex_groups)
+        self.assertEqual([tuple(v.co) for v in source.data.vertices],
+                         original)
+
+    def test_box_collider_packed_under_create_lods(self):
+        from optimize_your_project_v088.Blender.vr_optimizer_blender import triangle_count
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=20, ring_count=12)
+        original = bpy.context.active_object
+        before = triangle_count(original.data)
+        scene = bpy.context.scene
+        scene.fishhwb_collision_shape = 'BOX'
+        scene.fishhwb_create_collision_proxy = True
+        scene.fishhwb_collision_target = 12
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {'FINISHED'})
+        lod0 = bpy.context.active_object
+        collider = next(
+            o for o in lod0.users_collection[0].objects
+            if o.get('fishhwb_collision_proxy'))
+        self.assertEqual(collider.get('fishhwb_collider_shape'), 'BOX')
+        self.assertEqual(triangle_count(collider.data), 12)
+        self.assertEqual(len(collider.data.vertices), 8)
+        self.assertEqual(len(collider.data.polygons), 6)
+        self.assertEqual(triangle_count(original.data), before)
+        lods = [o for o in lod0.users_collection[0].objects
+                if o.get('fishhwb_lod_level') in (1, 2)]
+        self.assertEqual(len(lods), 2)
+        self.assertTrue(all(o.get('fishhwb_surface_deviation_percent')
+                            is not None for o in lods))
+
+    def test_box_collider_impossible_budget_warns(self):
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=20, ring_count=12)
+        scene = bpy.context.scene
+        scene.fishhwb_collision_shape = 'BOX'
+        scene.fishhwb_create_collision_proxy = True
+        scene.fishhwb_collision_target = 8
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {'FINISHED'})
+        lod0 = bpy.context.active_object
+        collection = lod0.users_collection[0]
+        self.assertFalse(any(o.get('fishhwb_collision_proxy')
+                             for o in collection.objects))
+        self.assertIn('12 triangles', collection.get(
+            'fishhwb_collision_warning', ''))
 
     def test_smart_remesh_selected_meshes_obey_one_global_limit(self):
         from optimize_your_project_v088.Blender.vr_optimizer_blender import triangle_count
