@@ -23,6 +23,16 @@ Unity and Blender share one project version. Blender support starts at **4.2** a
 - **P2 - Medium priority:** new integrations or deeper automation that need more validation before becoming default behavior.
 - **P3 - Later / experimental:** useful ideas that should not delay the main Unity, Blender, Godot and Unreal work.
 
+## Game-ready overhaul - implementation sequence
+
+1. **In progress:** component-aware Smart Remesh, whole-model scope, strict triangle budgets, atomic rollback and regression fixtures.
+2. **Next:** geometric fidelity evaluation, accurate UV/material/rig transfer and more reliable mixed-island retopology.
+3. **Next:** game-ready asset inspector, LOD quality controls, collision preparation and bake/atlas validation.
+4. **Next:** Unity performance auditing and asset preparation with platform profiles and measured before/after reporting.
+5. **Later:** validated exports, engine integration and multi-project reporting.
+
+Do not label surface-preserving decimation as QuadriFlow retopology. A budget is a ceiling, not proof of game readiness; preserve or reject details that cannot safely fit.
+
 ## Current baseline: v0.8.8
 
 Blender 0.8.8 implements the Smart Optimize preview, source-preserving optional combined workflows, guarded PBR atlases and configurable LOD/collider budgets. Unity 0.8.8 adds a non-destructive CSV report of unused-asset candidates. Existing Unity and Blender actions remain available.
