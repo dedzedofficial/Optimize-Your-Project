@@ -51,7 +51,7 @@ def allocate_triangle_budgets(meshes, triangle_limit):
     undistributed = remaining - sum(grants)
     residual_order = sorted(
         range(len(counts)),
-        key=lambda i: (-(remaining * capacity[i]) % capacity_sum, i),
+        key=lambda i: (-((remaining * capacity[i]) % capacity_sum), i),
     )
     for i in residual_order:
         if not undistributed:
