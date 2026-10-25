@@ -15,6 +15,7 @@ import json
 import struct
 import uuid
 from . import deform_transfer
+from . import mesh_quality
 
 import bpy
 import bpy.utils.previews
@@ -227,9 +228,13 @@ def _reduce_copy_to_limit(obj, target, context):
     if before <= target:
         return before
 
+    protected = mesh_quality.protected_positions(obj)
     modifier = obj.modifiers.new("LOD Triangle Limit", 'DECIMATE')
     modifier.decimate_type = 'COLLAPSE'
     modifier.use_collapse_triangulate = True
+    if protected:
+        modifier.vertex_group = mesh_quality.PROTECTED_GROUP_NAME
+        modifier.vertex_group_factor = 100.0
 
     depsgraph = context.evaluated_depsgraph_get()
     low = 0.0
@@ -271,6 +276,14 @@ def _reduce_copy_to_limit(obj, target, context):
         obj.modifiers.remove(modifier)
         raise ValueError("The generated LOD did not meet its triangle target.")
 
+    if protected:
+        try:
+            mesh_quality.verify_protected_positions(protected, result)
+        except ValueError:
+            bpy.data.meshes.remove(result)
+            obj.modifiers.remove(modifier)
+            raise
+
     old_mesh = obj.data
     obj.modifiers.remove(modifier)
     obj.data = result
@@ -278,6 +291,34 @@ def _reduce_copy_to_limit(obj, target, context):
         bpy.data.meshes.remove(old_mesh)
 
     return count
+
+
+def _make_box_collider(obj):
+    """Replace a private collision copy with a local-space bounding box."""
+    vertices = [v.co for v in obj.data.vertices]
+    if not vertices:
+        raise ValueError('Cannot create a box collider without vertices.')
+    low = [min(v[axis] for v in vertices) for axis in range(3)]
+    high = [max(v[axis] for v in vertices) for axis in range(3)]
+    if any(high[axis] - low[axis] < 1e-8 for axis in range(3)):
+        raise ValueError('Box collider requires nonzero dimensions in every axis.')
+    corners = [
+        (low[0], low[1], low[2]), (high[0], low[1], low[2]),
+        (high[0], high[1], low[2]), (low[0], high[1], low[2]),
+        (low[0], low[1], high[2]), (high[0], low[1], high[2]),
+        (high[0], high[1], high[2]), (low[0], high[1], high[2]),
+    ]
+    faces = [
+        (3, 2, 1, 0), (4, 5, 6, 7), (0, 1, 5, 4),
+        (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7),
+    ]
+    box_mesh = bpy.data.meshes.new(obj.name + '_BoxMesh')
+    box_mesh.from_pydata(corners, [], faces)
+    box_mesh.update()
+    old = obj.data
+    obj.data = box_mesh
+    if old.users == 0:
+        bpy.data.meshes.remove(old)
 
 
 def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=False):
@@ -290,7 +331,11 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
     lod1_ratio = max(0.05, min(0.99, context.scene.fishhwb_lod1_percent / 100.0))
     lod2_ratio = max(0.02, min(lod1_ratio, context.scene.fishhwb_lod2_percent / 100.0))
     collision_target = max(4, context.scene.fishhwb_collision_target)
-    policy = f'lod-v088:{apply_modifiers}:{create_collision_proxy}:{lod1_ratio:.3f}:{lod2_ratio:.3f}:{collision_target}'
+    collision_shape = getattr(context.scene, 'fishhwb_collision_shape', 'MESH')
+    policy = (
+        f'lod-v089:{apply_modifiers}:{create_collision_proxy}:'
+        f'{lod1_ratio:.3f}:{lod2_ratio:.3f}:{collision_target}:'
+        f'{collision_shape}:{mesh_quality.PROTECTED_GROUP_NAME}')
     cached = _cached_outputs(source, context, 'lod', policy)
     source['fishhwb_lod_reused'] = bool(cached)
     if cached:
@@ -339,6 +384,10 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
             copy['fishhwb_lod_level'] = level
             copy['fishhwb_triangle_target'] = target
             copy['fishhwb_triangle_result'] = actual
+            deviation = mesh_quality.surface_deviation_ratio(
+                lod0.data, copy.data, max_samples=512)
+            copy['fishhwb_surface_deviation_percent'] = round(
+                deviation * 100.0, 3)
             copy.hide_set(True)
 
         if create_collision_proxy:
@@ -360,8 +409,15 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
             collection.objects.link(collider)
             created.append(collider)
             try:
-                if triangle_count(collider.data) > collision_target:
+                if collision_shape == 'BOX':
+                    if collision_target < 12:
+                        raise ValueError(
+                            'A closed box needs 12 triangles; increase '
+                            'the collision triangle limit to at least 12.')
+                    _make_box_collider(collider)
+                elif triangle_count(collider.data) > collision_target:
                     _reduce_copy_to_limit(collider, collision_target, context)
+                collider['fishhwb_collider_shape'] = collision_shape
                 collider['fishhwb_collision_source'] = lod2.name_full
                 collider['fishhwb_collision_mesh_source'] = start.name_full
                 collider['fishhwb_triangle_result'] = triangle_count(collider.data)
@@ -637,7 +693,9 @@ class FISHHWB_OT_create_lods(bpy.types.Operator):
             lod2 = triangle_count(created[2].data)
             collider_detail = ""
             if len(created) > 3 and created[3].get('fishhwb_collision_proxy'):
-                if created[3].get('fishhwb_collision_mesh_source') == created[2].name_full:
+                if created[3].get('fishhwb_collider_shape') == 'BOX':
+                    collider_detail = " Box collider candidate created."
+                elif created[3].get('fishhwb_collision_mesh_source') == created[2].name_full:
                     collider_detail = " Collision proxy created from LOD2."
                 else:
                     collider_detail = " Collision proxy created from LOD0 for the tighter triangle budget."
@@ -646,7 +704,11 @@ class FISHHWB_OT_create_lods(bpy.types.Operator):
             _action_report(
                 self,
                 context,
-                f"LOD set from {base:,} triangles: LOD1 {lod1:,}, LOD2 {lod2:,}. Original object preserved." + collider_detail,
+                f"LOD set from {base:,} triangles: LOD1 {lod1:,}, LOD2 {lod2:,}. "
+                f"Approx. surface deviations: LOD1 "
+                f"{created[1].get('fishhwb_surface_deviation_percent', 0):.2f}%, "
+                f"LOD2 {created[2].get('fishhwb_surface_deviation_percent', 0):.2f}% "
+                f"of model diagonal. Original object preserved." + collider_detail,
                 changed=0 if source.get("fishhwb_lod_reused") else 1,
                 unchanged=1 if source.get("fishhwb_lod_reused") else 0,
             )
@@ -859,6 +921,37 @@ def register():
         default='SURFACE',
         description="Choose whether Remesh preserves existing topology detail or reconstructs a new static mesh",
     )
+    bpy.types.Scene.fishhwb_remesh_quality = EnumProperty(
+        name="Detail Handling",
+        items=(
+            ('AUTO', "Automatic", "Rebuild safe closed meshes and preserve unsafe surfaces"),
+            ('DETAIL', "Preserve Important Edges", "Keep authored sharp/seam edges on the existing surface and check geometric deviation"),
+            ('SURFACE', "Preserve Surface", "Always prefer surface-preserving reduction over rebuilding"),
+        ),
+        default='AUTO',
+        description="Advanced behaviour inside the existing Smart Remesh action",
+    )
+    bpy.types.Scene.fishhwb_show_mesh_inspector = BoolProperty(
+        name="Mesh Details", default=False,
+        description="Show read-only geometry and UV checks below the selection",
+    )
+    bpy.types.Scene.fishhwb_smart_advanced = BoolProperty(
+        name="Smart Remesh Options", default=False,
+        description="Expand additional Smart Remesh settings",
+    )
+    bpy.types.Scene.fishhwb_lod_advanced = BoolProperty(
+        name="LOD Options", default=False,
+        description="Expand existing LOD and collision controls",
+    )
+    bpy.types.Scene.fishhwb_collision_shape = EnumProperty(
+        name="Collider Shape",
+        items=(
+            ('MESH', "Simplified Mesh", "Independent low-triangle collision candidate"),
+            ('BOX', "Bounding Box", "12-triangle box matching the model's local bounds"),
+        ),
+        default='MESH',
+        description="Type of optional collider made by the existing Create LODs button",
+    )
     bpy.types.Scene.fishhwb_last_result = StringProperty(options={'SKIP_SAVE'})
     bpy.types.Scene.fishhwb_language = EnumProperty(
         name="Language",
@@ -901,6 +994,13 @@ def unregister():
         del bpy.types.Scene.fishhwb_remesh_scope
     if hasattr(bpy.types.Scene, "fishhwb_remesh_method"):
         del bpy.types.Scene.fishhwb_remesh_method
+    for name in (
+        "fishhwb_remesh_quality", "fishhwb_show_mesh_inspector",
+        "fishhwb_smart_advanced", "fishhwb_lod_advanced",
+        "fishhwb_collision_shape",
+    ):
+        if hasattr(bpy.types.Scene, name):
+            delattr(bpy.types.Scene, name)
     if hasattr(bpy.types.Scene, "fishhwb_last_result"):
         del bpy.types.Scene.fishhwb_last_result
     if hasattr(bpy.types.Scene, "fishhwb_language"):
