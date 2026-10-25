@@ -551,6 +551,22 @@ class SmartOptimize088Tests(unittest.TestCase):
         self.assertTrue(all(o.get('fishhwb_surface_deviation_percent')
                             is not None for o in lods))
 
+    def test_existing_lod_button_has_safe_preview(self):
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=20, ring_count=12)
+        original = bpy.context.active_object
+        source_vertices = [tuple(v.co) for v in original.data.vertices]
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {'FINISHED'})
+        lod0 = bpy.context.active_object
+        self.assertEqual(bpy.ops.fishhwb.preview_lod(level=1), {'FINISHED'})
+        lod1 = bpy.context.active_object
+        self.assertEqual(lod1.get('fishhwb_lod_level'), 1)
+        self.assertFalse(lod1.hide_get())
+        self.assertTrue(lod0.hide_get())
+        self.assertEqual(bpy.ops.fishhwb.preview_lod(level=2), {'FINISHED'})
+        self.assertEqual(bpy.context.active_object.get('fishhwb_lod_level'), 2)
+        self.assertEqual(source_vertices,
+                         [tuple(v.co) for v in original.data.vertices])
+
     def test_lod_refuses_to_delete_all_protected_vertices(self):
         from optimize_your_project_v088.Blender.vr_optimizer_blender import triangle_count
         source = self.cube()
