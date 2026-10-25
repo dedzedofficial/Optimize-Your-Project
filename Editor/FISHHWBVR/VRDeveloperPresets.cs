@@ -64,6 +64,30 @@ namespace FISHHWB.VROptimizer
             return result;
         }
 
+        internal static VRSettings LoadCurrent()
+        {
+            var json = EditorPrefs.GetString(ProjectKey + ".Current", "");
+            if (string.IsNullOrEmpty(json)) return VRSettings.Load();
+            try
+            {
+                var profile = JsonUtility.FromJson<VRSettings>(json);
+                if (profile != null) { profile.Sanitize(); return profile; }
+            }
+            catch (Exception error)
+            {
+                Debug.LogWarning("Could not load current project settings: " + error.Message);
+            }
+            return VRSettings.Load();
+        }
+
+        internal static void SaveCurrent(VRSettings settings)
+        {
+            if (settings == null) return;
+            settings.Sanitize();
+            EditorPrefs.SetString(ProjectKey + ".Current", JsonUtility.ToJson(settings));
+            settings.Save(); // Keep existing settings consumers working.
+        }
+
         internal static bool HasLocal => EditorPrefs.HasKey(ProjectKey);
 
         internal static void SaveProject(VRSettings current)
