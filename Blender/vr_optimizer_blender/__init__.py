@@ -818,6 +818,54 @@ class FISHHWB_OT_create_lods_selected(bpy.types.Operator):
         return {'FINISHED'} if changed or unchanged else {'CANCELLED'}
 
 
+class FISHHWB_OT_preview_lod(bpy.types.Operator):
+    bl_idname = 'fishhwb.preview_lod'
+    bl_label = 'Preview Generated LOD'
+    bl_description = (
+        'Show one generated LOD at a time without editing the source mesh')
+    bl_options = {'REGISTER', 'UNDO'}
+
+    level: IntProperty(name='LOD Level', min=0, max=2, default=0)
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == 'OBJECT' and context.active_object is not None
+
+    def execute(self, context):
+        source = context.active_object
+        collection = next((
+            item for item in source.users_collection
+            if item.get('fishhwb_generated_lod')), None)
+        if collection is None:
+            collection = next((
+                item for item in bpy.data.collections
+                if item.get('fishhwb_generated_lod')
+                and item.name.startswith(source.name + '_LODs')), None)
+        if collection is None:
+            self.report({'WARNING'}, 'Run Create LODs on this model first.')
+            return {'CANCELLED'}
+        levels = {
+            obj.get('fishhwb_lod_level'): obj
+            for obj in collection.objects
+            if obj.get('fishhwb_lod_level') is not None
+        }
+        if self.level not in levels:
+            self.report({'WARNING'}, 'The requested LOD is missing.')
+            return {'CANCELLED'}
+        for level, obj in levels.items():
+            obj.hide_set(level != self.level)
+        selected = levels[self.level]
+        _select_only(context, selected)
+        detail = selected.get('fishhwb_surface_deviation_percent')
+        message = (
+            f'Previewing LOD{self.level}: {triangle_count(selected.data):,} '
+            'triangles. Original source was not modified or hidden.')
+        if detail is not None:
+            message += f' Approximate surface deviation: {detail:.2f}%.'
+        self.report({'INFO'}, message)
+        return {'FINISHED'}
+
+
 class FISHHWB_PT_optimizer(bpy.types.Panel):
     bl_label = "Optimize Your Project"
     bl_idname = "FISHHWB_PT_optimizer"
@@ -894,6 +942,7 @@ classes = (
     FISHHWB_OT_one_click_remesh,
     FISHHWB_OT_create_lods,
     FISHHWB_OT_create_lods_selected,
+    FISHHWB_OT_preview_lod,
     FISHHWB_PT_optimizer,
 )
 
