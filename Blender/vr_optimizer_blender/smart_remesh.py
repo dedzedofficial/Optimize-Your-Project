@@ -665,7 +665,73 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
             return {'CANCELLED'}
 
 
-classes = (FISHHWB_OT_smart_remesh,)
+class FISHHWB_OT_load_game_profile(bpy.types.Operator):
+    bl_idname = 'fishhwb.load_game_profile'
+    bl_label = 'Use Game Target'
+    bl_description = 'Load settings into existing tools; does not modify any mesh'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        import json
+        scene = context.scene
+        profile = scene.fishhwb_workflow_profile
+        templates = {
+            'BALANCED': (10000, 66, 33, 500),
+            'DESKTOP': (25000, 70, 35, 750),
+            'MOBILE': (5000, 55, 22, 250),
+            'VR': (8000, 60, 25, 300),
+        }
+        try:
+            if profile == 'CUSTOM':
+                if not scene.fishhwb_saved_profile:
+                    raise ValueError(
+                        'No saved settings in this .blend yet. Set values '
+                        'and choose Save My Project first.')
+                values = json.loads(scene.fishhwb_saved_profile)
+                limits = (
+                    int(values['triangles']), int(values['lod1']),
+                    int(values['lod2']), int(values['collision']))
+            else:
+                limits = templates[profile]
+            if not (4 <= limits[0] <= 500000 and
+                    5 <= limits[1] <= 99 and 2 <= limits[2] <= 95 and
+                    4 <= limits[3] <= 100000):
+                raise ValueError('The saved profile contains invalid limits.')
+            (scene.fishhwb_triangle_target, scene.fishhwb_lod1_percent,
+             scene.fishhwb_lod2_percent,
+             scene.fishhwb_collision_target) = limits
+            self.report({'INFO'}, 'Game target loaded. No mesh was changed.')
+            return {'FINISHED'}
+        except (ValueError, KeyError, TypeError) as exc:
+            self.report({'WARNING'}, str(exc))
+            return {'CANCELLED'}
+
+
+class FISHHWB_OT_save_game_profile(bpy.types.Operator):
+    bl_idname = 'fishhwb.save_game_profile'
+    bl_label = 'Save My Project'
+    bl_description = 'Keep current optimisation settings in this .blend'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        import json
+        scene = context.scene
+        scene.fishhwb_saved_profile = json.dumps({
+            'triangles': int(scene.fishhwb_triangle_target),
+            'lod1': int(scene.fishhwb_lod1_percent),
+            'lod2': int(scene.fishhwb_lod2_percent),
+            'collision': int(scene.fishhwb_collision_target),
+        }, sort_keys=True)
+        scene.fishhwb_workflow_profile = 'CUSTOM'
+        self.report({'INFO'}, 'Saved to this .blend. Save the file to keep it.')
+        return {'FINISHED'}
+
+
+classes = (
+    FISHHWB_OT_smart_remesh,
+    FISHHWB_OT_load_game_profile,
+    FISHHWB_OT_save_game_profile,
+)
 
 
 def register():
