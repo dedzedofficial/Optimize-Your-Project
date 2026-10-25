@@ -51,7 +51,7 @@ namespace FISHHWB.VROptimizer
 
         void OnEnable()
         {
-            settings = VRSettings.Load();
+            settings = VRDeveloperPresets.LoadCurrent();
             icon = AssetDatabase.LoadAssetAtPath<Texture2D>(
                 "Packages/com.fishhwb.vr-optimizer/Editor/FISHHWBVR/Icons/Optimize-Your-Project.png");
             titleContent = new GUIContent("Optimize Your Project", icon);
@@ -61,7 +61,7 @@ namespace FISHHWB.VROptimizer
 
         void OnGUI()
         {
-            if (settings == null) settings = VRSettings.Load();
+            if (settings == null) settings = VRDeveloperPresets.LoadCurrent();
             EnsureStyles();
 
             DrawHeader();
@@ -437,7 +437,7 @@ namespace FISHHWB.VROptimizer
                 {
                     settings = VRDeveloperPresets.Apply(
                         labels[presetSelection], settings);
-                    settings.Save();
+                    VRDeveloperPresets.SaveCurrent(settings);
                     summary = "Preset applied: " + labels[presetSelection]
                         + ". No assets modified.";
                 }
@@ -486,7 +486,7 @@ namespace FISHHWB.VROptimizer
             if (EditorGUI.EndChangeCheck())
             {
                 settings.Sanitize();
-                settings.Save();
+                VRDeveloperPresets.SaveCurrent(settings);
             }
 
             GUILayout.Space(4);
