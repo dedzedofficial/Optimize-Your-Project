@@ -397,7 +397,10 @@ def _create_lod_set(source, context, apply_modifiers, create_collision_proxy=Fal
             lod2 = created[2]
             # A second decimation of LOD2 may reach a topology floor. When the
             # collider budget is tighter than LOD2, reduce a fresh LOD0 copy.
-            start = lod0 if triangle_count(lod2.data) > collision_target else lod2
+            start = (
+                lod0 if collision_shape == 'BOX'
+                or triangle_count(lod2.data) > collision_target
+                else lod2)
             collider = start.copy()
             collider.data = start.data.copy()
             collider.name = source.name + "_COLLIDER"
