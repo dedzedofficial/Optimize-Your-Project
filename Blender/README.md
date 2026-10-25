@@ -69,6 +69,14 @@ Generated results record an **approximate bidirectional vertex-to-surface deviat
 
 The **CURRENT SELECTION** box includes an optional **Mesh Health Details** disclosure (no extra action button): it lists UV/material counts, n-gons, open/nonmanifold edges, degenerate faces and loose vertices. These are diagnostics, not automatic repairs.
 
+#### Saved settings and preview
+
+Open **Smart Remesh → Advanced Options** to load a Balanced, Desktop, Mobile or Standalone VR **starting preset**. Targets are examples, not verified limits for every game. **Save My Project** records the current triangle, LOD and collider limits in the active .blend file; save the .blend to retain them. Applying a preset never runs optimisation. With advanced settings expanded, the current scope and combined pre-optimisation triangle count appear beneath the button.
+
+**Create LODs → LOD & Collision Options** also includes LOD0/LOD1/LOD2 preview selectors. After running Create LODs, use these to switch visibility among the *generated* LOD objects. The original object is deliberately not hidden, so hide the original manually if its geometry overlaps the comparison. Preview does not modify mesh data. LOD outputs record approximate surface deviation for visual review.
+
+A bounded **FISHHWB_Optimization_History** Text datablock stores the latest 100 action summaries locally inside the .blend, including warnings and preservation reports.
+
 ### Create LODs
 
 Creates LOD0, LOD1 and LOD2 using existing safe triangle budgets. Source mesh is preserved; LODs are static-mesh only. Previous advanced preferences continue to exist but are deliberately not displayed in the main sidebar.
