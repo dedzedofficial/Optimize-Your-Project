@@ -943,6 +943,10 @@ def register():
         name="LOD Options", default=False,
         description="Expand existing LOD and collision controls",
     )
+    bpy.types.Scene.fishhwb_material_advanced = BoolProperty(
+        name="Material Options", default=False,
+        description="Expand existing material-atlas settings",
+    )
     bpy.types.Scene.fishhwb_collision_shape = EnumProperty(
         name="Collider Shape",
         items=(
@@ -997,7 +1001,7 @@ def unregister():
     for name in (
         "fishhwb_remesh_quality", "fishhwb_show_mesh_inspector",
         "fishhwb_smart_advanced", "fishhwb_lod_advanced",
-        "fishhwb_collision_shape",
+        "fishhwb_material_advanced", "fishhwb_collision_shape",
     ):
         if hasattr(bpy.types.Scene, name):
             delattr(bpy.types.Scene, name)
