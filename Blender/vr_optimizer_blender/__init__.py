@@ -162,9 +162,9 @@ def _action_report(operator, context, detail, changed=0, unsupported=0, failed=0
         if log is None:
             log = bpy.data.texts.new('FISHHWB_Optimization_History')
         # Keep the report bounded even in projects processed hundreds of times.
-        lines = (log.as_string() + message.replace('\\n', ' ') + '\\n').splitlines()
+        lines = (log.as_string() + message.replace('\n', ' ') + '\n').splitlines()
         log.clear()
-        log.write('\\n'.join(lines[-100:]) + '\\n')
+        log.write('\n'.join(lines[-100:]) + '\n')
     except Exception:
         # Reporting must not turn a safe optimisation into a failed job.
         pass
