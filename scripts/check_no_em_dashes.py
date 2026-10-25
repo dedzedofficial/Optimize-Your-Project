@@ -10,7 +10,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EM_DASH = "\\u2014"
+EM_DASH = chr(0x2014)
 
 
 def tracked_paths(root):
@@ -20,7 +20,7 @@ def tracked_paths(root):
             stderr=subprocess.DEVNULL,
         )
         return [root / part.decode("utf-8")
-                for part in output.split(b"\\0") if part]
+                for part in output.split(bytes([0])) if part]
     except (FileNotFoundError, subprocess.CalledProcessError):
         # Also support an exported source tree without its Git metadata.
         ignored = {".git", ".venv", "venv", "__pycache__", "dist", "build"}
