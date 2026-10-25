@@ -840,6 +840,16 @@ def register():
         soft_min=100, soft_max=100000,
         description="Maximum triangle budget for the remeshed copy; preserves the original",
     )
+    bpy.types.Scene.fishhwb_remesh_scope = EnumProperty(
+        name="Mesh Scope",
+        items=(
+            ('ACTIVE', "Active Mesh", "Retopologize the active mesh only"),
+            ('SELECTED', "Selected Meshes", "Optimise all selected meshes under one combined triangle limit"),
+            ('HIERARCHY', "Model Hierarchy", "Optimise all mesh descendants of the active parent under one combined triangle limit"),
+        ),
+        default='ACTIVE',
+        description="Choose which meshes share the hard triangle limit",
+    )
     bpy.types.Scene.fishhwb_remesh_method = EnumProperty(
         name="Remesh Method",
         items=(
@@ -887,6 +897,8 @@ def unregister():
         del bpy.types.Object.fishhwb_protect_detail
     if hasattr(bpy.types.Scene, "fishhwb_triangle_target"):
         del bpy.types.Scene.fishhwb_triangle_target
+    if hasattr(bpy.types.Scene, "fishhwb_remesh_scope"):
+        del bpy.types.Scene.fishhwb_remesh_scope
     if hasattr(bpy.types.Scene, "fishhwb_remesh_method"):
         del bpy.types.Scene.fishhwb_remesh_method
     if hasattr(bpy.types.Scene, "fishhwb_last_result"):
