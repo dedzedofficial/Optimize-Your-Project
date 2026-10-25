@@ -10,6 +10,15 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
+## Unreleased - indie-developer workflow improvements
+
+- Unity: local per-project Balanced/Desktop/Mobile/Standalone VR starting profiles under Advanced Settings; preview-only texture and model importer batches; model importer processing extended to a selected Assets folder.
+- Unity: Project Review now prioritizes high-severity actionable findings, with read-only texture-waste checks, SHA-256-based exact duplicate-source identification for files up to 32 MiB, prefab/loaded-scene missing-script checks, missing shader checks and evidence-based model import warnings.
+- Unity: optional serialized asset usage lookup with bounded input (4,000 candidate files), local CSV report export and a read-only preview of the fingerprint-guarded last import batch. Runtime-created dependencies remain out of scope.
+- Blender: non-destructive local game-target preset save/load under Smart Remesh; scope counts and triangle-budget preflight; persistent bounded local optimisation log; per-LOD viewport preview under existing Create LODs advanced options.
+- Added Unity EditMode tests for issue ranking, independent preset selection and exact duplicate-source warnings; extended Blender tests for local presets, bounded history and generated LOD preview.
+- No extra main buttons, no new online services, no Unity shader changes. Unity EditMode tests have not been run by the Blender/Python-only GitHub Actions workflow.
+
 ## Unreleased - whole-model Smart Remesh foundation
 
 - Added Active Mesh, Selected Meshes and Model Hierarchy scopes in the Blender sidebar.
