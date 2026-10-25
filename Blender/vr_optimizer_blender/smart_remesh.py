@@ -20,9 +20,22 @@ from . import (
 )
 
 
+def _requires_deformation_transfer(source):
+    """A protection-only vertex group is not a skinning or morph rig."""
+    if not deform_transfer.has_deformation(source):
+        return False
+    return (
+        bool(source.data.shape_keys)
+        or any(modifier.type == 'ARMATURE' for modifier in source.modifiers)
+        or any(group.name != mesh_quality.PROTECTED_GROUP_NAME
+               for group in source.vertex_groups)
+    )
+
+
 def _custom_data_reason(mesh):
     builtin = {
         'position', 'material_index', 'sharp_face', 'sharp_edge',
+        'uv_seam',
         'crease_edge', 'crease_vert', 'bevel_weight_edge', 'bevel_weight_vert',
         '.position', '.edge_verts', '.corner_vert', '.corner_edge',
         '.material_index', '.select_vert', '.select_edge', '.select_poly',
@@ -484,7 +497,7 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                 evaluated = None
                 try:
                     if (source.modifiers
-                            and not deform_transfer.has_deformation(source)):
+                            and not _requires_deformation_transfer(source)):
                         evaluated = _evaluated_mesh_copy(source, context)
                     data = evaluated or source.data
                     islands, _boundary, _bounds = _geometry_facts(data)
@@ -513,7 +526,7 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                     if key in output:
                         del output[key]
 
-                deforming = deform_transfer.has_deformation(source)
+                deforming = _requires_deformation_transfer(source)
                 neutral = None
                 reference_surface = None
                 try:
