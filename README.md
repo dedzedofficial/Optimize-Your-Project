@@ -98,7 +98,7 @@ Use source control or a backup before any permanent cleanup.
 
 ## Game-ready Smart Remesh development update
 
-The upcoming Blender Smart Remesh update adds three scopes (Active Mesh, Selected Meshes and Model Hierarchy), a strict combined triangle ceiling, whole-batch rollback on failure and geometry safeguards that reject disappearing parts. Open or disconnected meshes use a reported surface-preserving fallback rather than risking a destructive voxel rebuild. See the [Blender guide](Blender/README.md) for supported inputs, safeguards and remaining limitations.
+The upcoming Blender Smart Remesh update keeps its three main sidebar buttons and adds hidden-when-closed advanced controls for detailed edge protection, Mesh Health inspection, LOD quality reporting, optional box colliders and material atlas settings. The Smart Remesh update adds three scopes (Active Mesh, Selected Meshes and Model Hierarchy), a strict combined triangle ceiling, whole-batch rollback on failure and geometry safeguards that reject disappearing parts. Open or disconnected meshes use a reported surface-preserving fallback rather than risking a destructive voxel rebuild. See the [Blender guide](Blender/README.md) for supported inputs, safeguards and remaining limitations.
 
 ## Blender v8.8.3
 
