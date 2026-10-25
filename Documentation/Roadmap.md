@@ -23,6 +23,13 @@ Unity and Blender share one project version. Blender support starts at **4.2** a
 - **P2 - Medium priority:** new integrations or deeper automation that need more validation before becoming default behavior.
 - **P3 - Later / experimental:** useful ideas that should not delay the main Unity, Blender, Godot and Unreal work.
 
+## Indie-developer workflow upgrades on the game-ready feature branch
+
+- Implemented: severity-prioritised Unity issues, read-only build readiness and texture waste, exact source texture duplicates, CSV export, serialized dependency lookup, project-specific local presets, folder-wide model import scope, dry-run import previews, import history preview.
+- Implemented: Blender .blend game-target starting presets, combined scope preflight counts, persisted bounded local job history, LOD0/1/2 viewport preview and approximate LOD geometry deviation.
+- Existing actions are reused; no new main optimisation buttons, no external asset uploads, no automatic deletion or automatic export. Unity EditMode tests were added but must run in the Unity Editor; the repository's GitHub Actions matrix currently checks Python packaging and Blender versions, not C# compilation.
+- Still future work: robust skinning-aware retopology/UV baking, profiler-grounded runtime performance forecasts, automatic scene-camera screen-size LOD recommendations, full engine export/build certification, and Godot/Unreal integrations. Runtime measurements must not be inferred from triangle counts alone.
+
 ## Game-ready overhaul - implementation sequence
 
 1. **In progress:** component-aware Smart Remesh, whole-model scope, strict triangle budgets, atomic rollback and regression fixtures.
