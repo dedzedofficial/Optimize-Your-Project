@@ -497,6 +497,7 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
             total_after = 0
             methods = []
             used_fallback = []
+            normals_reprojected = 0
 
             for source, ceiling in zip(sources, ceilings):
                 output = _copy_mesh_object(source, context, '_SmartRemesh')
@@ -559,6 +560,9 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                             output, context, ceiling)
                         groups, shapes = _project_details(
                             source, output, neutral, deforming, context)
+                        if (neutral.attributes.get('custom_normal')
+                                or neutral.has_custom_normals):
+                            normals_reprojected += 1
                         method = ('QUADRIFLOW' if quadriflow
                                   else 'VOXEL_QUADS')
 
@@ -593,7 +597,9 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                 f'(global maximum {target:,}). '
                 f'Methods: {", ".join(sorted(set(methods)))}. '
                 'Component counts, output bounds and per-mesh budgets verified. '
-                'Originals untouched. Review UV seams, shading and rigging '
+                + ('Authored custom_normal data reprojected. '
+                   if normals_reprojected else '')
+                + 'Originals untouched. Review UV seams, shading and rigging '
                 'before export.' + fallback,
                 changed=len(generated))
             return {'FINISHED'}
