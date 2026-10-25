@@ -202,7 +202,10 @@ def _static_mesh_reason(source, allow_deformation=False):
         if reason:
             return reason
     else:
-        if source.data.shape_keys or source.vertex_groups or any(m.type == 'ARMATURE' for m in source.modifiers):
+        if (source.data.shape_keys
+                or any(g.name != mesh_quality.PROTECTED_GROUP_NAME
+                       for g in source.vertex_groups)
+                or any(m.type == 'ARMATURE' for m in source.modifiers)):
             return 'LOD remains static-mesh only. Remesh supports guarded deformation transfer.'
     if triangle_count(source.data) < 1:
         return "The selected mesh has no triangles."
