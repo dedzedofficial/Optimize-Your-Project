@@ -263,6 +263,18 @@ def _draw_core_080(self, context):
             lod.prop(context.scene, 'fishhwb_collision_shape', text='Collider Type')
             lod.prop(context.scene, 'fishhwb_collision_target',
                      text='Collider Triangle Limit')
+        lod.label(text='Preview generated LODs (sources unchanged):')
+        preview = lod.row(align=True)
+        for level in range(3):
+            action = preview.operator('fishhwb.preview_lod',
+                                      text=f'LOD{level}')
+            action.level = level
+        if obj and obj.get('fishhwb_lod_level') is not None:
+            deviation = obj.get('fishhwb_surface_deviation_percent')
+            lod.label(text=f'Viewing LOD{obj.get("fishhwb_lod_level")}: '
+                           f'{_addon.triangle_count(obj.data):,} triangles')
+            if deviation is not None:
+                lod.label(text=f'Approx. surface deviation: {deviation:.2f}%')
 
     materials = layout.box()
     row = materials.row()
