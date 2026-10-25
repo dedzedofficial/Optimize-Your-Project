@@ -157,6 +157,17 @@ def _action_report(operator, context, detail, changed=0, unsupported=0, failed=0
     ]
     message = " | ".join(parts) + ". " + detail
     context.scene.fishhwb_last_result = message
+    try:
+        log = bpy.data.texts.get('FISHHWB_Optimization_History')
+        if log is None:
+            log = bpy.data.texts.new('FISHHWB_Optimization_History')
+        # Keep the report bounded even in projects processed hundreds of times.
+        lines = (log.as_string() + message.replace('\\n', ' ') + '\\n').splitlines()
+        log.clear()
+        log.write('\\n'.join(lines[-100:]) + '\\n')
+    except Exception:
+        # Reporting must not turn a safe optimisation into a failed job.
+        pass
     level = {'ERROR'} if failed else ({'WARNING'} if unsupported and not changed else {'INFO'})
     operator.report(level, message)
 
@@ -962,6 +973,22 @@ def register():
         default='MESH',
         description="Type of optional collider made by the existing Create LODs button",
     )
+    bpy.types.Scene.fishhwb_workflow_profile = EnumProperty(
+        name='Game Target',
+        items=(
+            ('BALANCED', 'Balanced', 'Example starting values for mixed targets'),
+            ('DESKTOP', 'Desktop', 'Example starting values for desktop games'),
+            ('MOBILE', 'Mobile', 'Conservative example starting values for mobile'),
+            ('VR', 'Standalone VR', 'Conservative example starting values for standalone VR'),
+            ('CUSTOM', 'My Project', 'Load saved settings from this blend file'),
+        ),
+        default='BALANCED',
+        description='Optional settings template; not a performance guarantee',
+    )
+    bpy.types.Scene.fishhwb_saved_profile = StringProperty(
+        name='Saved Local Profile', default='',
+        description='Saved in this blend file, never sent to a service',
+    )
     bpy.types.Scene.fishhwb_last_result = StringProperty(options={'SKIP_SAVE'})
     bpy.types.Scene.fishhwb_language = EnumProperty(
         name="Language",
@@ -1008,6 +1035,7 @@ def unregister():
         "fishhwb_remesh_quality", "fishhwb_show_mesh_inspector",
         "fishhwb_smart_advanced", "fishhwb_lod_advanced",
         "fishhwb_material_advanced", "fishhwb_collision_shape",
+        "fishhwb_workflow_profile", "fishhwb_saved_profile",
     ):
         if hasattr(bpy.types.Scene, name):
             delattr(bpy.types.Scene, name)
