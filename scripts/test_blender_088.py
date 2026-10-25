@@ -503,11 +503,34 @@ class SmartOptimize088Tests(unittest.TestCase):
         self.assertEqual(len(collider.data.vertices), 8)
         self.assertEqual(len(collider.data.polygons), 6)
         self.assertEqual(triangle_count(original.data), before)
+        for axis in range(3):
+            source_range = (
+                min(v.co[axis] for v in original.data.vertices),
+                max(v.co[axis] for v in original.data.vertices))
+            collider_range = (
+                min(v.co[axis] for v in collider.data.vertices),
+                max(v.co[axis] for v in collider.data.vertices))
+            self.assertAlmostEqual(source_range[0], collider_range[0], places=5)
+            self.assertAlmostEqual(source_range[1], collider_range[1], places=5)
         lods = [o for o in lod0.users_collection[0].objects
                 if o.get('fishhwb_lod_level') in (1, 2)]
         self.assertEqual(len(lods), 2)
         self.assertTrue(all(o.get('fishhwb_surface_deviation_percent')
                             is not None for o in lods))
+
+    def test_lod_refuses_to_delete_all_protected_vertices(self):
+        from optimize_your_project_v088.Blender.vr_optimizer_blender import triangle_count
+        source = self.cube()
+        group = source.vertex_groups.new(name='FISHHWB_Protect')
+        group.add(list(range(len(source.data.vertices))), 1.0, 'REPLACE')
+        original = [tuple(v.co) for v in source.data.vertices]
+        original_count = triangle_count(source.data)
+        bpy.context.scene.fishhwb_lod1_percent = 20
+        bpy.context.scene.fishhwb_lod2_percent = 10
+        self.assertEqual(bpy.ops.fishhwb.create_lods(), {'CANCELLED'})
+        self.assertEqual(original, [tuple(v.co) for v in source.data.vertices])
+        self.assertEqual(triangle_count(source.data), original_count)
+        self.assertNotIn('fishhwb_lod_history', source)
 
     def test_box_collider_impossible_budget_warns(self):
         bpy.ops.mesh.primitive_uv_sphere_add(segments=20, ring_count=12)
