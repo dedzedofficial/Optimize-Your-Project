@@ -218,6 +218,29 @@ def _draw_core_080(self, context):
         smart.prop(context.scene, 'fishhwb_remesh_quality',
                    text='Detail Handling')
         smart.label(text='Mark vertices with FISHHWB_Protect to keep them', icon='INFO')
+        smart.prop(context.scene, 'fishhwb_workflow_profile',
+                   text='Game Target')
+        line = smart.row(align=True)
+        line.operator('fishhwb.load_game_profile', text='Apply Settings',
+                      icon='IMPORT')
+        line.operator('fishhwb.save_game_profile', text='Save My Project',
+                      icon='FILE_TICK')
+        # Non-destructive estimate; actual output can be smaller or refused.
+        source_objs = []
+        scope = context.scene.fishhwb_remesh_scope
+        if scope == 'SELECTED':
+            source_objs = [o for o in context.selected_objects if o.type == 'MESH']
+        elif scope == 'HIERARCHY' and obj:
+            source_objs = [o for o in [obj, *obj.children_recursive] if o.type == 'MESH']
+        elif obj and obj.type == 'MESH':
+            source_objs = [obj]
+        if source_objs:
+            before = sum(_addon.triangle_count(o.data) for o in source_objs)
+            budget = context.scene.fishhwb_triangle_target
+            smart.label(text=f"Preview: {len(source_objs)} mesh(es), {before:,} tris")
+            smart.label(text=f"Combined maximum: {budget:,} tris")
+            smart.label(text='No geometry changes until you run Smart Remesh',
+                        icon='INFO')
 
     lod = layout.box()
     row = lod.row()
