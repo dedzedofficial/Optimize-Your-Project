@@ -99,7 +99,7 @@ namespace FISHHWB.VROptimizer
             }
             return "Last import batch: " + lastBatch.Count
                 + " change(s) eligible for fingerprint-checked restore."
-                + "\\n" + string.Join("\\n", lines.ToArray())
+                + "\n" + string.Join("\n", lines.ToArray())
                 + (lastBatch.Count > 15 ? "\\n... more not shown" : "")
                 + (missing > 0 ? "\\nMissing assets: " + missing : "")
                 + "\\nRestoring checks for later source/importer edits. No changes made.";
