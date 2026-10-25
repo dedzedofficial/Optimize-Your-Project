@@ -105,6 +105,35 @@ namespace FISHHWB.VROptimizer
                         model, path));
             }
 
+            foreach (var guid in AssetDatabase.FindAssets("t:Model", new[] { folder }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                // Evidence-based import recommendations only; do not mutate
+                // animations, bindposes, UVs or model importer settings.
+                foreach (var asset in AssetDatabase.LoadAllAssetsAtPath(path))
+                {
+                    var mesh = asset as Mesh;
+                    if (!mesh) continue;
+                    if (mesh.subMeshCount > 8)
+                        issues.Add(new VRIssue(
+                            VRSeverity.Warning, VRCategory.Mesh,
+                            mesh.name + ": " + mesh.subMeshCount
+                            + " submeshes. Review draw-call/material costs and whether consolidation is appropriate.",
+                            mesh, path));
+                    if (mesh.bindposes.Length > 128)
+                        issues.Add(new VRIssue(
+                            VRSeverity.Warning, VRCategory.Mesh,
+                            mesh.name + ": " + mesh.bindposes.Length
+                            + " bind poses. Check skinning and target hardware limits.",
+                            mesh, path));
+                    if (mesh.isReadable && mesh.uv.Length == 0)
+                        issues.Add(new VRIssue(
+                            VRSeverity.Info, VRCategory.Mesh,
+                            mesh.name + ": no UV0 channel on the imported mesh. Texture baking may be unavailable.",
+                            mesh, path));
+                }
+            }
+
             foreach (var guid in AssetDatabase.FindAssets("t:Material", new[] { folder }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
