@@ -190,6 +190,7 @@ def _draw_core_080(self, context):
     row.scale_y = 1.55
     row.operator('fishhwb.smart_remesh', text='SMART REMESH', icon='MOD_REMESH')
     smart.prop(context.scene, 'fishhwb_triangle_target', text='Triangle Limit')
+    smart.prop(context.scene, 'fishhwb_remesh_scope', text='Scope')
 
     row = layout.row()
     row.scale_y = 1.45
