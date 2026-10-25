@@ -266,7 +266,7 @@ namespace FISHHWB.VROptimizer
             {
                 EditorGUILayout.BeginHorizontal();
                 if (Primary(T("optimize_textures"))) OptimizeTextures(root, folder);
-                if (Primary(T("optimize_models"))) OptimizeModelImports(root);
+                if (Primary(T("optimize_models"))) OptimizeModelImports(root, folder);
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.BeginHorizontal();
@@ -603,9 +603,9 @@ namespace FISHHWB.VROptimizer
             }
         }
 
-        void OptimizeModelImports(GameObject root, bool confirm = true)
+        void OptimizeModelImports(GameObject root, string folder = null, bool confirm = true)
         {
-            var meshes = VRMeshCompression.Collect(root, out int unsupported);
+            var meshes = VRMeshCompression.Collect(root, folder, out int unsupported);
             int pending = 0;
             foreach (var mesh in meshes)
             {
