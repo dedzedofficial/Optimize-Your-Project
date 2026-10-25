@@ -26,6 +26,7 @@ class SmartOptimize088Tests(unittest.TestCase):
         scene.fishhwb_create_collision_proxy = False
         scene.fishhwb_triangle_target = 10000
         scene.fishhwb_remesh_method = 'SURFACE'
+        scene.fishhwb_remesh_scope = 'ACTIVE'
 
     def cube(self):
         bpy.ops.mesh.primitive_cube_add()
@@ -432,6 +433,81 @@ class SmartOptimize088Tests(unittest.TestCase):
         self.assertIsNot(output, source)
         self.assertEqual(len(output.modifiers), 0)
         self.assertEqual(len(source.modifiers), 1)
+
+    def test_smart_remesh_selected_meshes_obey_one_global_limit(self):
+        from optimize_your_project_v088.Blender.vr_optimizer_blender import triangle_count
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2)
+        first = bpy.context.active_object
+        before_first = triangle_count(first.data)
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2)
+        second = bpy.context.active_object
+        before_second = triangle_count(second.data)
+        first.select_set(True)
+        scene = bpy.context.scene
+        scene.fishhwb_remesh_scope = 'SELECTED'
+        scene.fishhwb_triangle_target = 180
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'FINISHED'})
+        outputs = list(bpy.context.selected_objects)
+        self.assertEqual(len(outputs), 2)
+        self.assertLessEqual(sum(triangle_count(o.data) for o in outputs), 180)
+        self.assertEqual(triangle_count(first.data), before_first)
+        self.assertEqual(triangle_count(second.data), before_second)
+        self.assertTrue(all(o.get('fishhwb_generated_job') == 'smart_remesh'
+                            for o in outputs))
+
+    def test_smart_remesh_parent_hierarchy_covers_all_children(self):
+        bpy.ops.object.empty_add()
+        root = bpy.context.active_object
+        for index in range(2):
+            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2)
+            bpy.context.active_object.parent = root
+        for obj in list(bpy.context.selected_objects):
+            obj.select_set(False)
+        root.select_set(True)
+        bpy.context.view_layer.objects.active = root
+        bpy.context.scene.fishhwb_remesh_scope = 'HIERARCHY'
+        bpy.context.scene.fishhwb_triangle_target = 180
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'FINISHED'})
+        self.assertEqual(len(bpy.context.selected_objects), 2)
+        self.assertTrue(all(o.parent == root for o in bpy.context.selected_objects))
+
+    def test_smart_remesh_open_sheet_preserves_surface(self):
+        bpy.ops.mesh.primitive_plane_add()
+        source = bpy.context.active_object
+        coords = [tuple(v.co) for v in source.data.vertices]
+        bpy.context.scene.fishhwb_triangle_target = 4
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'FINISHED'})
+        output = bpy.context.active_object
+        self.assertEqual(output.get('fishhwb_retopology_status'),
+                         'SURFACE_PRESERVED')
+        self.assertEqual(coords, [tuple(v.co) for v in source.data.vertices])
+        self.assertEqual(len(output.data.polygons), 1)
+
+    def test_smart_remesh_budget_failure_is_atomic(self):
+        for index in range(3):
+            bpy.ops.mesh.primitive_cube_add()
+        sources = list(bpy.data.objects)
+        for obj in sources:
+            obj.select_set(True)
+        bpy.context.scene.fishhwb_remesh_scope = 'SELECTED'
+        bpy.context.scene.fishhwb_triangle_target = 4
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'CANCELLED'})
+        self.assertEqual(set(bpy.data.objects), set(sources))
+        self.assertTrue(all(not o.name.endswith('_SmartRemesh')
+                            for o in bpy.data.objects))
+
+    def test_smart_remesh_protected_child_blocks_entire_batch(self):
+        bpy.ops.mesh.primitive_cube_add()
+        first = bpy.context.active_object
+        bpy.ops.mesh.primitive_cube_add()
+        second = bpy.context.active_object
+        first.select_set(True)
+        first.fishhwb_protect_detail = True
+        bpy.context.scene.fishhwb_remesh_scope = 'SELECTED'
+        self.assertEqual(bpy.ops.fishhwb.smart_remesh(), {'CANCELLED'})
+        self.assertEqual(len([o for o in bpy.data.objects
+                              if o.get('fishhwb_generated_job') == 'smart_remesh']), 0)
+        self.assertEqual(len(bpy.context.selected_objects), 2)
 
     def test_remesh_keeps_large_open_boundary(self):
         from optimize_your_project_v088.Blender.vr_optimizer_blender import v08_tools
