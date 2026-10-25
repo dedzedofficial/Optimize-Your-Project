@@ -96,6 +96,10 @@ The cleaner is intentionally conservative:
 
 Use source control or a backup before any permanent cleanup.
 
+## Game-ready Smart Remesh development update
+
+The upcoming Blender Smart Remesh update adds three scopes (Active Mesh, Selected Meshes and Model Hierarchy), a strict combined triangle ceiling, whole-batch rollback on failure and geometry safeguards that reject disappearing parts. Open or disconnected meshes use a reported surface-preserving fallback rather than risking a destructive voxel rebuild. See the [Blender guide](Blender/README.md) for supported inputs, safeguards and remaining limitations.
+
 ## Blender v8.8.3
 
 **The Blender sidebar is now limited to the requested actions:** Language selector, current mesh with triangle/vertex/face counts, **Smart Remesh** with Triangle Limit, **Create LODs** and **Merge Materials**. Smart Remesh now attempts rebuilding regardless of previous Remesh history or input triangle count and can reproject supported relative blendshapes, UVs, vertex weights and armature modifiers onto rebuilt topology. The original is never modified. See [the Blender guide](Blender/README.md) for safeguards and unsupported cases.
