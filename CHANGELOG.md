@@ -10,6 +10,36 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
+## Unreleased - documentation and source text style
+
+- Audited all repository text files on the game-ready feature branch for em dash punctuation. No existing occurrences required replacement.
+- Added `scripts/check_no_em_dashes.py` to the pull-request package checks. Future em dashes in tracked UTF-8 documentation, source, metadata and configuration files will fail the style check.
+
+## Unreleased - indie-developer workflow improvements
+
+- Unity: local per-project Balanced/Desktop/Mobile/Standalone VR starting profiles under Advanced Settings; preview-only texture and model importer batches; model importer processing extended to a selected Assets folder.
+- Unity: Project Review now prioritizes high-severity actionable findings, with read-only texture-waste checks, SHA-256-based exact duplicate-source identification for files up to 32 MiB, prefab/loaded-scene missing-script checks, missing shader checks and evidence-based model import warnings.
+- Unity: optional serialized asset usage lookup with bounded input (4,000 candidate files), local CSV report export and a read-only preview of the fingerprint-guarded last import batch. Runtime-created dependencies remain out of scope.
+- Blender: non-destructive local game-target preset save/load under Smart Remesh; scope counts and triangle-budget preflight; persistent bounded local optimisation log; per-LOD viewport preview under existing Create LODs advanced options.
+- Added Unity EditMode tests for issue ranking, independent preset selection and exact duplicate-source warnings; extended Blender tests for local presets, bounded history and generated LOD preview.
+- No extra main buttons, no new online services, no Unity shader changes. Unity EditMode tests have not been run by the Blender/Python-only GitHub Actions workflow.
+
+## Unreleased - whole-model Smart Remesh foundation
+
+- Added Active Mesh, Selected Meshes and Model Hierarchy scopes in the Blender sidebar.
+- Added deterministic per-component allocation under one strict combined triangle limit. Reject impossible models before producing outputs.
+- Added atomic multi-object output creation and cleanup, original selection recovery, per-object budget metadata and combined before/after reporting.
+- Added open/nonmanifold/disconnected-geometry safeguards. Such static meshes use a clearly reported surface-preserving simplification rather than unsafe voxel welding; deformation-sensitive exceptions reject over-budget inputs.
+- Added component-count and bounding-box validation. Reconstructed mesh results that lose connected pieces or exceed the limit are discarded.
+- Added standalone budget tests and multi-object Blender regressions; no Unity functionality or release version changed.
+- Kept exactly three primary Blender buttons; added compact expandable mesh-health, Smart Remesh, LOD/collision and material-atlas settings within the existing controls.
+- Added automatic detail masking via the `FISHHWB_Protect` vertex group: guarded Decimate reductions reject outputs that remove or displace explicitly marked vertices.
+- Added detail-focused remeshing to protect authored seam/sharp edge geometry and an optional 4%-of-diagonal sampled surface deviation gate, plus output deviation reporting.
+- Added LOD surface-deviation reports and a 12-triangle bounding-box collider candidate under Create LODs, with safe failure when collider budget is below 12.
+- Added Blender integration tests for diagnostics, detail modes, protected positions, box colliders and impossible budgets.
+
+- Known limitations: automatic retopology cannot guarantee animation-quality edge flow; surface-preserving fallback is not quad retopology; bounds and UV checks are conservative and do not replace visual review.
+
 ## Blender 8.8.3 | Smart Remesh and custom normal fix\n\n- Smart Remesh now projects supported authored `custom_normal` FLOAT_VECTOR POINT/CORNER attributes onto rebuilt topology rather than rejecting the mesh. Projected directions are normalized; source mesh and attribute data are unchanged.\n- Unsupported custom-normal storage and other unknown attributes still produce a clear, non-destructive rejection.\n- Restored the Blender extension version to the user-requested **8.8.3**; Unity remains **0.8.8**.\n\n### Smart Remesh and simplified UI (features retained from the previous development build)
 
 - Redesigned the Blender sidebar to show language, active mesh statistics and exactly three main operations: **Smart Remesh**, **Create LODs** and **Merge Materials**.

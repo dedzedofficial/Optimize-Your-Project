@@ -29,6 +29,10 @@ namespace FISHHWB.VROptimizer
         bool showParticleControls;
         bool showMeshSettings;
         bool testImportedMemory;
+        bool showReviewOptions;
+        bool showPresets;
+        int presetSelection;
+        bool previewOnly;
 
         GUIStyle panelStyle;
         GUIStyle sectionTitleStyle;
@@ -47,7 +51,7 @@ namespace FISHHWB.VROptimizer
 
         void OnEnable()
         {
-            settings = VRSettings.Load();
+            settings = VRDeveloperPresets.LoadCurrent();
             icon = AssetDatabase.LoadAssetAtPath<Texture2D>(
                 "Packages/com.fishhwb.vr-optimizer/Editor/FISHHWBVR/Icons/Optimize-Your-Project.png");
             titleContent = new GUIContent("Optimize Your Project", icon);
@@ -57,7 +61,7 @@ namespace FISHHWB.VROptimizer
 
         void OnGUI()
         {
-            if (settings == null) settings = VRSettings.Load();
+            if (settings == null) settings = VRDeveloperPresets.LoadCurrent();
             EnsureStyles();
 
             DrawHeader();
@@ -245,8 +249,9 @@ namespace FISHHWB.VROptimizer
             {
                 if (Compact(T("heavy_meshes")))
                 {
-                    issues = VRProjectInsights.OversizedMeshes(avatar);
-                    summary = "Heavy mesh review: " + issues.Count + " candidates.";
+                    issues = VRDeveloperReview.Prioritize(
+                        VRProjectInsights.OversizedMeshes(avatar));
+                    summary = "Heavy mesh review: " + issues.Count + " candidates. Prioritised by severity.";
                 }
             }
             EditorGUILayout.EndVertical();
@@ -261,7 +266,7 @@ namespace FISHHWB.VROptimizer
             {
                 EditorGUILayout.BeginHorizontal();
                 if (Primary(T("optimize_textures"))) OptimizeTextures(root, folder);
-                if (Primary(T("optimize_models"))) OptimizeModelImports(root);
+                if (Primary(T("optimize_models"))) OptimizeModelImports(root, folder);
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.BeginHorizontal();
@@ -309,13 +314,15 @@ namespace FISHHWB.VROptimizer
             {
                 if (Compact(T("largest_textures")))
                 {
-                    issues = VRProjectInsights.LargestTextures(projectFolder);
+                    issues = VRDeveloperReview.Prioritize(
+                        VRProjectInsights.LargestTextures(projectFolder));
                     summary = "Largest texture review: " + issues.Count + " candidates.";
                 }
 
                 if (Compact(T("readwrite_review")))
                 {
-                    issues = VRProjectInsights.ReadWriteReview(projectFolder);
+                    issues = VRDeveloperReview.Prioritize(
+                        VRProjectInsights.ReadWriteReview(projectFolder));
                     summary = "Read/Write review: " + issues.Count + " candidates.";
                 }
             }
@@ -324,16 +331,53 @@ namespace FISHHWB.VROptimizer
             EditorGUILayout.BeginHorizontal();
             if (Compact(T("heavy_meshes")))
             {
-                issues = VRProjectInsights.OversizedMeshes(null);
+                issues = VRDeveloperReview.Prioritize(
+                    VRProjectInsights.OversizedMeshes(null));
                 summary = "Heavy mesh review: " + issues.Count + " candidates.";
             }
 
             if (Compact(T("scan_project")))
             {
-                issues = VRProjectScanner.Scan(settings, null, out bool cancelled);
-                summary = (cancelled ? "Partial scan: " : "Project scan complete: ") + issues.Count + " findings.";
+                var found = VRProjectScanner.Scan(settings, null, out bool cancelled);
+                if (!cancelled)
+                {
+                    found.AddRange(VRDeveloperReview.TextureWaste(projectFolder));
+                    found.AddRange(VRDeveloperReview.BuildReadiness(projectFolder));
+                }
+                issues = VRDeveloperReview.Prioritize(found);
+                summary = (cancelled ? "Partial scan: " : "Project scan complete: ")
+                    + issues.Count + " prioritised findings. Read-only, no changes applied.";
             }
             EditorGUILayout.EndHorizontal();
+            showReviewOptions = EditorGUILayout.Foldout(
+                showReviewOptions, "More Review Options", true);
+            if (showReviewOptions)
+            {
+                using (new EditorGUI.DisabledScope(!valid))
+                {
+                    if (Compact("Build Readiness"))
+                    {
+                        issues = VRDeveloperReview.BuildReadiness(projectFolder);
+                        summary = "Build readiness: " + issues.Count
+                            + " findings (loaded scenes and prefabs in scope; read-only).";
+                    }
+                    if (Compact("Texture Waste"))
+                    {
+                        issues = VRDeveloperReview.TextureWaste(projectFolder);
+                        summary = "Texture waste review: " + issues.Count
+                            + " candidates; no import settings modified.";
+                    }
+                    if (Compact("Find Selected Asset Users"))
+                    {
+                        var selectedPath = AssetDatabase.GetAssetPath(Selection.activeObject);
+                        summary = VRDeveloperReview.AssetUsers(
+                            selectedPath, projectFolder);
+                    }
+                }
+                using (new EditorGUI.DisabledScope(issues == null))
+                    if (Compact("Export Review CSV"))
+                        summary = VRDeveloperReview.ExportCsv(issues);
+            }
             EditorGUILayout.EndVertical();
         }
 
@@ -374,6 +418,38 @@ namespace FISHHWB.VROptimizer
             if (!showAdvanced) return;
 
             GUILayout.Space(4);
+            showPresets = EditorGUILayout.Foldout(
+                showPresets, "Local Project Presets", true);
+            if (showPresets)
+            {
+                var labels = new[] {
+                    "Balanced", "Desktop", "Mobile", "Standalone VR", "My Project"
+                };
+                presetSelection = EditorGUILayout.Popup(
+                    "Target", presetSelection, labels);
+                EditorGUILayout.HelpBox(
+                    "Presets change the optimisation settings only; "
+                    + "they do not modify assets until you run an existing action. "
+                    + "My Project stays in local EditorPrefs for this project.",
+                    MessageType.Info);
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Apply Preset", compactButtonStyle))
+                {
+                    settings = VRDeveloperPresets.Apply(
+                        labels[presetSelection], settings);
+                    VRDeveloperPresets.SaveCurrent(settings);
+                    summary = "Preset applied: " + labels[presetSelection]
+                        + ". No assets modified.";
+                }
+                if (GUILayout.Button("Save My Project", compactButtonStyle))
+                {
+                    VRDeveloperPresets.SaveProject(settings);
+                    summary = "My Project preset saved locally. No assets modified.";
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+            previewOnly = EditorGUILayout.Toggle(
+                "Preview Import Changes Only", previewOnly);
             EditorGUI.BeginChangeCheck();
 
             showTextureSettings = EditorGUILayout.Foldout(showTextureSettings, T("texture_settings"), true);
@@ -410,7 +486,7 @@ namespace FISHHWB.VROptimizer
             if (EditorGUI.EndChangeCheck())
             {
                 settings.Sanitize();
-                settings.Save();
+                VRDeveloperPresets.SaveCurrent(settings);
             }
 
             GUILayout.Space(4);
@@ -461,6 +537,15 @@ namespace FISHHWB.VROptimizer
                 return;
             }
 
+            if (previewOnly)
+            {
+                summary = "Texture batch preview: " + textures.Count
+                    + " supported assets; " + unsupported + " unsupported; "
+                    + compression.Count + " platform-compression candidates; "
+                    + importFixes.Count + " recognized import repairs. "
+                    + "No assets modified. Disable Preview Import Changes Only to apply.";
+                return;
+            }
             if (confirm && !EditorUtility.DisplayDialog(
                 "Optimize textures",
                 "Optimize " + textures.Count + " supported textures? Recognized normal/data imports are repaired. Existing explicit formats and stricter size caps are preserved.",
@@ -518,9 +603,9 @@ namespace FISHHWB.VROptimizer
             }
         }
 
-        void OptimizeModelImports(GameObject root, bool confirm = true)
+        void OptimizeModelImports(GameObject root, string folder = null, bool confirm = true)
         {
-            var meshes = VRMeshCompression.Collect(root, out int unsupported);
+            var meshes = VRMeshCompression.Collect(root, folder, out int unsupported);
             int pending = 0;
             foreach (var mesh in meshes)
             {
@@ -534,6 +619,14 @@ namespace FISHHWB.VROptimizer
             if (pending == 0)
             {
                 summary = new VRActionSummary { Unchanged = meshes.Count, Unsupported = unsupported }.Format("Imported meshes");
+                return;
+            }
+            if (previewOnly)
+            {
+                summary = "Model import batch preview: " + meshes.Count
+                    + " supported assets, " + pending + " requiring changes, "
+                    + unsupported + " unsupported. Existing stronger compression "
+                    + "and rigs are preserved. No assets modified.";
                 return;
             }
 
@@ -685,6 +778,8 @@ namespace FISHHWB.VROptimizer
                 () => { VRImportHistory.instance.SetProtection(VRImportHistory.SelectedPaths(), false); summary = T("detail_allowed"); Repaint(); });
             menu.AddItem(new GUIContent(T("reset_selected_history")), false,
                 () => { VRImportHistory.instance.Forget(VRImportHistory.SelectedPaths()); summary = T("history_reset"); Repaint(); });
+            menu.AddItem(new GUIContent("Preview Last Import Batch"), false,
+                () => { summary = VRImportHistory.instance.LastBatchPreview(); Repaint(); });
             menu.AddItem(new GUIContent(T("restore_import_batch")), false,
                 () => { summary = VRImportHistory.instance.RestoreLastBatch(); Repaint(); });
             menu.ShowAsContext();
@@ -702,7 +797,7 @@ namespace FISHHWB.VROptimizer
             EditorGUILayout.EndHorizontal();
 
             int count = 0;
-            foreach (var issue in issues)
+            foreach (var issue in VRDeveloperReview.Prioritize(issues))
             {
                 if (filter == Filter.Critical && issue.Severity != VRSeverity.Critical ||
                     filter == Filter.Warning && issue.Severity != VRSeverity.Warning)
@@ -717,7 +812,9 @@ namespace FISHHWB.VROptimizer
                 GUILayout.Label("●", severityDot, GUILayout.Width(17));
 
                 EditorGUILayout.BeginVertical();
-                EditorGUILayout.LabelField(issue.Message, EditorStyles.wordWrappedLabel);
+                EditorGUILayout.LabelField(
+                    (issue.CanOptimize ? "[Review with existing optimiser] " : "")
+                    + issue.Message, EditorStyles.wordWrappedLabel);
                 if (!string.IsNullOrEmpty(issue.AssetPath))
                     EditorGUILayout.LabelField(issue.AssetPath, mutedStyle);
                 EditorGUILayout.EndVertical();

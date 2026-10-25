@@ -11,6 +11,8 @@ import bpy
 from mathutils.bvhtree import BVHTree
 
 from . import deform_transfer
+from .smart_budget import allocate_triangle_budgets
+from . import mesh_quality
 from . import v08_tools as _v08
 from . import (
     _copy_mesh_object, _remove_object_and_mesh, _select_only, _evaluated_mesh_copy,
@@ -18,9 +20,22 @@ from . import (
 )
 
 
+def _requires_deformation_transfer(source):
+    """A protection-only vertex group is not a skinning or morph rig."""
+    if not deform_transfer.has_deformation(source):
+        return False
+    return (
+        bool(source.data.shape_keys)
+        or any(modifier.type == 'ARMATURE' for modifier in source.modifiers)
+        or any(group.name != mesh_quality.PROTECTED_GROUP_NAME
+               for group in source.vertex_groups)
+    )
+
+
 def _custom_data_reason(mesh):
     builtin = {
         'position', 'material_index', 'sharp_face', 'sharp_edge',
+        'uv_seam',
         'crease_edge', 'crease_vert', 'bevel_weight_edge', 'bevel_weight_vert',
         '.position', '.edge_verts', '.corner_vert', '.corner_edge',
         '.material_index', '.select_vert', '.select_edge', '.select_poly',
@@ -83,6 +98,91 @@ def _triangle_samples(mesh):
         return tri, bary, distance
 
     return sample
+
+
+
+def _geometry_facts(mesh):
+    """Count disconnected face islands and unsafe open/nonmanifold boundaries."""
+    if not mesh.polygons:
+        raise ValueError("A selected mesh has no usable polygons.")
+    parents = list(range(len(mesh.vertices)))
+
+    def find(i):
+        while parents[i] != i:
+            parents[i] = parents[parents[i]]
+            i = parents[i]
+        return i
+
+    for polygon in mesh.polygons:
+        indices = list(polygon.vertices)
+        first = find(indices[0])
+        for index in indices[1:]:
+            parents[find(index)] = first
+
+    islands = len({find(face.vertices[0]) for face in mesh.polygons})
+    bm = bmesh.new()
+    try:
+        bm.from_mesh(mesh)
+        unsafe_edges = sum(1 for edge in bm.edges if not edge.is_manifold)
+    finally:
+        bm.free()
+    positions = [vertex.co for vertex in mesh.vertices]
+    bounds = tuple(
+        (min(p[axis] for p in positions), max(p[axis] for p in positions))
+        for axis in range(3)
+    )
+    return islands, unsafe_edges, bounds
+
+
+def _verify_result(mesh, reference, ceiling, expected_islands, source_bounds):
+    """Reject damaged reconstruction before a result can be marked successful."""
+    actual = triangle_count(mesh)
+    if actual < 1 or actual > ceiling:
+        raise ValueError(
+            f"Output exceeds its assigned triangle limit "
+            f"({actual:,} / {ceiling:,}) or contains no usable triangles.")
+    islands, _edges, bounds = _geometry_facts(mesh)
+    if islands != expected_islands:
+        raise ValueError(
+            f"Retopology changed disconnected components "
+            f"({expected_islands} -> {islands}). Original retained.")
+    diagonal = math.sqrt(sum(
+        (high - low) ** 2 for low, high in source_bounds))
+    tolerance = max(1.0e-5, diagonal * 0.08)
+    if any(abs(a - b) > tolerance
+           for old_axis, new_axis in zip(source_bounds, bounds)
+           for a, b in zip(old_axis, new_axis)):
+        raise ValueError(
+            "Retopology changed the model bounds beyond the safety tolerance. "
+            "The source is preserved; raise the budget or use manual retopology.")
+    return actual
+
+
+def _collect_meshes(context):
+    """Respect the explicit operation scope without modifying hidden sources."""
+    scope = getattr(context.scene, 'fishhwb_remesh_scope', 'ACTIVE')
+    active = context.active_object
+    if scope == 'SELECTED':
+        candidates = list(context.selected_objects)
+    elif scope == 'HIERARCHY':
+        candidates = [active, *active.children_recursive] if active else []
+    else:
+        candidates = [active] if active else []
+    return sorted(
+        (obj for obj in dict.fromkeys(candidates)
+         if obj is not None and obj.type == 'MESH'),
+        key=lambda obj: obj.name_full,
+    )
+
+
+def _restore_selection(context, selected, active):
+    for obj in list(context.selected_objects):
+        obj.select_set(False)
+    for obj in selected:
+        if obj.name in bpy.data.objects:
+            obj.select_set(True)
+    if active is not None and active.name in bpy.data.objects:
+        context.view_layer.objects.active = active
 
 
 def _retopology_geometry(output, context, target):
@@ -362,113 +462,276 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
     bl_idname = 'fishhwb.smart_remesh'
     bl_label = 'Smart Remesh'
     bl_description = (
-        'Repair small gaps, reconstruct and retopologize a private mesh, '
-        'aim for the triangle limit, and project compatible UVs, vertex groups, '
-        'relative shape keys and armature modifiers')
+        'Prepare the active mesh, selected meshes or model hierarchy under '
+        'one strict triangle budget. Originals are never modified')
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
-        return (
-            context.mode == 'OBJECT' and context.active_object is not None
-            and context.active_object.type == 'MESH'
-        )
+        return (context.mode == 'OBJECT' and
+                bool(_collect_meshes(context)))
 
     def execute(self, context):
-        source = context.active_object
-        previous_selection = list(context.selected_objects)
-        previous_active = source
-        output = None
-        neutral = None
+        originals = list(context.selected_objects)
+        original_active = context.active_object
+        generated = []
         try:
-            reason = _static_mesh_reason(source, allow_deformation=True)
-            if reason:
-                raise ValueError(reason)
-            reason = deform_transfer.unsupported_reason(source)
-            if reason:
-                raise ValueError(reason)
-            reason = _custom_data_reason(source.data)
-            if reason:
-                raise ValueError(reason)
-
+            sources = _collect_meshes(context)
+            if not sources:
+                raise ValueError('Select one or more mesh objects.')
             target = int(context.scene.fishhwb_triangle_target)
             if target > 500000:
                 raise ValueError(
-                    'Smart Remesh is limited to 500,000 target triangles for '
-                    'safe operation. Reduce the triangle limit first.')
-            deforming = deform_transfer.has_deformation(source)
-            before = triangle_count(source.data)
-            output = _copy_mesh_object(source, context, '_SmartRemesh')
-            for key in (
-                    'fishhwb_remesh_history', 'fishhwb_lod_history',
-                    'fishhwb_output_id', 'fishhwb_generated_job',
-                    'fishhwb_source_deformation_sensitive'):
-                if key in output:
-                    del output[key]
+                    'Smart Remesh is limited to 500,000 output triangles. '
+                    'Reduce the triangle limit first.')
 
-            if deforming:
-                keys = output.data.shape_keys
-                if keys:
-                    basis = [item.co.copy() for item in keys.key_blocks[0].data]
-                    output.shape_key_clear()
-                    for vert, co in zip(output.data.vertices, basis):
-                        vert.co = co
-                output.modifiers.clear()
-            else:
-                if output.modifiers:
-                    evaluated = _evaluated_mesh_copy(output, context)
-                    old = output.data
-                    output.modifiers.clear()
-                    output.data = evaluated
-                    if old.users == 0:
-                        bpy.data.meshes.remove(old)
+            # Preflight every source before creating any output. A protected,
+            # linked or unsupported child must never disappear silently.
+            source_facts = []
+            for source in sources:
+                reason = (_static_mesh_reason(source, allow_deformation=True)
+                          or deform_transfer.unsupported_reason(source)
+                          or _custom_data_reason(source.data))
+                if reason:
+                    raise ValueError(source.name + ': ' + reason)
+                evaluated = None
+                try:
+                    if (source.modifiers
+                            and not _requires_deformation_transfer(source)):
+                        evaluated = _evaluated_mesh_copy(source, context)
+                    data = evaluated or source.data
+                    islands, _boundary, _bounds = _geometry_facts(data)
+                    source_facts.append((triangle_count(data), islands))
+                finally:
+                    if evaluated is not None and evaluated.users == 0:
+                        bpy.data.meshes.remove(evaluated)
 
-            # Attribute source is independent of cleanup and reconstruction.
-            neutral = output.data.copy()
-            _v08._repair_static_mesh(output.data, fill_holes=True)
-            quadriflow, actual = _retopology_geometry(output, context, target)
-            groups, shapes = _project_details(
-                source, output, neutral, deforming, context)
-            output['fishhwb_generated_job'] = 'smart_remesh'
-            output['fishhwb_retopology_status'] = (
-                'QUADRIFLOW' if quadriflow else 'VOXEL_QUADS')
-            output['fishhwb_triangle_target'] = target
-            _select_only(context, output)
-            method = 'QuadriFlow' if quadriflow else 'voxel quad topology'
+            ceilings = allocate_triangle_budgets(source_facts, target)
+            total_before = sum(count for count, _ in source_facts)
+            total_after = 0
+            methods = []
+            used_fallback = []
+            normals_reprojected = 0
+            max_deviation = 0.0
+            quality_mode = getattr(
+                context.scene, 'fishhwb_remesh_quality', 'AUTO')
+
+            for source, ceiling in zip(sources, ceilings):
+                output = _copy_mesh_object(source, context, '_SmartRemesh')
+                generated.append(output)
+                for key in (
+                        'fishhwb_remesh_history', 'fishhwb_lod_history',
+                        'fishhwb_output_id', 'fishhwb_generated_job',
+                        'fishhwb_source_deformation_sensitive'):
+                    if key in output:
+                        del output[key]
+
+                deforming = _requires_deformation_transfer(source)
+                neutral = None
+                reference_surface = None
+                try:
+                    # Static modifier results are evaluated only on a private
+                    # copy. Rigged sources retain their unposed Basis.
+                    if not deforming and output.modifiers:
+                        evaluated = _evaluated_mesh_copy(output, context)
+                        old = output.data
+                        output.modifiers.clear()
+                        output.data = evaluated
+                        if old.users == 0:
+                            bpy.data.meshes.remove(old)
+
+                    islands, unsafe_edges, bounds = _geometry_facts(output.data)
+                    reference_surface = output.data.copy()
+                    has_marked_detail = bool(
+                        mesh_quality.protected_positions(output))
+                    has_sharp_or_seams = any(
+                        edge.use_seam or edge.use_edge_sharp
+                        for edge in output.data.edges)
+                    # Voxel reconstruction can remove UV/sharp details or
+                    # erase open and disconnected sheets. User-authored vertex
+                    # protection always wins over automatic retopology.
+                    safe_rebuild = (
+                        islands == 1 and unsafe_edges == 0
+                        and quality_mode != 'SURFACE'
+                        and not has_marked_detail
+                        and not (quality_mode == 'DETAIL'
+                                 and has_sharp_or_seams))
+                    if not safe_rebuild:
+                        if deforming:
+                            if triangle_count(output.data) > ceiling:
+                                raise ValueError(
+                                    source.name + ': open or disconnected rigged '
+                                    'mesh cannot safely meet this triangle budget. '
+                                    'Source and shape keys preserved.')
+                            actual = triangle_count(output.data)
+                            method = 'DEFORMATION_PRESERVED'
+                        else:
+                            from . import _reduce_copy_to_limit
+                            actual = _reduce_copy_to_limit(
+                                output, ceiling, context)
+                            method = 'SURFACE_PRESERVED'
+                        used_fallback.append(source.name)
+                        groups = len(source.vertex_groups)
+                        shapes = (len(source.data.shape_keys.key_blocks) - 1
+                                  if source.data.shape_keys else 0)
+                    else:
+                        if deforming:
+                            keys = output.data.shape_keys
+                            if keys:
+                                basis = [item.co.copy()
+                                         for item in keys.key_blocks[0].data]
+                                output.shape_key_clear()
+                                for vert, co in zip(output.data.vertices, basis):
+                                    vert.co = co
+                            output.modifiers.clear()
+                        neutral = output.data.copy()
+                        _v08._repair_static_mesh(output.data, fill_holes=True)
+                        quadriflow, actual = _retopology_geometry(
+                            output, context, ceiling)
+                        groups, shapes = _project_details(
+                            source, output, neutral, deforming, context)
+                        if (neutral.attributes.get('custom_normal')
+                                or neutral.has_custom_normals):
+                            normals_reprojected += 1
+                        method = ('QUADRIFLOW' if quadriflow
+                                  else 'VOXEL_QUADS')
+
+                    actual = _verify_result(
+                        output.data, source.data, ceiling, islands, bounds)
+                    deviation = mesh_quality.surface_deviation_ratio(
+                        reference_surface, output.data, max_samples=768)
+                    if not math.isfinite(deviation):
+                        raise ValueError(
+                            source.name + ': could not validate the output surface.')
+                    if quality_mode == 'DETAIL' and deviation > 0.04:
+                        raise ValueError(
+                            f'{source.name}: sampled surface deviation '
+                            f'{deviation * 100.0:.2f}% exceeds the 4% '
+                            'detail-preservation threshold. Increase the '
+                            'budget or choose Preserve Surface.')
+                    max_deviation = max(max_deviation, deviation)
+                    output['fishhwb_surface_deviation_percent'] = round(
+                        deviation * 100.0, 3)
+                    output['fishhwb_generated_job'] = 'smart_remesh'
+                    output['fishhwb_retopology_status'] = method
+                    output['fishhwb_triangle_target'] = ceiling
+                    output['fishhwb_smart_remesh_scope'] = getattr(
+                        context.scene, 'fishhwb_remesh_scope', 'ACTIVE')
+                    output['fishhwb_remesh_quality_mode'] = quality_mode
+                    total_after += actual
+                    methods.append(method)
+                finally:
+                    if neutral is not None and neutral.users == 0:
+                        bpy.data.meshes.remove(neutral)
+                    if (reference_surface is not None
+                            and reference_surface.users == 0):
+                        bpy.data.meshes.remove(reference_surface)
+
+            if total_after > target:
+                raise ValueError(
+                    'Combined model exceeds its global triangle limit '
+                    f'({total_after:,} > {target:,}); nothing was accepted.')
+            _restore_selection(context, generated, generated[0])
+            fallback = (
+                ' Surface-preserving fallback used for: '
+                + ', '.join(used_fallback[:6])
+                + ('.' if len(used_fallback) <= 6 else ', and others.')
+                if used_fallback else ''
+            )
             _action_report(
                 self, context,
-                f'Smart Remesh: {before:,} -> {actual:,} triangles '
-                f'(target {target:,}); repaired and rebuilt with {method}. '
-                f'Projected {len(neutral.uv_layers)} UV layers, '
-                f'{groups} vertex groups and {shapes} blendshapes. '
+                f'Smart Remesh: {len(generated)} mesh(es), '
+                f'{total_before:,} -> {total_after:,} triangles '
+                f'(global maximum {target:,}). '
+                f'Methods: {", ".join(sorted(set(methods)))}. '
+                f'Max sampled surface deviation: {max_deviation * 100:.2f}% '
+                'of model diagonal. '
+                'Component counts, output bounds and per-mesh budgets verified. '
                 + ('Authored custom_normal data reprojected. '
-                   if (neutral.attributes.get('custom_normal')
-                       or neutral.has_custom_normals) else '')
-                + 'Compatible armature bindings restored; source untouched. '
-                'Inspect UV seams, deformation and small details before export.',
-                changed=1)
+                   if normals_reprojected else '')
+                + 'Originals untouched. Review UV seams, shading and rigging '
+                'before export.' + fallback,
+                changed=len(generated))
             return {'FINISHED'}
         except Exception as exc:
-            if output is not None:
+            for output in reversed(generated):
                 _remove_object_and_mesh(output)
-            for obj in list(context.selected_objects):
-                obj.select_set(False)
-            for obj in previous_selection:
-                if obj.name in bpy.data.objects:
-                    obj.select_set(True)
-            if previous_active and previous_active.name in bpy.data.objects:
-                context.view_layer.objects.active = previous_active
+            _restore_selection(context, originals, original_active)
             _action_report(
                 self, context,
-                'Smart Remesh not applied: ' + str(exc) + '. Source preserved.',
+                'Smart Remesh not applied: ' + str(exc)
+                + '. All original sources preserved.',
                 unsupported=1)
             return {'CANCELLED'}
-        finally:
-            if neutral is not None and neutral.users == 0:
-                bpy.data.meshes.remove(neutral)
 
 
-classes = (FISHHWB_OT_smart_remesh,)
+class FISHHWB_OT_load_game_profile(bpy.types.Operator):
+    bl_idname = 'fishhwb.load_game_profile'
+    bl_label = 'Use Game Target'
+    bl_description = 'Load settings into existing tools; does not modify any mesh'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        import json
+        scene = context.scene
+        profile = scene.fishhwb_workflow_profile
+        templates = {
+            'BALANCED': (10000, 66, 33, 500),
+            'DESKTOP': (25000, 70, 35, 750),
+            'MOBILE': (5000, 55, 22, 250),
+            'VR': (8000, 60, 25, 300),
+        }
+        try:
+            if profile == 'CUSTOM':
+                if not scene.fishhwb_saved_profile:
+                    raise ValueError(
+                        'No saved settings in this .blend yet. Set values '
+                        'and choose Save My Project first.')
+                values = json.loads(scene.fishhwb_saved_profile)
+                limits = (
+                    int(values['triangles']), int(values['lod1']),
+                    int(values['lod2']), int(values['collision']))
+            else:
+                limits = templates[profile]
+            if not (4 <= limits[0] <= 500000 and
+                    5 <= limits[1] <= 99 and 2 <= limits[2] <= 95 and
+                    4 <= limits[3] <= 100000):
+                raise ValueError('The saved profile contains invalid limits.')
+            (scene.fishhwb_triangle_target, scene.fishhwb_lod1_percent,
+             scene.fishhwb_lod2_percent,
+             scene.fishhwb_collision_target) = limits
+            self.report({'INFO'}, 'Game target loaded. No mesh was changed.')
+            return {'FINISHED'}
+        except (ValueError, KeyError, TypeError) as exc:
+            self.report({'WARNING'}, str(exc))
+            return {'CANCELLED'}
+
+
+class FISHHWB_OT_save_game_profile(bpy.types.Operator):
+    bl_idname = 'fishhwb.save_game_profile'
+    bl_label = 'Save My Project'
+    bl_description = 'Keep current optimisation settings in this .blend'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        import json
+        scene = context.scene
+        scene.fishhwb_saved_profile = json.dumps({
+            'triangles': int(scene.fishhwb_triangle_target),
+            'lod1': int(scene.fishhwb_lod1_percent),
+            'lod2': int(scene.fishhwb_lod2_percent),
+            'collision': int(scene.fishhwb_collision_target),
+        }, sort_keys=True)
+        scene.fishhwb_workflow_profile = 'CUSTOM'
+        self.report({'INFO'}, 'Saved to this .blend. Save the file to keep it.')
+        return {'FINISHED'}
+
+
+classes = (
+    FISHHWB_OT_smart_remesh,
+    FISHHWB_OT_load_game_profile,
+    FISHHWB_OT_save_game_profile,
+)
 
 
 def register():
