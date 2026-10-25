@@ -10,6 +10,16 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
+## Unreleased - whole-model Smart Remesh foundation
+
+- Added Active Mesh, Selected Meshes and Model Hierarchy scopes in the Blender sidebar.
+- Added deterministic per-component allocation under one strict combined triangle limit. Reject impossible models before producing outputs.
+- Added atomic multi-object output creation and cleanup, original selection recovery, per-object budget metadata and combined before/after reporting.
+- Added open/nonmanifold/disconnected-geometry safeguards. Such static meshes use a clearly reported surface-preserving simplification rather than unsafe voxel welding; deformation-sensitive exceptions reject over-budget inputs.
+- Added component-count and bounding-box validation. Reconstructed mesh results that lose connected pieces or exceed the limit are discarded.
+- Added standalone budget tests and multi-object Blender regressions; no Unity functionality or release version changed.
+- Known limitations: automatic retopology cannot guarantee animation-quality edge flow; surface-preserving fallback is not quad retopology; bounds and UV checks are conservative and do not replace visual review.
+
 ## Blender 8.8.3 | Smart Remesh and custom normal fix\n\n- Smart Remesh now projects supported authored `custom_normal` FLOAT_VECTOR POINT/CORNER attributes onto rebuilt topology rather than rejecting the mesh. Projected directions are normalized; source mesh and attribute data are unchanged.\n- Unsupported custom-normal storage and other unknown attributes still produce a clear, non-destructive rejection.\n- Restored the Blender extension version to the user-requested **8.8.3**; Unity remains **0.8.8**.\n\n### Smart Remesh and simplified UI (features retained from the previous development build)
 
 - Redesigned the Blender sidebar to show language, active mesh statistics and exactly three main operations: **Smart Remesh**, **Create LODs** and **Merge Materials**.
