@@ -56,6 +56,19 @@ Supported relative blendshapes, vertex groups and armature modifiers can be tran
 
 This is the first game-ready pipeline milestone. The LOD and materials buttons are still separate; automated normal baking, export certification and cross-engine scene optimisation are planned rather than shipped in this update.
 
+#### Included Smart Remesh detail protection
+
+The public sidebar still has **three primary actions**. Smart Remesh has an **Advanced Options** disclosure rather than another button. Its Detail Handling offers:
+- **Automatic** (default): rebuild safe closed meshes, otherwise preserve their surface.
+- **Preserve Important Edges**: avoid voxel welding when authored UV seams or sharp edges are present, and reject results whose *sampled* surface deviation exceeds 4% of source bounds diagonal.
+- **Preserve Surface**: favour topology-preserving mesh decimation instead of quad rebuilding. This is not quad retopology.
+
+To protect specific vertices, create a vertex group named `FISHHWB_Protect` and paint weights of at least 0.5. Smart Remesh avoids voxel reconstruction for marked geometry, biases the Decimate modifier toward preserving those vertices and **rejects** any simplification that removes or moves a marked vertex. The protected region may make a low triangle budget impossible. This mask also applies to existing LOD simplification. It is a vertex position guard, not a guarantee of untouched neighbouring faces, UV layouts or deformation.
+
+Generated results record an **approximate bidirectional vertex-to-surface deviation** relative to the source mesh diagonal. It samples mesh vertices, not all surface points, so it cannot prove that every thin detail, UV seam or face orientation is preserved. Model quality still requires inspection.
+
+The **CURRENT SELECTION** box includes an optional **Mesh Health Details** disclosure (no extra action button): it lists UV/material counts, n-gons, open/nonmanifold edges, degenerate faces and loose vertices. These are diagnostics, not automatic repairs.
+
 ### Create LODs
 
 Creates LOD0, LOD1 and LOD2 using existing safe triangle budgets. Source mesh is preserved; LODs are static-mesh only. Previous advanced preferences continue to exist but are deliberately not displayed in the main sidebar.
