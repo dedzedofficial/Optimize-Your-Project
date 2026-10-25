@@ -778,6 +778,8 @@ namespace FISHHWB.VROptimizer
                 () => { VRImportHistory.instance.SetProtection(VRImportHistory.SelectedPaths(), false); summary = T("detail_allowed"); Repaint(); });
             menu.AddItem(new GUIContent(T("reset_selected_history")), false,
                 () => { VRImportHistory.instance.Forget(VRImportHistory.SelectedPaths()); summary = T("history_reset"); Repaint(); });
+            menu.AddItem(new GUIContent("Preview Last Import Batch"), false,
+                () => { summary = VRImportHistory.instance.LastBatchPreview(); Repaint(); });
             menu.AddItem(new GUIContent(T("restore_import_batch")), false,
                 () => { summary = VRImportHistory.instance.RestoreLastBatch(); Repaint(); });
             menu.ShowAsContext();
