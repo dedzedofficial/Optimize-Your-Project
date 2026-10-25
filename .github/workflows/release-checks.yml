@@ -17,6 +17,8 @@ jobs:
           python3 -c 'import json; print("blender=" + json.load(open("version.json"))["blender"])' >> "$GITHUB_OUTPUT"
       - name: Validate versions, logos and packages
         run: python3 scripts/check_release.py
+      - name: Test deterministic global triangle budgets
+        run: python3 scripts/test_smart_budget.py
       - name: Build Blender 4.2+ extension ZIP
         run: python3 scripts/build_blender_extension.py
       - name: Upload Blender 4.2+ extension
