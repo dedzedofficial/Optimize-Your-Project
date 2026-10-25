@@ -3,8 +3,14 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "Blender"))
-from vr_optimizer_blender.smart_budget import allocate_triangle_budgets
+import importlib.util
+
+module_path = (Path(__file__).resolve().parents[1]
+               / "Blender" / "vr_optimizer_blender" / "smart_budget.py")
+spec = importlib.util.spec_from_file_location("smart_budget", module_path)
+budget_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(budget_module)
+allocate_triangle_budgets = budget_module.allocate_triangle_budgets
 
 
 class TriangleBudgetTests(unittest.TestCase):
