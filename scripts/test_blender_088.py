@@ -436,6 +436,39 @@ class SmartOptimize088Tests(unittest.TestCase):
         self.assertEqual(len(output.modifiers), 0)
         self.assertEqual(len(source.modifiers), 1)
 
+    def test_blend_file_game_target_presets_are_non_destructive(self):
+        source = self.cube()
+        original = [tuple(v.co) for v in source.data.vertices]
+        scene = bpy.context.scene
+        scene.fishhwb_workflow_profile = 'MOBILE'
+        self.assertEqual(bpy.ops.fishhwb.load_game_profile(), {'FINISHED'})
+        self.assertEqual(scene.fishhwb_triangle_target, 5000)
+        self.assertEqual(scene.fishhwb_lod1_percent, 55)
+        scene.fishhwb_triangle_target = 3456
+        self.assertEqual(bpy.ops.fishhwb.save_game_profile(), {'FINISHED'})
+        scene.fishhwb_triangle_target = 10000
+        self.assertEqual(bpy.ops.fishhwb.load_game_profile(), {'FINISHED'})
+        self.assertEqual(scene.fishhwb_triangle_target, 3456)
+        self.assertEqual(original, [tuple(v.co) for v in source.data.vertices])
+        self.assertEqual(len(bpy.data.objects), 1)
+
+    def test_local_job_history_remains_bounded(self):
+        obj = self.cube()
+        scene = bpy.context.scene
+        from optimize_your_project_v088.Blender.vr_optimizer_blender import _action_report
+        class Reporter:
+            def report(self, *args):
+                pass
+        for index in range(110):
+            _action_report(Reporter(), bpy.context, 'Local job ' + str(index),
+                           changed=1)
+        log = bpy.data.texts.get('FISHHWB_Optimization_History')
+        self.assertIsNotNone(log)
+        lines = log.as_string().splitlines()
+        self.assertLessEqual(len(lines), 100)
+        self.assertIn('Local job 109', lines[-1])
+        self.assertNotIn('Local job 0', log.as_string())
+
     def test_existing_buttons_expose_advanced_settings(self):
         scene = bpy.context.scene
         self.assertFalse(scene.fishhwb_smart_advanced)
