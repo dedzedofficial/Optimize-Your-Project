@@ -64,6 +64,10 @@ namespace FISHHWB.VROptimizer
                 if (!mesh) return;
                 var path = AssetDatabase.GetAssetPath(mesh);
                 if (string.IsNullOrEmpty(path) || !path.StartsWith("Assets/", StringComparison.Ordinal)) { unsupportedMeshes.Add(mesh); return; }
+                if (!root && !string.IsNullOrEmpty(folder)
+                    && !string.Equals(folder, "Assets", StringComparison.Ordinal)
+                    && !path.StartsWith(folder.TrimEnd('/') + "/", StringComparison.Ordinal))
+                    return; // Never alter out-of-scope scene references.
                 var importer = AssetImporter.GetAtPath(path) as ModelImporter;
                 if (!importer) { unsupportedMeshes.Add(mesh); return; }
                 if (!entries.TryGetValue(path, out var entry))
