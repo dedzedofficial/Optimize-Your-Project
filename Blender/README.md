@@ -39,19 +39,22 @@ Triangle Limit: ...
 
 ### Smart Remesh
 
-**Runs even when the mesh has fewer triangles than the target and on earlier generated Remesh objects.** The triangle setting is a best-effort **budget**, not a guarantee that a quad topology has precisely that many triangles.
+Smart Remesh now supports **Active Mesh**, **Selected Meshes** and **Model Hierarchy** scopes. The **Triangle Limit** is an enforced **combined maximum** for all meshes in the chosen scope, not a separate target for each mesh. A generated job is only accepted when every mesh passes the budget and geometry checks. The operation always preserves the source objects.
 
-- Creates a private output copy without modifying the selected mesh or previously generated results.
-- For static meshes, evaluates existing modifiers on the private copy before reconstruction. For rigged meshes, preserves supported armature modifiers instead of baking the pose.
-- Repairs near-duplicate vertices, degenerate/loose geometry and small boundary loops, and attempts to join nearby surface gaps with controlled voxel reconstruction. It does not indiscriminately connect legitimate separate mesh islands or seal every intentional opening.
-- Runs voxel reconstruction and attempts QuadriFlow quad retopology. If QuadriFlow fails but the voxel output is valid, it reports **voxel quad topology**, not QuadriFlow success.
-- Attempts triangle reduction or adds topology where useful, staying within safety and detail limits; subdivision does not invent new sculpted detail.
-- Reprojects supported UVs, material slots and face material IDs.
-- For compatible relative shape keys, vertex groups and armature modifiers, reprojects blendshape deltas and weights onto the new vertices, and restores the original relative shape-key configuration and supported animation bindings. **Review the result**: nearest-surface interpolation can distort weights, facial expression shapes, texture seams and details.
+- **Active Mesh:** process one mesh object.
+- **Selected Meshes:** process all selected meshes with one shared budget.
+- **Model Hierarchy:** choose a parent object (including an Empty) and process its descendant meshes, retaining their parent links.
+- Each disconnected island reserves a small minimum allocation. Impossible budgets fail before editing anything.
+- Each output records its assigned triangle ceiling, method and originating scope.
+- Complete jobs report the combined before/after triangle count. All results are selected together.
 
-Smart Remesh supports Blender's built-in `custom_normal` corner normals stored as compressed `INT16_2D` values (as well as authored `FLOAT_VECTOR` normals on POINT/CORNER). Native packed normal integers are never interpreted as XYZ vectors; the actual 3D corner directions are decoded through Blender's mesh API, reprojected, and encoded correctly for rebuilt topology. Blender 4.2's legacy custom split normals are also supported. Because topology and seams change, inspect shading, hard edges, deformation and UV seams before exporting. Other unknown custom mesh attributes still require a supported transfer method.\n\nUnsupported custom mesh attributes, absolute shape keys, shape-key NLA tracks and non-armature modifier stacks on rigged sources are **not silently destroyed**. The operator refuses those cases with a reason and preserves the source. Models with highly intricate geometry may require manual retopology and corrections.
+**Preserving geometry:** A single closed manifold component uses voxel reconstruction with optional QuadriFlow and guarded reduction, including UV/material/deformation reprojection where supported. Open, nonmanifold or disconnected meshes avoid dangerous voxel welding: static meshes use a **surface-preserving simplification fallback** instead. That fallback is **not** equivalent to new quad retopology and is explicitly reported. Deformed meshes with unsafe boundaries are kept intact only if their allocated budget already fits; otherwise the whole operation is rejected.
 
-Very high target limits (above 500,000) are rejected for memory/performance safety.
+**Validation:** Each generated mesh must have usable faces, meet its assigned triangle ceiling, preserve the number of disconnected surface components, and pass a coarse bounds check. Any failure removes *all* newly created outputs and restores the original selection. The validator cannot guarantee optimal animation edge flow or perfectly preserved UV appearance; inspect UV seams, normals, deformation and silhouettes before exporting.
+
+Supported relative blendshapes, vertex groups and armature modifiers can be transferred on closed sources. Unsupported custom attributes, absolute shape keys, shape-key NLA tracks and unsupported modifier combinations still fail with an explicit reason, leaving originals untouched. Target limits over 500,000 triangles are rejected for resource safety.
+
+This is the first game-ready pipeline milestone. The LOD and materials buttons are still separate; automated normal baking, export certification and cross-engine scene optimisation are planned rather than shipped in this update.
 
 ### Create LODs
 
