@@ -190,6 +190,10 @@ Optimize Your Project is free to use. The goal is to turn repetitive optimizatio
 
 Optional support: https://www.patreon.com/cw/DedZed
 
+## Repository text style
+
+Documentation, code comments, interface strings and other editable text files use ordinary hyphens or suitable punctuation instead of em dashes. The release workflow checks tracked text files with `python3 scripts/check_no_em_dashes.py`, so new occurrences are caught before merging.
+
 ## Safety
 
 Use source control or backups for production projects and inspect generated results in the target engine.
