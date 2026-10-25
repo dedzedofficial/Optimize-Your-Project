@@ -10,6 +10,11 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
+## Unreleased - documentation and source text style
+
+- Audited all repository text files on the game-ready feature branch for em dash punctuation. No existing occurrences required replacement.
+- Added `scripts/check_no_em_dashes.py` to the pull-request package checks. Future em dashes in tracked UTF-8 documentation, source, metadata and configuration files will fail the style check.
+
 ## Unreleased - indie-developer workflow improvements
 
 - Unity: local per-project Balanced/Desktop/Mobile/Standalone VR starting profiles under Advanced Settings; preview-only texture and model importer batches; model importer processing extended to a selected Assets folder.
