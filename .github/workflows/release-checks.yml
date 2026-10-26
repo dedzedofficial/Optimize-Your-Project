@@ -35,7 +35,7 @@ jobs:
         blender:
           - { series: '4.2', version: '4.2.9' }
           - { series: '4.5', version: '4.5.14' }
-          - { series: '5.2', version: '5.2.2' }
+          - { series: '5.2', version: '5.2.3' }
     steps:
       - uses: actions/checkout@v4
       - name: Install Blender runtime libraries
