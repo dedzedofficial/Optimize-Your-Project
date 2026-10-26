@@ -85,6 +85,59 @@ def _triangle_samples(mesh):
     return sample
 
 
+def _try_quadwild(output, context):
+    """Use an already installed QRemeshify add-on without bundling its binaries.
+
+    QRemeshify produces a separate object, so adopt only its geometry on our
+    private working copy. Do not modify or hide the source object.
+    """
+    if not (hasattr(context.scene, 'quadwild_props')
+            and hasattr(context.scene, 'quadpatches_props')):
+        return False
+    try:
+        if not bpy.ops.qremeshify.remesh.poll():
+            return False
+    except (AttributeError, RuntimeError):
+        return False
+
+    selected_before = list(context.selected_objects)
+    active_before = context.view_layer.objects.active
+    hidden_before = output.hide_get()
+    objects_before = set(bpy.data.objects)
+    try:
+        _v08._activate_only(context, output)
+        result = bpy.ops.qremeshify.remesh()
+        generated = [
+            obj for obj in bpy.data.objects
+            if obj not in objects_before and obj.type == 'MESH'
+            and not obj.hide_get() and len(obj.data.polygons) > 0
+        ]
+        if 'FINISHED' not in result or len(generated) != 1:
+            raise ValueError('QRemeshify did not return exactly one visible mesh.')
+        created = generated[0]
+        new_mesh = created.data.copy()
+        old_mesh = output.data
+        output.data = new_mesh
+        if old_mesh.users == 0:
+            bpy.data.meshes.remove(old_mesh)
+        return True
+    finally:
+        for obj in list(bpy.data.objects):
+            if obj not in objects_before:
+                mesh = obj.data if obj.type == 'MESH' else None
+                bpy.data.objects.remove(obj, do_unlink=True)
+                if mesh is not None and mesh.users == 0:
+                    bpy.data.meshes.remove(mesh)
+        output.hide_set(hidden_before)
+        for obj in context.selected_objects:
+            obj.select_set(False)
+        for obj in selected_before:
+            if obj.name in bpy.data.objects:
+                obj.select_set(True)
+        if active_before is not None and active_before.name in bpy.data.objects:
+            context.view_layer.objects.active = active_before
+
+
 def _retopology_geometry(output, context, target):
     """Quad-first topology rebuild, with voxel repair only when necessary.
 
@@ -103,6 +156,19 @@ def _retopology_geometry(output, context, target):
         (max(zs) - min(zs)) ** 2)
     if diagonal < 1e-6:
         raise ValueError('Mesh bounds are degenerate.')
+
+    # Prefer QuadWild if the user installed QRemeshify separately.
+    try:
+        if _try_quadwild(output, context):
+            actual = triangle_count(output.data)
+            if actual > target:
+                from . import _reduce_copy_to_limit
+                actual = _reduce_copy_to_limit(output, target, context)
+            return 'QUADWILD', actual
+    except Exception:
+        # Never discard the whole Smart Remesh job because an optional
+        # third-party solver is missing, incompatible, or failed.
+        pass
 
     _v08._activate_only(context, output)
     requested_quads = max(4, target // 2)
@@ -177,7 +243,7 @@ def _retopology_geometry(output, context, target):
                 from . import _reduce_copy_to_limit
                 actual = _reduce_copy_to_limit(output, target, context)
                 break
-    return quadriflow, actual
+    return (retopo_engine), actual
 
 
 def _reproject_custom_normals(source_mesh, target_mesh, sample, vertex_matches):
@@ -452,7 +518,7 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
             # Attribute source is independent of cleanup and reconstruction.
             neutral = output.data.copy()
             _v08._repair_static_mesh(output.data, fill_holes=True)
-            quadriflow, actual = _retopology_geometry(output, context, target)
+            retopo_engine, actual = _retopology_geometry(output, context, target)
             groups, shapes = _project_details(
                 source, output, neutral, deforming, context)
             output['fishhwb_generated_job'] = 'smart_remesh'
@@ -460,7 +526,7 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                 'QUADRIFLOW' if quadriflow else 'VOXEL_QUADS')
             output['fishhwb_triangle_target'] = target
             _select_only(context, output)
-            method = 'QuadriFlow' if quadriflow else 'voxel quad topology'
+            method = {'QUADWILD': 'QuadWild via QRemeshify', 'QUADRIFLOW': 'QuadriFlow', 'VOXEL_QUADS': 'voxel topology'}[retopo_engine]
             _action_report(
                 self, context,
                 f'Smart Remesh: {before:,} -> {actual:,} triangles '
