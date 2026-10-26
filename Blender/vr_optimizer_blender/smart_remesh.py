@@ -86,54 +86,73 @@ def _triangle_samples(mesh):
 
 
 def _retopology_geometry(output, context, target):
-    """Voxel weld/rebuild + optional QuadriFlow, with guarded budget refinement."""
+    """Quad-first topology rebuild, with voxel repair only when necessary.
+
+    QuadriFlow is Blender's built-in solver, not QRemeshify's QuadWild solver.
+    Never label a voxel result as finished quad retopology.
+    """
     source_mesh = output.data
-    if len(source_mesh.vertices) < 3 or len(source_mesh.polygons) == 0:
+    if len(source_mesh.vertices) < 3 or not source_mesh.polygons:
         raise ValueError('The mesh has no usable faces.')
     xs = [v.co.x for v in source_mesh.vertices]
     ys = [v.co.y for v in source_mesh.vertices]
     zs = [v.co.z for v in source_mesh.vertices]
     diagonal = math.sqrt(
-        (max(xs)-min(xs))**2 + (max(ys)-min(ys))**2 + (max(zs)-min(zs))**2)
+        (max(xs) - min(xs)) ** 2 +
+        (max(ys) - min(ys)) ** 2 +
+        (max(zs) - min(zs)) ** 2)
     if diagonal < 1e-6:
         raise ValueError('Mesh bounds are degenerate.')
-    cells = max(48.0, min(220.0, math.sqrt(max(64, target)) * 1.65))
-    source_mesh.remesh_voxel_size = max(1e-5, diagonal/cells)
-    source_mesh.remesh_voxel_adaptivity = 0.0
-    if hasattr(source_mesh, 'use_remesh_preserve_volume'):
-        source_mesh.use_remesh_preserve_volume = True
-    _v08._activate_only(context, output)
-    if 'FINISHED' not in bpy.ops.object.voxel_remesh():
-        raise ValueError('Voxel reconstruction was unavailable for this geometry.')
-    if not output.data.polygons:
-        raise ValueError('Reconstruction produced no faces.')
 
-    quadriflow = False
-    try:
-        result = bpy.ops.object.quadriflow_remesh(
+    _v08._activate_only(context, output)
+    requested_quads = max(4, target // 2)
+    first_error = None
+
+    def run_quadriflow():
+        outcome = bpy.ops.object.quadriflow_remesh(
             use_mesh_symmetry=False,
             use_preserve_sharp=True,
-            use_preserve_boundary=False,
+            use_preserve_boundary=True,
             preserve_attributes=True,
             smooth_normals=True,
             mode='FACES',
-            target_faces=max(4, target // 2),
+            target_faces=requested_quads,
             seed=0,
         )
-        quadriflow = 'FINISHED' in result
-    except Exception:
-        pass
-    if not output.data.polygons:
-        raise ValueError('Retopology produced no usable surface.')
+        if 'FINISHED' not in outcome or not output.data.polygons:
+            raise ValueError('QuadriFlow did not generate a usable mesh.')
+
+    try:
+        # Preserve the original surface features and open boundaries when
+        # QuadriFlow can work directly on the repaired source.
+        run_quadriflow()
+    except Exception as exc:
+        first_error = str(exc)
+        # Reconstruct only as a recovery step for noisy/nonmanifold input.
+        # Do not report success unless the second quad pass completes.
+        cells = max(48.0, min(220.0, math.sqrt(max(64, target)) * 1.65))
+        output.data.remesh_voxel_size = max(1e-5, diagonal / cells)
+        output.data.remesh_voxel_adaptivity = 0.0
+        if hasattr(output.data, 'use_remesh_preserve_volume'):
+            output.data.use_remesh_preserve_volume = True
+        try:
+            if 'FINISHED' not in bpy.ops.object.voxel_remesh():
+                raise ValueError('Voxel repair did not finish.')
+            if not output.data.polygons:
+                raise ValueError('Voxel repair produced no faces.')
+            run_quadriflow()
+        except Exception as recovery_exc:
+            raise ValueError(
+                'Quad retopology failed (direct: ' + first_error +
+                '; repaired: ' + str(recovery_exc) + '). '
+                'No substitute voxel topology was accepted.'
+            ) from recovery_exc
 
     actual = triangle_count(output.data)
     if actual > target:
         from . import _reduce_copy_to_limit
-        # Reduce only newly constructed topology, before any attribute transfer.
         actual = _reduce_copy_to_limit(output, target, context)
     elif actual < int(target * 0.60) and target > actual * 2:
-        # An increase in budget is useful for subsequent sculpt work, but
-        # never invent detail or imply a subdivided mesh is more accurate.
         for _ in range(2):
             if actual >= target * 0.65:
                 break
@@ -151,7 +170,7 @@ def _retopology_geometry(output, context, target):
                 from . import _reduce_copy_to_limit
                 actual = _reduce_copy_to_limit(output, target, context)
                 break
-    return quadriflow, actual
+    return True, actual
 
 
 def _reproject_custom_normals(source_mesh, target_mesh, sample, vertex_matches):
