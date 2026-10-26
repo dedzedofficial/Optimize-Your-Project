@@ -39,6 +39,9 @@ Triangle Limit: ...
 
 ### Smart Remesh
 
+**Blender 5.2.3 crash fix:** QuadriFlow native attribute preservation is disabled because the Blender mesh attribute reprojection path can crash with an access violation on some meshes. Smart Remesh instead reprojects supported UVs, materials, normals, weights and compatible shape keys in its own transfer stage after geometry rebuild. This workaround does not fix Blender's underlying native crash, and a Blender runtime regression test remains necessary.
+
+
 **Quality-first mode:** If QRemeshify is separately installed and its QuadWild operator is available, Smart Remesh attempts that quad solver first on a private working copy. QRemeshify is GPL-3.0 and its platform-specific binaries are not bundled with this project. If QRemeshify is missing, fails, or the object's scale/rotation is unsuitable for the current adapter, Smart Remesh uses Blender QuadriFlow and finally a labelled voxel fallback. QRemeshify's results are best-effort, not guaranteed on every mesh. Blender rigging, UVs and materials still require visual checking after data reprojection.
 
 
