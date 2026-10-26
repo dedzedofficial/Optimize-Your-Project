@@ -243,7 +243,7 @@ def _retopology_geometry(output, context, target):
                 from . import _reduce_copy_to_limit
                 actual = _reduce_copy_to_limit(output, target, context)
                 break
-    return (retopo_engine), actual
+    return ('QUADRIFLOW' if quadriflow else 'VOXEL_QUADS'), actual
 
 
 def _reproject_custom_normals(source_mesh, target_mesh, sample, vertex_matches):
@@ -523,7 +523,7 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                 source, output, neutral, deforming, context)
             output['fishhwb_generated_job'] = 'smart_remesh'
             output['fishhwb_retopology_status'] = (
-                'QUADRIFLOW' if quadriflow else 'VOXEL_QUADS')
+                retopo_engine)
             output['fishhwb_triangle_target'] = target
             _select_only(context, output)
             method = {'QUADWILD': 'QuadWild via QRemeshify', 'QUADRIFLOW': 'QuadriFlow', 'VOXEL_QUADS': 'voxel topology'}[retopo_engine]
