@@ -43,8 +43,8 @@ Triangle Limit: ...
 
 - Creates a private output copy without modifying the selected mesh or previously generated results.
 - For static meshes, evaluates existing modifiers on the private copy before reconstruction. For rigged meshes, preserves supported armature modifiers instead of baking the pose.
-- Repairs near-duplicate vertices, degenerate/loose geometry and small boundary loops, and attempts to join nearby surface gaps with controlled voxel reconstruction. It does not indiscriminately connect legitimate separate mesh islands or seal every intentional opening.
-- Runs voxel reconstruction and attempts QuadriFlow quad retopology. If QuadriFlow fails but the voxel output is valid, it reports **voxel quad topology**, not QuadriFlow success.
+- Repairs near-duplicate vertices, degenerate/loose geometry and small boundary loops, and attempts to join nearby surface gaps with controlled voxel reconstruction. Voxel recovery can bridge close islands or seal openings. Always inspect disconnected parts, cavities and thin surfaces.
+- Tries QuadriFlow directly on the repaired mesh first, retaining more of the surface and boundary features when successful. If that fails, reconstructs the surface with voxel remeshing and retries QuadriFlow. If the quad solver still fails but voxel reconstruction is usable, labels the output **voxel quad topology**, not QuadriFlow success. This is a best-effort Blender-native pipeline, not the QuadWild solver used by QRemeshify.
 - Attempts triangle reduction or adds topology where useful, staying within safety and detail limits; subdivision does not invent new sculpted detail.
 - Reprojects supported UVs, material slots and face material IDs.
 - For compatible relative shape keys, vertex groups and armature modifiers, reprojects blendshape deltas and weights onto the new vertices, and restores the original relative shape-key configuration and supported animation bindings. **Review the result**: nearest-surface interpolation can distort weights, facial expression shapes, texture seams and details.
@@ -63,7 +63,7 @@ The button uses the existing **Merge Textures** atlas workflow to reduce compati
 
 ## When the target cannot be safely met
 
-The resulting operator message explains whether it used QuadriFlow, kept voxel quads, or rejected an unsupported source. Inspect the output's wireframe, UVs, shape keys, bones/weights and shading before exporting it to Unity or VRChat.
+The resulting operator message explains whether it used QuadriFlow, kept voxel quads, or rejected an unsupported source. No automatic solver guarantees clean quad edge flow for every nonmanifold, extremely thin or multi-island mesh. Voxel fallback prioritizes producing usable game geometry over preserving exact fine details. Inspect the output's wireframe, UVs, shape keys, bones/weights and shading before exporting it to Unity or VRChat.
 
 ## Other retained tools
 
