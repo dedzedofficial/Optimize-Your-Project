@@ -108,6 +108,7 @@ def _try_quadwild(output, context):
     selected_before = list(context.selected_objects)
     active_before = context.view_layer.objects.active
     hidden_before = output.hide_get()
+    hide_viewport_before = output.hide_viewport
     objects_before = set(bpy.data.objects)
     try:
         _v08._activate_only(context, output)
@@ -115,7 +116,8 @@ def _try_quadwild(output, context):
         generated = [
             obj for obj in bpy.data.objects
             if obj not in objects_before and obj.type == 'MESH'
-            and not obj.hide_get() and len(obj.data.polygons) > 0
+            and len(obj.data.polygons) > 0
+            and obj.name.endswith(' Remeshed')
         ]
         if 'FINISHED' not in result or len(generated) != 1:
             raise ValueError('QRemeshify did not return exactly one visible mesh.')
@@ -133,6 +135,7 @@ def _try_quadwild(output, context):
                 bpy.data.objects.remove(obj, do_unlink=True)
                 if mesh is not None and mesh.users == 0:
                     bpy.data.meshes.remove(mesh)
+        output.hide_viewport = hide_viewport_before
         output.hide_set(hidden_before)
         for obj in context.selected_objects:
             obj.select_set(False)
@@ -163,6 +166,8 @@ def _retopology_geometry(output, context, target):
         raise ValueError('Mesh bounds are degenerate.')
 
     # Prefer QuadWild if the user installed QRemeshify separately.
+    # An unsuccessful optional solver must not leave partly modified input.
+    quadwild_backup = output.data.copy()
     try:
         if _try_quadwild(output, context):
             actual = triangle_count(output.data)
@@ -171,9 +176,13 @@ def _retopology_geometry(output, context, target):
                 actual = _reduce_copy_to_limit(output, target, context)
             return 'QUADWILD', actual
     except Exception:
-        # Never discard the whole Smart Remesh job because an optional
-        # third-party solver is missing, incompatible, or failed.
-        pass
+        damaged = output.data
+        output.data = quadwild_backup.copy()
+        if damaged.users == 0:
+            bpy.data.meshes.remove(damaged)
+    finally:
+        if quadwild_backup.users == 0:
+            bpy.data.meshes.remove(quadwild_backup)
 
     _v08._activate_only(context, output)
     requested_quads = max(4, target // 2)
@@ -213,7 +222,18 @@ def _retopology_geometry(output, context, target):
                 raise ValueError('Voxel repair did not finish.')
             if not output.data.polygons:
                 raise ValueError('Voxel repair produced no faces.')
-            run_quadriflow()
+            voxel_backup = output.data.copy()
+            try:
+                run_quadriflow()
+            except Exception:
+                damaged = output.data
+                output.data = voxel_backup.copy()
+                if damaged.users == 0:
+                    bpy.data.meshes.remove(damaged)
+                raise
+            finally:
+                if voxel_backup.users == 0:
+                    bpy.data.meshes.remove(voxel_backup)
         except Exception as recovery_exc:
             # For difficult geometry, keep a usable voxel reconstruction
             # while clearly identifying that it is not QuadriFlow output.
