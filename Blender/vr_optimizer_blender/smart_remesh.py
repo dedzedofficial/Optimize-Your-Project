@@ -184,7 +184,10 @@ def _retopology_geometry(output, context, target):
             use_mesh_symmetry=False,
             use_preserve_sharp=True,
             use_preserve_boundary=True,
-            # Blender 5.2.3 may access-violate while reprojecting attributes.\n            # _project_details handles transfers separately after remeshing.\n            preserve_attributes=False,\n            smooth_normals=True,
+            # Blender 5.2.3 may access-violate while reprojecting attributes.
+            # _project_details handles transfers separately after remeshing.
+            preserve_attributes=False,
+            smooth_normals=True,
             mode='FACES',
             target_faces=requested_quads,
             seed=0,
