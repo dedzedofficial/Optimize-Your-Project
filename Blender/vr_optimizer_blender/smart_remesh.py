@@ -91,6 +91,11 @@ def _try_quadwild(output, context):
     QRemeshify produces a separate object, so adopt only its geometry on our
     private working copy. Do not modify or hide the source object.
     """
+    # QRemeshify bakes scale and rotation into its OBJ export, which would
+    # double-transform this output. Keep those cases on the native path.
+    if (any(abs(float(v) - 1.0) > 1e-5 for v in output.scale)
+            or any(abs(float(v)) > 1e-5 for v in output.rotation_euler)):
+        return False
     if not (hasattr(context.scene, 'quadwild_props')
             and hasattr(context.scene, 'quadpatches_props')):
         return False
