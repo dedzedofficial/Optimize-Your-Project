@@ -203,7 +203,7 @@ class SmartOptimize088Tests(unittest.TestCase):
             sum(max(0, len(poly.vertices)-2) for poly in result.data.polygons), 100)
         self.assertEqual(result.get('fishhwb_remesh_method_used'), 'REBUILD')
         self.assertIn(result.get('fishhwb_retopology_status'),
-                      {'QUADRIFLOW', 'VOXEL_QUADS'})
+                      {'QUADWILD', 'QUADRIFLOW', 'VOXEL_QUADS'})
 
     def test_remesh_rebuild_protects_rigged_shape_key_workflow(self):
         bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0)
@@ -352,6 +352,13 @@ class SmartOptimize088Tests(unittest.TestCase):
         self.assertIn('arbitrary_uv_sensitive_data',
                       bpy.context.scene.fishhwb_last_result)
         self.assertIsNotNone(source.data.attributes.get(attr.name))
+
+    def test_quadriflow_does_not_use_native_attribute_reprojection(self):
+        import inspect
+        from optimize_your_project_v088.Blender.vr_optimizer_blender import smart_remesh
+        implementation = inspect.getsource(smart_remesh._retopology_geometry)
+        self.assertIn('preserve_attributes=False', implementation)
+        self.assertNotIn('preserve_attributes=True', implementation)
 
     def test_smart_remesh_always_retops_above_and_below_target(self):
         from optimize_your_project_v088.Blender.vr_optimizer_blender import triangle_count
