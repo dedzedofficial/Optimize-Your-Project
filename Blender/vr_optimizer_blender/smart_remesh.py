@@ -89,7 +89,7 @@ def _retopology_geometry(output, context, target):
     """Quad-first topology rebuild, with voxel repair only when necessary.
 
     QuadriFlow is Blender's built-in solver, not QRemeshify's QuadWild solver.
-    Never label a voxel result as finished quad retopology.
+    Voxel fallback is explicitly identified instead of claiming QuadriFlow success.
     """
     source_mesh = output.data
     if len(source_mesh.vertices) < 3 or not source_mesh.polygons:
@@ -142,11 +142,18 @@ def _retopology_geometry(output, context, target):
                 raise ValueError('Voxel repair produced no faces.')
             run_quadriflow()
         except Exception as recovery_exc:
-            raise ValueError(
-                'Quad retopology failed (direct: ' + first_error +
-                '; repaired: ' + str(recovery_exc) + '). '
-                'No substitute voxel topology was accepted.'
-            ) from recovery_exc
+            # For difficult geometry, keep a usable voxel reconstruction
+            # while clearly identifying that it is not QuadriFlow output.
+            if not output.data.polygons:
+                raise ValueError(
+                    'Quad retopology and voxel fallback failed: '
+                    + first_error + '; ' + str(recovery_exc)
+                ) from recovery_exc
+            quadriflow = False
+        else:
+            quadriflow = True
+    else:
+        quadriflow = True
 
     actual = triangle_count(output.data)
     if actual > target:
@@ -170,7 +177,7 @@ def _retopology_geometry(output, context, target):
                 from . import _reduce_copy_to_limit
                 actual = _reduce_copy_to_limit(output, target, context)
                 break
-    return True, actual
+    return quadriflow, actual
 
 
 def _reproject_custom_normals(source_mesh, target_mesh, sample, vertex_matches):
