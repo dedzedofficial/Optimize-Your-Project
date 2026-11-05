@@ -125,7 +125,7 @@ def analyze_components(vertex_count, faces):
 
 def compare_topology(source, candidate, *, max_triangles=None,
                      preserve_components=True, preserve_component_sizes=False,
-                     preserve_boundary=True,
+                     preserve_boundary=True, preserve_winding=True,
                      minimum_quad_percent=None):
     """Return explicit failed gates; caller must additionally verify UVs, skin,
     shape keys, normals, materials, surface deviation and posed deformation.
@@ -161,6 +161,9 @@ def compare_topology(source, candidate, *, max_triangles=None,
         or source["nonmanifold_edges"] != candidate["nonmanifold_edges"]
     ):
         failures.append("boundary/nonmanifold edge counts changed")
+    if preserve_winding and (candidate["winding_conflict_edges"] >
+                             source["winding_conflict_edges"]):
+        failures.append("new winding conflicts introduced")
     if minimum_quad_percent is not None and candidate["quad_percent"] < minimum_quad_percent:
         failures.append("quad percentage below target")
     return failures
