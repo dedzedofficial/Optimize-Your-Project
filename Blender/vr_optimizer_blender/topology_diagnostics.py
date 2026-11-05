@@ -80,6 +80,49 @@ def analyze_faces(vertex_count, faces):
     }
 
 
+def analyze_components(vertex_count, faces):
+    """Audit each vertex-connected island independently.
+
+    Returns deterministic per-component face statistics. Isolated vertices are
+    retained as zero-face components. This never merges disconnected shells.
+    """
+    if type(vertex_count) is not int or vertex_count < 0:
+        raise ValueError("Invalid vertex count")
+    polygons = [tuple(face) for face in faces]
+    # Reuse the central validator, including duplicate/out-of-range indices.
+    analyze_faces(vertex_count, polygons)
+    parent = list(range(vertex_count))
+
+    def root(index):
+        while parent[index] != index:
+            parent[index] = parent[parent[index]]
+            index = parent[index]
+        return index
+
+    for face in polygons:
+        for index in face[1:]:
+            a, b = root(face[0]), root(index)
+            if a != b:
+                parent[max(a, b)] = min(a, b)
+
+    vertices_by_root = {}
+    for index in range(vertex_count):
+        vertices_by_root.setdefault(root(index), []).append(index)
+    faces_by_root = {key: [] for key in vertices_by_root}
+    for face in polygons:
+        faces_by_root[root(face[0])].append(face)
+
+    reports = []
+    for key, indices in sorted(vertices_by_root.items()):
+        local = {value: offset for offset, value in enumerate(indices)}
+        local_faces = [tuple(local[v] for v in face)
+                       for face in faces_by_root[key]]
+        report = analyze_faces(len(indices), local_faces)
+        report["first_vertex"] = indices[0]
+        reports.append(report)
+    return reports
+
+
 def compare_topology(source, candidate, *, max_triangles=None,
                      preserve_components=True, preserve_component_sizes=False,
                      preserve_boundary=True,
