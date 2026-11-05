@@ -47,6 +47,12 @@ class PairPreviewTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             module.propose_pairs(self.vertices, self.faces, minimum_dot=float("nan"))
 
+    def test_concave_and_collinear_quads_rejected(self):
+        concave = [(0, 0, 0), (2, 0, 0), (0.5, 0.2, 0), (0, 2, 0)]
+        self.assertEqual(module.propose_pairs(concave, self.faces), [])
+        collinear = [(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0)]
+        self.assertEqual(module.propose_pairs(collinear, self.faces), [])
+
     def test_nonmanifold_edge_not_paired(self):
         vertices = self.vertices + [(0.5, 0.5, 1)]
         faces = self.faces + [(0, 2, 4)]
