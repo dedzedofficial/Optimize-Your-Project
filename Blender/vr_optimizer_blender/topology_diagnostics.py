@@ -68,7 +68,8 @@ def analyze_faces(vertex_count, faces):
 
 
 def compare_topology(source, candidate, *, max_triangles=None,
-                     preserve_components=True, preserve_boundary=True,
+                     preserve_components=True, preserve_component_sizes=False,
+                     preserve_boundary=True,
                      minimum_quad_percent=None):
     """Return explicit failed gates; caller must additionally verify UVs, skin,
     shape keys, normals, materials, surface deviation and posed deformation.
@@ -91,9 +92,12 @@ def compare_topology(source, candidate, *, max_triangles=None,
         failures.append("loose vertex count changed")
     if max_triangles is not None and candidate["triangle_equivalents"] > max_triangles:
         failures.append("triangle budget exceeded")
+    # Retopology may legitimately change per-island vertex counts.
+    # Require exact sizes only for index-preserving cleanup operations.
     if preserve_components and (
         source["components"] != candidate["components"]
-        or source["component_vertex_sizes"] != candidate["component_vertex_sizes"]
+        or (preserve_component_sizes and
+            source["component_vertex_sizes"] != candidate["component_vertex_sizes"])
     ):
         failures.append("vertex-connected component structure changed")
     if preserve_boundary and (
