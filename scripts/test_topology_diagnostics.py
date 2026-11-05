@@ -50,6 +50,16 @@ class TopologyGateTests(unittest.TestCase):
         self.assertIn("vertex-connected component structure changed",
                       module.compare_topology(before, after))
 
+    def test_retessellation_can_change_component_vertex_sizes(self):
+        before = module.analyze_faces(4, [(0, 1, 2, 3)])
+        after = module.analyze_faces(5, [(0, 1, 4, 3), (1, 2, 4)])
+        self.assertEqual(module.compare_topology(
+            before, after, preserve_boundary=False), [])
+        self.assertIn("vertex-connected component structure changed",
+                      module.compare_topology(
+                          before, after, preserve_boundary=False,
+                          preserve_component_sizes=True))
+
     def test_rejects_loose_vertex_change(self):
         before = module.analyze_faces(5, [(0, 1, 2)])
         after = module.analyze_faces(5, [(0, 1, 2), (2, 3, 4)])
