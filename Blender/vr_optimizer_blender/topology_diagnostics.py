@@ -19,7 +19,7 @@ def analyze_faces(vertex_count, faces):
     polygons = []
     for face in faces:
         face = tuple(face)
-        if len(face) < 3 or len(set(face)) < 3:
+        if len(face) < 3 or len(set(face)) != len(face):
             raise ValueError("Degenerate polygon vertex indices")
         if any(not isinstance(v, int) or v < 0 or v >= vertex_count
                for v in face):
