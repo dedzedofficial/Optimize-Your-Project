@@ -185,55 +185,174 @@ def _restore_selection(context, selected, active):
         context.view_layer.objects.active = active
 
 
+def _try_quadwild(output, context):
+    """Use an already installed QRemeshify add-on without bundling its binaries.
+
+    QRemeshify produces a separate object, so adopt only its geometry on our
+    private working copy. Do not modify or hide the source object.
+    """
+    # QRemeshify bakes scale and rotation into its OBJ export, which would
+    # double-transform this output. Keep those cases on the native path.
+    if (any(abs(float(v) - 1.0) > 1e-5 for v in output.scale)
+            or any(abs(float(v)) > 1e-5 for v in output.rotation_euler)):
+        return False
+    if not (hasattr(context.scene, 'quadwild_props')
+            and hasattr(context.scene, 'quadpatches_props')):
+        return False
+    try:
+        if not bpy.ops.qremeshify.remesh.poll():
+            return False
+    except (AttributeError, RuntimeError):
+        return False
+
+    selected_before = list(context.selected_objects)
+    active_before = context.view_layer.objects.active
+    hidden_before = output.hide_get()
+    hide_viewport_before = output.hide_viewport
+    objects_before = set(bpy.data.objects)
+    try:
+        _v08._activate_only(context, output)
+        result = bpy.ops.qremeshify.remesh()
+        generated = [
+            obj for obj in bpy.data.objects
+            if obj not in objects_before and obj.type == 'MESH'
+            and len(obj.data.polygons) > 0
+            and obj.name.endswith(' Remeshed')
+        ]
+        if 'FINISHED' not in result or len(generated) != 1:
+            raise ValueError('QRemeshify did not return exactly one visible mesh.')
+        created = generated[0]
+        new_mesh = created.data.copy()
+        old_mesh = output.data
+        output.data = new_mesh
+        if old_mesh.users == 0:
+            bpy.data.meshes.remove(old_mesh)
+        return True
+    finally:
+        for obj in list(bpy.data.objects):
+            if obj not in objects_before:
+                mesh = obj.data if obj.type == 'MESH' else None
+                bpy.data.objects.remove(obj, do_unlink=True)
+                if mesh is not None and mesh.users == 0:
+                    bpy.data.meshes.remove(mesh)
+        output.hide_viewport = hide_viewport_before
+        output.hide_set(hidden_before)
+        for obj in context.selected_objects:
+            obj.select_set(False)
+        for obj in selected_before:
+            if obj.name in bpy.data.objects:
+                obj.select_set(True)
+        if active_before is not None and active_before.name in bpy.data.objects:
+            context.view_layer.objects.active = active_before
+
+
 def _retopology_geometry(output, context, target):
-    """Voxel weld/rebuild + optional QuadriFlow, with guarded budget refinement."""
+    """Quad-first topology rebuild, with voxel repair only when necessary.
+
+    QuadriFlow is Blender's built-in solver, not QRemeshify's QuadWild solver.
+    Voxel fallback is explicitly identified instead of claiming QuadriFlow success.
+    """
     source_mesh = output.data
-    if len(source_mesh.vertices) < 3 or len(source_mesh.polygons) == 0:
+    if len(source_mesh.vertices) < 3 or not source_mesh.polygons:
         raise ValueError('The mesh has no usable faces.')
     xs = [v.co.x for v in source_mesh.vertices]
     ys = [v.co.y for v in source_mesh.vertices]
     zs = [v.co.z for v in source_mesh.vertices]
     diagonal = math.sqrt(
-        (max(xs)-min(xs))**2 + (max(ys)-min(ys))**2 + (max(zs)-min(zs))**2)
+        (max(xs) - min(xs)) ** 2 +
+        (max(ys) - min(ys)) ** 2 +
+        (max(zs) - min(zs)) ** 2)
     if diagonal < 1e-6:
         raise ValueError('Mesh bounds are degenerate.')
-    cells = max(48.0, min(220.0, math.sqrt(max(64, target)) * 1.65))
-    source_mesh.remesh_voxel_size = max(1e-5, diagonal/cells)
-    source_mesh.remesh_voxel_adaptivity = 0.0
-    if hasattr(source_mesh, 'use_remesh_preserve_volume'):
-        source_mesh.use_remesh_preserve_volume = True
-    _v08._activate_only(context, output)
-    if 'FINISHED' not in bpy.ops.object.voxel_remesh():
-        raise ValueError('Voxel reconstruction was unavailable for this geometry.')
-    if not output.data.polygons:
-        raise ValueError('Reconstruction produced no faces.')
 
-    quadriflow = False
+    # Prefer QuadWild if the user installed QRemeshify separately.
+    # An unsuccessful optional solver must not leave partly modified input.
+    quadwild_backup = output.data.copy()
     try:
-        result = bpy.ops.object.quadriflow_remesh(
+        if _try_quadwild(output, context):
+            actual = triangle_count(output.data)
+            if actual > target:
+                from . import _reduce_copy_to_limit
+                actual = _reduce_copy_to_limit(output, target, context)
+            return 'QUADWILD', actual
+    except Exception:
+        damaged = output.data
+        output.data = quadwild_backup.copy()
+        if damaged.users == 0:
+            bpy.data.meshes.remove(damaged)
+    finally:
+        if quadwild_backup.users == 0:
+            bpy.data.meshes.remove(quadwild_backup)
+
+    _v08._activate_only(context, output)
+    requested_quads = max(4, target // 2)
+    first_error = None
+
+    def run_quadriflow():
+        outcome = bpy.ops.object.quadriflow_remesh(
             use_mesh_symmetry=False,
             use_preserve_sharp=True,
-            use_preserve_boundary=False,
-            preserve_attributes=True,
+            use_preserve_boundary=True,
+            # Blender 5.2.3 may access-violate while reprojecting attributes.
+            # _project_details handles transfers separately after remeshing.
+            preserve_attributes=False,
             smooth_normals=True,
             mode='FACES',
-            target_faces=max(4, target // 2),
+            target_faces=requested_quads,
             seed=0,
         )
-        quadriflow = 'FINISHED' in result
-    except Exception:
-        pass
-    if not output.data.polygons:
-        raise ValueError('Retopology produced no usable surface.')
+        if 'FINISHED' not in outcome or not output.data.polygons:
+            raise ValueError('QuadriFlow did not generate a usable mesh.')
+
+    try:
+        # Preserve the original surface features and open boundaries when
+        # QuadriFlow can work directly on the repaired source.
+        run_quadriflow()
+    except Exception as exc:
+        first_error = str(exc)
+        # Reconstruct only as a recovery step for noisy/nonmanifold input.
+        # Do not report success unless the second quad pass completes.
+        cells = max(48.0, min(220.0, math.sqrt(max(64, target)) * 1.65))
+        output.data.remesh_voxel_size = max(1e-5, diagonal / cells)
+        output.data.remesh_voxel_adaptivity = 0.0
+        if hasattr(output.data, 'use_remesh_preserve_volume'):
+            output.data.use_remesh_preserve_volume = True
+        try:
+            if 'FINISHED' not in bpy.ops.object.voxel_remesh():
+                raise ValueError('Voxel repair did not finish.')
+            if not output.data.polygons:
+                raise ValueError('Voxel repair produced no faces.')
+            voxel_backup = output.data.copy()
+            try:
+                run_quadriflow()
+            except Exception:
+                damaged = output.data
+                output.data = voxel_backup.copy()
+                if damaged.users == 0:
+                    bpy.data.meshes.remove(damaged)
+                raise
+            finally:
+                if voxel_backup.users == 0:
+                    bpy.data.meshes.remove(voxel_backup)
+        except Exception as recovery_exc:
+            # For difficult geometry, keep a usable voxel reconstruction
+            # while clearly identifying that it is not QuadriFlow output.
+            if not output.data.polygons:
+                raise ValueError(
+                    'Quad retopology and voxel fallback failed: '
+                    + first_error + '; ' + str(recovery_exc)
+                ) from recovery_exc
+            quadriflow = False
+        else:
+            quadriflow = True
+    else:
+        quadriflow = True
 
     actual = triangle_count(output.data)
     if actual > target:
         from . import _reduce_copy_to_limit
-        # Reduce only newly constructed topology, before any attribute transfer.
         actual = _reduce_copy_to_limit(output, target, context)
     elif actual < int(target * 0.60) and target > actual * 2:
-        # An increase in budget is useful for subsequent sculpt work, but
-        # never invent detail or imply a subdivided mesh is more accurate.
         for _ in range(2):
             if actual >= target * 0.65:
                 break
@@ -251,7 +370,7 @@ def _retopology_geometry(output, context, target):
                 from . import _reduce_copy_to_limit
                 actual = _reduce_copy_to_limit(output, target, context)
                 break
-    return quadriflow, actual
+    return ('QUADRIFLOW' if quadriflow else 'VOXEL_QUADS'), actual
 
 
 def _reproject_custom_normals(source_mesh, target_mesh, sample, vertex_matches):
@@ -586,15 +705,14 @@ class FISHHWB_OT_smart_remesh(bpy.types.Operator):
                             output.modifiers.clear()
                         neutral = output.data.copy()
                         _v08._repair_static_mesh(output.data, fill_holes=True)
-                        quadriflow, actual = _retopology_geometry(
+                        retopo_engine, actual = _retopology_geometry(
                             output, context, ceiling)
                         groups, shapes = _project_details(
                             source, output, neutral, deforming, context)
                         if (neutral.attributes.get('custom_normal')
                                 or neutral.has_custom_normals):
                             normals_reprojected += 1
-                        method = ('QUADRIFLOW' if quadriflow
-                                  else 'VOXEL_QUADS')
+                        method = retopo_engine
 
                     actual = _verify_result(
                         output.data, source.data, ceiling, islands, bounds)

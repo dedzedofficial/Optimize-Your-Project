@@ -39,6 +39,8 @@ Triangle Limit: ...
 
 ### Smart Remesh
 
+**Current quad solver behaviour (integrated from main):** The optional QuadWild path requires a separately installed QRemeshify package; no GPL-3.0 solver binary is bundled. If unavailable, Blender QuadriFlow is attempted first on a private repaired surface and then after voxel recovery. Voxel-only results are labelled as such, never presented as successful QuadriFlow. Blender 5.2.3 can crash in native QuadriFlow attribute reprojection, so Smart Remesh uses `preserve_attributes=False` and transfers supported UVs, material assignment, custom normals, vertex groups and relative shape keys separately. Geometry and attribute results still require inspection.
+
 Smart Remesh now supports **Active Mesh**, **Selected Meshes** and **Model Hierarchy** scopes. The **Triangle Limit** is an enforced **combined maximum** for all meshes in the chosen scope, not a separate target for each mesh. A generated job is only accepted when every mesh passes the budget and geometry checks. The operation always preserves the source objects.
 
 - **Active Mesh:** process one mesh object.
