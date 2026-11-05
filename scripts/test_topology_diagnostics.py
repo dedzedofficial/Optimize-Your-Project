@@ -50,8 +50,24 @@ class TopologyGateTests(unittest.TestCase):
         self.assertIn("vertex-connected component structure changed",
                       module.compare_topology(before, after))
 
+    def test_rejects_loose_vertex_change(self):
+        before = module.analyze_faces(5, [(0, 1, 2)])
+        after = module.analyze_faces(5, [(0, 1, 2), (2, 3, 4)])
+        self.assertIn("loose vertex count changed",
+                      module.compare_topology(before, after))
+
+    def test_invalid_thresholds(self):
+        report = module.analyze_faces(3, [(0, 1, 2)])
+        for value in (float("nan"), float("inf"), -1, True):
+            with self.assertRaises(ValueError):
+                module.compare_topology(report, report, max_triangles=value)
+        for value in (float("nan"), 101, -1, True):
+            with self.assertRaises(ValueError):
+                module.compare_topology(report, report,
+                                        minimum_quad_percent=value)
+
     def test_rejects_bad_indices(self):
-        for faces in [[(0, 1, 9)], [(0, 0, 1)], [(0, 1)], [(-1, 1, 2)]]:
+        for faces in [[(0, 1, 9)], [(0, 0, 1)], [(0, 1)], [(-1, 1, 2)], [(0, 1, True)]]:
             with self.assertRaises(ValueError):
                 module.analyze_faces(3, faces)
 
