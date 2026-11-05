@@ -23,6 +23,8 @@ jobs:
         run: python3 scripts/test_smart_budget.py
       - name: Test topology diagnostic gates
         run: python3 scripts/test_topology_diagnostics.py
+      - name: Test seam-aware triangle-pair preview
+        run: python3 scripts/test_triangle_pair_preview.py
       - name: Build Blender 4.2+ extension ZIP
         run: python3 scripts/build_blender_extension.py
       - name: Upload Blender 4.2+ extension
