@@ -85,6 +85,26 @@ namespace FISHHWB.VROptimizer
             Persist();
         }
 
+        internal string LastBatchPreview()
+        {
+            if (lastBatch == null || lastBatch.Count == 0)
+                return "No restorable import batch is recorded for this project.";
+            var lines = new List<string>();
+            int missing = 0;
+            foreach (var record in lastBatch)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(record.Guid);
+                if (string.IsNullOrEmpty(path)) { missing++; continue; }
+                if (lines.Count < 15) lines.Add(record.Job + ": " + path);
+            }
+            return "Last import batch: " + lastBatch.Count
+                + " change(s) eligible for fingerprint-checked restore."
+                + "\n" + string.Join("\n", lines.ToArray())
+                + (lastBatch.Count > 15 ? "\\n... more not shown" : "")
+                + (missing > 0 ? "\\nMissing assets: " + missing : "")
+                + "\\nRestoring checks for later source/importer edits. No changes made.";
+        }
+
         internal string RestoreLastBatch()
         {
             int restored = 0, conflicts = 0, failed = 0;

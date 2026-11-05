@@ -182,6 +182,25 @@ def _draw_core_080(self, context):
         selection.label(text=f"Faces: {len(obj.data.polygons):,}")
         if len(meshes) > 1:
             selection.label(text=f"{len(meshes)} mesh objects selected")
+        selection.prop(
+            context.scene, 'fishhwb_show_mesh_inspector',
+            text='Mesh Health Details',
+            icon=('TRIA_DOWN' if context.scene.fishhwb_show_mesh_inspector
+                  else 'TRIA_RIGHT'), emboss=False)
+        if context.scene.fishhwb_show_mesh_inspector:
+            from .Blender.vr_optimizer_blender import mesh_quality
+            stats = mesh_quality.inspect_mesh(obj.data)
+            selection.label(text=(
+                f"UVs: {stats['uv_layers']}  |  "
+                f"Materials: {stats['material_slots']}  |  "
+                f"N-gons: {stats['ngons']}"))
+            warnings = mesh_quality.summary_lines(stats)
+            if warnings:
+                for issue in warnings[:5]:
+                    selection.label(text=issue, icon='ERROR')
+            else:
+                selection.label(text='No basic mesh-health warnings', icon='CHECKMARK')
+            selection.label(text='Inspect shading and UV quality manually', icon='INFO')
     else:
         selection.label(text=_addon.tr(context, 'select_mesh'), icon='INFO')
 
@@ -190,16 +209,86 @@ def _draw_core_080(self, context):
     row.scale_y = 1.55
     row.operator('fishhwb.smart_remesh', text='SMART REMESH', icon='MOD_REMESH')
     smart.prop(context.scene, 'fishhwb_triangle_target', text='Triangle Limit')
+    smart.prop(context.scene, 'fishhwb_remesh_scope', text='Scope')
+    smart.prop(
+        context.scene, 'fishhwb_smart_advanced', text='Advanced Options',
+        icon=('TRIA_DOWN' if context.scene.fishhwb_smart_advanced
+              else 'TRIA_RIGHT'), emboss=False)
+    if context.scene.fishhwb_smart_advanced:
+        smart.prop(context.scene, 'fishhwb_remesh_quality',
+                   text='Detail Handling')
+        smart.label(text='Mark vertices with FISHHWB_Protect to keep them', icon='INFO')
+        smart.prop(context.scene, 'fishhwb_workflow_profile',
+                   text='Game Target')
+        line = smart.row(align=True)
+        line.operator('fishhwb.load_game_profile', text='Apply Settings',
+                      icon='IMPORT')
+        line.operator('fishhwb.save_game_profile', text='Save My Project',
+                      icon='FILE_TICK')
+        # Non-destructive estimate; actual output can be smaller or refused.
+        source_objs = []
+        scope = context.scene.fishhwb_remesh_scope
+        if scope == 'SELECTED':
+            source_objs = [o for o in context.selected_objects if o.type == 'MESH']
+        elif scope == 'HIERARCHY' and obj:
+            source_objs = [o for o in [obj, *obj.children_recursive] if o.type == 'MESH']
+        elif obj and obj.type == 'MESH':
+            source_objs = [obj]
+        if source_objs:
+            before = sum(_addon.triangle_count(o.data) for o in source_objs)
+            budget = context.scene.fishhwb_triangle_target
+            smart.label(text=f"Preview: {len(source_objs)} mesh(es), {before:,} tris")
+            smart.label(text=f"Combined maximum: {budget:,} tris")
+            smart.label(text='No geometry changes until you run Smart Remesh',
+                        icon='INFO')
 
-    row = layout.row()
+    lod = layout.box()
+    row = lod.row()
     row.scale_y = 1.45
     row.operator(
         'fishhwb.create_lods_selected' if len(meshes) > 1 else 'fishhwb.create_lods',
         text='CREATE LODS', icon='MOD_DECIM')
+    lod.prop(
+        context.scene, 'fishhwb_lod_advanced', text='LOD & Collision Options',
+        icon=('TRIA_DOWN' if context.scene.fishhwb_lod_advanced
+              else 'TRIA_RIGHT'), emboss=False)
+    if context.scene.fishhwb_lod_advanced:
+        lod.prop(context.scene, 'fishhwb_lod1_percent', text='LOD1 Detail %')
+        lod.prop(context.scene, 'fishhwb_lod2_percent', text='LOD2 Detail %')
+        lod.prop(context.scene, 'fishhwb_apply_modifiers',
+                 text='Apply Existing Modifiers')
+        lod.prop(context.scene, 'fishhwb_create_collision_proxy',
+                 text='Generate Collider')
+        if context.scene.fishhwb_create_collision_proxy:
+            lod.prop(context.scene, 'fishhwb_collision_shape', text='Collider Type')
+            lod.prop(context.scene, 'fishhwb_collision_target',
+                     text='Collider Triangle Limit')
+        lod.label(text='Preview generated LODs (sources unchanged):')
+        preview = lod.row(align=True)
+        for level in range(3):
+            action = preview.operator('fishhwb.preview_lod',
+                                      text=f'LOD{level}')
+            action.level = level
+        if obj and obj.get('fishhwb_lod_level') is not None:
+            deviation = obj.get('fishhwb_surface_deviation_percent')
+            lod.label(text=f'Viewing LOD{obj.get("fishhwb_lod_level")}: '
+                           f'{_addon.triangle_count(obj.data):,} triangles')
+            if deviation is not None:
+                lod.label(text=f'Approx. surface deviation: {deviation:.2f}%')
 
-    row = layout.row()
+    materials = layout.box()
+    row = materials.row()
     row.scale_y = 1.45
-    row.operator('fishhwb.merge_textures', text='MERGE MATERIALS', icon='MATERIAL')
+    row.operator('fishhwb.merge_textures',
+                 text='MERGE MATERIALS', icon='MATERIAL')
+    materials.prop(
+        context.scene, 'fishhwb_material_advanced',
+        text='Material Options',
+        icon=('TRIA_DOWN' if context.scene.fishhwb_material_advanced
+              else 'TRIA_RIGHT'), emboss=False)
+    if context.scene.fishhwb_material_advanced:
+        materials.prop(context.scene, 'fishhwb_atlas_size',
+                       text='Texture Atlas Resolution')
 
 
 

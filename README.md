@@ -96,6 +96,25 @@ The cleaner is intentionally conservative:
 
 Use source control or a backup before any permanent cleanup.
 
+## Indie-developer productivity upgrade (unreleased)
+
+The public interfaces retain their existing primary tools. More capable checks and workflow settings live **inside existing Review, Advanced Settings, Smart Remesh, Create LODs and Merge Materials sections**.
+
+**Unity:**
+- Project Review sorts critical findings first; **Scan Project** includes read-only texture-waste checks (exact duplicate source files, potential alpha/mip issues) and build-readiness checks (missing scripts on loaded scenes/prefabs, missing shaders, model scale, submesh/bindpose counts, UV0 when readable). These findings are warnings, not automatic destructive fixes or proof of FPS impact.
+- Under **More Review Options**, review build readiness or texture waste separately, find serialized asset dependents (max 4,000 candidate assets per search; runtime string references cannot be proven), and export a prioritised CSV report to a user-chosen local path.
+- Under existing **Advanced Settings**, use Balanced / Desktop / Mobile / Standalone VR presets, or save a project-specific preset in local EditorPrefs. Applying a preset changes settings only; no assets are modified.
+- **Preview Import Changes Only** previews supported counts before running existing texture and model import actions. In Project view, **Optimize Model Imports** now covers imported models inside the selected Assets folder, not only loaded scenes. The existing importer history and fingerprint-checked restore remain available; its most recent batch has a read-only preview in Batch Options.
+- Performance claims remain evidence-based: counts and editor importer data are observed, while runtime GPU memory, draw calls and framerate require player profiling. The optional existing memory trial measures sampled editor native assets and rejects imports with no verified improvement.
+
+**Blender:** Still only three main actions. Smart Remesh's advanced options now include saved **game-target starting points** (stored in the .blend), a preflight selection/triangle-count preview and explicit detail-protection modes. Create LODs' existing advanced options include a **LOD0/1/2 viewport preview** and measured approximate surface-deviation percentages; the source mesh is never hidden or modified by preview. Local job reports are written to a bounded Text datablock (`FISHHWB_Optimization_History`, most recent 100 lines).
+
+**Safety:** No new background agent, telemetry, online service or autonomous editing. All new diagnostic views are read-only; existing explicit Optimize actions require their existing approvals. Use source control before large changes.
+
+## Game-ready Smart Remesh development update
+
+The upcoming Blender Smart Remesh update keeps its three main sidebar buttons and adds hidden-when-closed advanced controls for detailed edge protection, Mesh Health inspection, LOD quality reporting, optional box colliders and material atlas settings. The Smart Remesh update adds three scopes (Active Mesh, Selected Meshes and Model Hierarchy), a strict combined triangle ceiling, whole-batch rollback on failure and geometry safeguards that reject disappearing parts. Open or disconnected meshes use a reported surface-preserving fallback rather than risking a destructive voxel rebuild. See the [Blender guide](Blender/README.md) for supported inputs, safeguards and remaining limitations.
+
 ## Blender v8.8.3
 
 **The Blender sidebar is now limited to the requested actions:** Language selector, current mesh with triangle/vertex/face counts, **Smart Remesh** with Triangle Limit, **Create LODs** and **Merge Materials**. Smart Remesh now attempts rebuilding regardless of previous Remesh history or input triangle count and can reproject supported relative blendshapes, UVs, vertex weights and armature modifiers onto rebuilt topology. The original is never modified. See [the Blender guide](Blender/README.md) for safeguards and unsupported cases.
@@ -170,6 +189,10 @@ The project will continue to favor useful single-button jobs over large settings
 Optimize Your Project is free to use. The goal is to turn repetitive optimization jobs into clear, useful actions without putting basic developer help behind a paywall.
 
 Optional support: https://www.patreon.com/cw/DedZed
+
+## Repository text style
+
+Documentation, code comments, interface strings and other editable text files use ordinary hyphens or suitable punctuation instead of em dashes. The release workflow checks tracked text files with `python3 scripts/check_no_em_dashes.py`, so new occurrences are caught before merging.
 
 ## Safety
 

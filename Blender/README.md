@@ -39,25 +39,45 @@ Triangle Limit: ...
 
 ### Smart Remesh
 
-**Blender 5.2.3 crash fix:** QuadriFlow native attribute preservation is disabled because the Blender mesh attribute reprojection path can crash with an access violation on some meshes. Smart Remesh instead reprojects supported UVs, materials, normals, weights and compatible shape keys in its own transfer stage after geometry rebuild. This workaround does not fix Blender's underlying native crash, and a Blender runtime regression test remains necessary.
+**Current quad solver behaviour (integrated from main):** The optional QuadWild path requires a separately installed QRemeshify package; no GPL-3.0 solver binary is bundled. If unavailable, Blender QuadriFlow is attempted first on a private repaired surface and then after voxel recovery. Voxel-only results are labelled as such, never presented as successful QuadriFlow. Blender 5.2.3 can crash in native QuadriFlow attribute reprojection, so Smart Remesh uses `preserve_attributes=False` and transfers supported UVs, material assignment, custom normals, vertex groups and relative shape keys separately. Geometry and attribute results still require inspection.
 
+Smart Remesh now supports **Active Mesh**, **Selected Meshes** and **Model Hierarchy** scopes. The **Triangle Limit** is an enforced **combined maximum** for all meshes in the chosen scope, not a separate target for each mesh. A generated job is only accepted when every mesh passes the budget and geometry checks. The operation always preserves the source objects.
 
-**Quality-first mode:** If QRemeshify is separately installed and its QuadWild operator is available, Smart Remesh attempts that quad solver first on a private working copy. QRemeshify is GPL-3.0 and its platform-specific binaries are not bundled with this project. If QRemeshify is missing, fails, or the object's scale/rotation is unsuitable for the current adapter, Smart Remesh uses Blender QuadriFlow and finally a labelled voxel fallback. QRemeshify's results are best-effort, not guaranteed on every mesh. Blender rigging, UVs and materials still require visual checking after data reprojection.
+- **Active Mesh:** process one mesh object.
+- **Selected Meshes:** process all selected meshes with one shared budget.
+- **Model Hierarchy:** choose a parent object (including an Empty) and process its descendant meshes, retaining their parent links.
+- Each disconnected island reserves a small minimum allocation. Impossible budgets fail before editing anything.
+- Each output records its assigned triangle ceiling, method and originating scope.
+- Complete jobs report the combined before/after triangle count. All results are selected together.
 
+**Preserving geometry:** A single closed manifold component uses voxel reconstruction with optional QuadriFlow and guarded reduction, including UV/material/deformation reprojection where supported. Open, nonmanifold or disconnected meshes avoid dangerous voxel welding: static meshes use a **surface-preserving simplification fallback** instead. That fallback is **not** equivalent to new quad retopology and is explicitly reported. Deformed meshes with unsafe boundaries are kept intact only if their allocated budget already fits; otherwise the whole operation is rejected.
 
-**Runs even when the mesh has fewer triangles than the target and on earlier generated Remesh objects.** The triangle setting is a best-effort **budget**, not a guarantee that a quad topology has precisely that many triangles.
+**Validation:** Each generated mesh must have usable faces, meet its assigned triangle ceiling, preserve the number of disconnected surface components, and pass a coarse bounds check. Any failure removes *all* newly created outputs and restores the original selection. The validator cannot guarantee optimal animation edge flow or perfectly preserved UV appearance; inspect UV seams, normals, deformation and silhouettes before exporting.
 
-- Creates a private output copy without modifying the selected mesh or previously generated results.
-- For static meshes, evaluates existing modifiers on the private copy before reconstruction. For rigged meshes, preserves supported armature modifiers instead of baking the pose.
-- Repairs near-duplicate vertices, degenerate/loose geometry and small boundary loops, and attempts to join nearby surface gaps with controlled voxel reconstruction. Voxel recovery can bridge close islands or seal openings. Always inspect disconnected parts, cavities and thin surfaces.
-- After the optional QuadWild pass, tries QuadriFlow directly on the repaired mesh first, retaining more of the surface and boundary features when successful. If that fails, reconstructs the surface with voxel remeshing and retries QuadriFlow. If the quad solver still fails but voxel reconstruction is usable, labels the output **voxel quad topology**, not QuadriFlow success. This is a best-effort Blender-native pipeline, not the QuadWild solver used by QRemeshify.
-- Attempts triangle reduction or adds topology where useful, staying within safety and detail limits; subdivision does not invent new sculpted detail.
-- Reprojects supported UVs, material slots and face material IDs.
-- For compatible relative shape keys, vertex groups and armature modifiers, reprojects blendshape deltas and weights onto the new vertices, and restores the original relative shape-key configuration and supported animation bindings. **Review the result**: nearest-surface interpolation can distort weights, facial expression shapes, texture seams and details.
+Supported relative blendshapes, vertex groups and armature modifiers can be transferred on closed sources. Unsupported custom attributes, absolute shape keys, shape-key NLA tracks and unsupported modifier combinations still fail with an explicit reason, leaving originals untouched. Target limits over 500,000 triangles are rejected for resource safety.
 
-Smart Remesh supports Blender's built-in `custom_normal` corner normals stored as compressed `INT16_2D` values (as well as authored `FLOAT_VECTOR` normals on POINT/CORNER). Native packed normal integers are never interpreted as XYZ vectors; the actual 3D corner directions are decoded through Blender's mesh API, reprojected, and encoded correctly for rebuilt topology. Blender 4.2's legacy custom split normals are also supported. Because topology and seams change, inspect shading, hard edges, deformation and UV seams before exporting. Other unknown custom mesh attributes still require a supported transfer method.\n\nUnsupported custom mesh attributes, absolute shape keys, shape-key NLA tracks and non-armature modifier stacks on rigged sources are **not silently destroyed**. The operator refuses those cases with a reason and preserves the source. Models with highly intricate geometry may require manual retopology and corrections.
+This is the first game-ready pipeline milestone. The LOD and materials buttons are still separate; automated normal baking, export certification and cross-engine scene optimisation are planned rather than shipped in this update.
 
-Very high target limits (above 500,000) are rejected for memory/performance safety.
+#### Included Smart Remesh detail protection
+
+The public sidebar still has **three primary actions**. Smart Remesh has an **Advanced Options** disclosure rather than another button. Its Detail Handling offers:
+- **Automatic** (default): rebuild safe closed meshes, otherwise preserve their surface.
+- **Preserve Important Edges**: avoid voxel welding when authored UV seams or sharp edges are present, and reject results whose *sampled* surface deviation exceeds 4% of source bounds diagonal.
+- **Preserve Surface**: favour topology-preserving mesh decimation instead of quad rebuilding. This is not quad retopology.
+
+To protect specific vertices, create a vertex group named `FISHHWB_Protect` and paint weights of at least 0.5. Smart Remesh avoids voxel reconstruction for marked geometry, biases the Decimate modifier toward preserving those vertices and **rejects** any simplification that removes or moves a marked vertex. The protected region may make a low triangle budget impossible. This mask also applies to existing LOD simplification. It is a vertex position guard, not a guarantee of untouched neighbouring faces, UV layouts or deformation.
+
+Generated results record an **approximate bidirectional vertex-to-surface deviation** relative to the source mesh diagonal. It samples mesh vertices, not all surface points, so it cannot prove that every thin detail, UV seam or face orientation is preserved. Model quality still requires inspection.
+
+The **CURRENT SELECTION** box includes an optional **Mesh Health Details** disclosure (no extra action button): it lists UV/material counts, n-gons, open/nonmanifold edges, degenerate faces and loose vertices. These are diagnostics, not automatic repairs.
+
+#### Saved settings and preview
+
+Open **Smart Remesh → Advanced Options** to load a Balanced, Desktop, Mobile or Standalone VR **starting preset**. Targets are examples, not verified limits for every game. **Save My Project** records the current triangle, LOD and collider limits in the active .blend file; save the .blend to retain them. Applying a preset never runs optimisation. With advanced settings expanded, the current scope and combined pre-optimisation triangle count appear beneath the button.
+
+**Create LODs → LOD & Collision Options** also includes LOD0/LOD1/LOD2 preview selectors. After running Create LODs, use these to switch visibility among the *generated* LOD objects. The original object is deliberately not hidden, so hide the original manually if its geometry overlaps the comparison. Preview does not modify mesh data. LOD outputs record approximate surface deviation for visual review.
+
+A bounded **FISHHWB_Optimization_History** Text datablock stores the latest 100 action summaries locally inside the .blend, including warnings and preservation reports.
 
 ### Create LODs
 
@@ -69,7 +89,7 @@ The button uses the existing **Merge Textures** atlas workflow to reduce compati
 
 ## When the target cannot be safely met
 
-The resulting operator message explains whether it used QuadWild, QuadriFlow, kept voxel quads, or rejected an unsupported source. No automatic solver guarantees clean quad edge flow for every nonmanifold, extremely thin or multi-island mesh. Voxel fallback prioritizes producing usable game geometry over preserving exact fine details. Inspect the output's wireframe, UVs, shape keys, bones/weights and shading before exporting it to Unity or VRChat.
+The resulting operator message explains whether it used QuadriFlow, kept voxel quads, or rejected an unsupported source. Inspect the output's wireframe, UVs, shape keys, bones/weights and shading before exporting it to Unity or VRChat.
 
 ## Other retained tools
 
