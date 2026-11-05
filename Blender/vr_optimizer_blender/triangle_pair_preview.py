@@ -71,6 +71,37 @@ def propose_pairs(vertices, faces, *, materials=None, corner_signatures=None,
         # A duplicate vertex across the two faces is a folded or duplicate face.
         if len(set(faces[i]) | set(faces[j])) != 4:
             continue
+        # Check that the four outer vertices form a strictly convex loop.
+        # Coplanarity alone is insufficient: concave pairs create poor quads,
+        # and a collapsed corner can corrupt downstream triangulation.
+        first = faces[i]
+        second = faces[j]
+        boundary = []
+        for face in (first, second):
+            for u, v in zip(face, face[1:] + face[:1]):
+                if tuple(sorted((u, v))) != edge:
+                    boundary.append((u, v))
+        successors = {u: v for u, v in boundary}
+        if len(successors) != 4:
+            continue
+        loop = [boundary[0][0]]
+        for _ in range(4):
+            loop.append(successors.get(loop[-1]))
+        if loop[-1] != loop[0] or len(set(loop[:-1])) != 4:
+            continue
+        winding = []
+        for k in range(4):
+            p0 = vertices[loop[k]]
+            p1 = vertices[loop[(k + 1) % 4]]
+            p2 = vertices[loop[(k + 2) % 4]]
+            u = [p1[d] - p0[d] for d in range(3)]
+            v = [p2[d] - p1[d] for d in range(3)]
+            cross = (u[1]*v[2]-u[2]*v[1],
+                     u[2]*v[0]-u[0]*v[2],
+                     u[0]*v[1]-u[1]*v[0])
+            winding.append(sum(cross[d] * normals[i][d] for d in range(3)))
+        if min(winding) <= 1e-10:
+            continue
         choices.append((-dot, min(i, j), max(i, j), edge))
     used = set()
     result = []
