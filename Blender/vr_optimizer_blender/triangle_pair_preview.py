@@ -15,7 +15,8 @@ def propose_pairs(vertices, faces, *, materials=None, corner_signatures=None,
     such as (UV, split normal, color). Both ends of a shared edge must match.
     Faces must be triangles with valid, distinct vertex indices.
     """
-    if not math.isfinite(minimum_dot) or not -1 <= minimum_dot <= 1:
+    if (isinstance(minimum_dot, bool) or not isinstance(minimum_dot, (int, float))
+            or not math.isfinite(minimum_dot) or not -1 <= minimum_dot <= 1):
         raise ValueError("Invalid coplanarity threshold")
     n = len(vertices)
     for vertex in vertices:
@@ -26,7 +27,7 @@ def propose_pairs(vertices, faces, *, materials=None, corner_signatures=None,
             raise ValueError("Expected finite 3D vertex coordinates")
     protected = set()
     for edge in protected_edges:
-        if (len(edge) != 2 or
+        if (not isinstance(edge, (tuple, list)) or len(edge) != 2 or
                 any(type(v) is not int or not 0 <= v < n for v in edge)
                 or edge[0] == edge[1]):
             raise ValueError("Invalid protected edge")
@@ -40,7 +41,9 @@ def propose_pairs(vertices, faces, *, materials=None, corner_signatures=None,
         if len(face) != 3 or len(set(face)) != 3 or any(
                 type(v) is not int or not 0 <= v < n for v in face):
             raise ValueError("Expected valid indexed triangles")
-        if corner_signatures is not None and len(corner_signatures[fi]) != 3:
+        if (corner_signatures is not None and
+                (not isinstance(corner_signatures[fi], (tuple, list))
+                 or len(corner_signatures[fi]) != 3)):
             raise ValueError("Invalid corner signatures")
         for a, b in zip(face, face[1:] + face[:1]):
             edges[tuple(sorted((a, b)))].append(fi)
