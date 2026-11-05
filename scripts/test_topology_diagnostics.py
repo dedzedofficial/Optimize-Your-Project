@@ -37,6 +37,17 @@ class TopologyGateTests(unittest.TestCase):
             5, [(0, 1, 2), (1, 0, 3), (0, 1, 4)])
         self.assertEqual(result["nonmanifold_edges"], 1)
 
+    def test_winding_conflicts_and_valence(self):
+        consistent = module.analyze_faces(4, [(0, 1, 2), (0, 2, 3)])
+        flipped = module.analyze_faces(4, [(0, 1, 2), (3, 2, 0)])
+        self.assertEqual(consistent["winding_conflict_edges"], 0)
+        self.assertEqual(flipped["winding_conflict_edges"], 1)
+        self.assertEqual(consistent["high_valence_vertices"], 0)
+        fan = module.analyze_faces(9, [
+            (0, 1, 5, 4), (1, 2, 6, 5),
+            (4, 5, 7, 8), (5, 6, 3, 7)])
+        self.assertGreaterEqual(fan["valence_four_vertices"], 1)
+
     def test_budget_and_quad_gate(self):
         source = module.analyze_faces(4, [(0, 1, 2), (0, 2, 3)])
         failures = module.compare_topology(
