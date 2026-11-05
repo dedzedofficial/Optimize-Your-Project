@@ -16,6 +16,7 @@ def analyze_faces(vertex_count, faces):
     if type(vertex_count) is not int or vertex_count < 0:
         raise ValueError("Negative vertex count")
     edge_faces = Counter()
+    directed_edges = Counter()
     adjacency = [set() for _ in range(vertex_count)]
     polygons = []
     for face in faces:
@@ -30,6 +31,7 @@ def analyze_faces(vertex_count, faces):
             if a == b:
                 raise ValueError("Zero-length indexed edge")
             edge_faces[tuple(sorted((a, b)))] += 1
+            directed_edges[(a, b)] += 1
             adjacency[a].add(b)
             adjacency[b].add(a)
     seen = set()
@@ -47,6 +49,14 @@ def analyze_faces(vertex_count, faces):
                 seen.add(neighbor)
                 pending.append(neighbor)
         parts.append(size)
+    # Diagnostic only: never flip rigged faces automatically.
+    winding_conflicts = sum(
+        edge_faces[edge] == 2 and (
+            directed_edges[edge] == 2 or
+            directed_edges[(edge[1], edge[0])] == 2)
+        for edge in edge_faces
+    )
+    valences = [len(neighbors) for neighbors in adjacency]
     tri = sum(len(f) == 3 for f in polygons)
     quad = sum(len(f) == 4 for f in polygons)
     ngon = len(polygons) - tri - quad
@@ -64,6 +74,9 @@ def analyze_faces(vertex_count, faces):
         "boundary_edges": sum(n == 1 for n in edge_faces.values()),
         "nonmanifold_edges": sum(n > 2 for n in edge_faces.values()),
         "edge_count": len(edge_faces),
+        "winding_conflict_edges": winding_conflicts,
+        "valence_four_vertices": sum(v == 4 for v in valences),
+        "high_valence_vertices": sum(v > 6 for v in valences),
     }
 
 
