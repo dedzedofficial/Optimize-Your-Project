@@ -53,6 +53,18 @@ class PairPreviewTests(unittest.TestCase):
         collinear = [(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0)]
         self.assertEqual(module.propose_pairs(collinear, self.faces), [])
 
+    def test_reject_nonfinite_vertices_and_invalid_protected_edges(self):
+        for bad in (float("nan"), float("inf"), -float("inf"), True):
+            vertices = list(self.vertices)
+            vertices[0] = (bad, 0, 0)
+            with self.subTest(bad=str(bad)), self.assertRaises(ValueError):
+                module.propose_pairs(vertices, self.faces)
+        for bad in ((0, 0), (0, 99), (-1, 2), (0,), (0, 2, 3),
+                    (True, 2), (0, 1.5)):
+            with self.subTest(edge=bad), self.assertRaises(ValueError):
+                module.propose_pairs(self.vertices, self.faces,
+                                     protected_edges=[bad])
+
     def test_nonmanifold_edge_not_paired(self):
         vertices = self.vertices + [(0.5, 0.5, 1)]
         faces = self.faces + [(0, 2, 4)]
