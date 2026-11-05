@@ -93,5 +93,21 @@ class TopologyGateTests(unittest.TestCase):
                 module.analyze_faces(3, faces)
 
 
+    def test_component_reports_are_isolated_and_deterministic(self):
+        faces = [(3, 4, 5, 6), (0, 1, 2)]
+        parts = module.analyze_components(8, faces)
+        self.assertEqual([part["first_vertex"] for part in parts], [0, 3, 7])
+        self.assertEqual([part["vertices"] for part in parts], [3, 4, 1])
+        self.assertEqual([part["quads"] for part in parts], [0, 1, 0])
+        self.assertEqual([part["triangle_equivalents"] for part in parts], [1, 2, 0])
+        self.assertEqual([part["boundary_edges"] for part in parts], [3, 4, 0])
+        self.assertEqual(sum(p["triangle_equivalents"] for p in parts), 3)
+        self.assertEqual(parts, module.analyze_components(8, list(reversed(faces))))
+
+    def test_component_reports_reject_invalid_faces(self):
+        for faces in ([(0, 1, 3)], [(0, 1, 1)], [(0, True, 2)]):
+            with self.assertRaises(ValueError):
+                module.analyze_components(3, faces)
+
 if __name__ == "__main__":
     unittest.main()
