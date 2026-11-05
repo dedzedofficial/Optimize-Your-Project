@@ -48,6 +48,16 @@ class TopologyGateTests(unittest.TestCase):
             (4, 5, 7, 8), (5, 6, 3, 7)])
         self.assertGreaterEqual(fan["valence_four_vertices"], 1)
 
+    def test_new_winding_conflict_rejected(self):
+        source = module.analyze_faces(4, [(0, 1, 2), (0, 2, 3)])
+        flipped = module.analyze_faces(4, [(0, 1, 2), (3, 2, 0)])
+        self.assertEqual(source["winding_conflict_edges"], 0)
+        self.assertEqual(flipped["winding_conflict_edges"], 1)
+        self.assertIn("new winding conflicts introduced",
+                      module.compare_topology(source, flipped))
+        self.assertEqual(module.compare_topology(
+            source, flipped, preserve_winding=False), [])
+
     def test_budget_and_quad_gate(self):
         source = module.analyze_faces(4, [(0, 1, 2), (0, 2, 3)])
         failures = module.compare_topology(
