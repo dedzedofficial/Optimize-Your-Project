@@ -57,7 +57,7 @@ class TopologyGateTests(unittest.TestCase):
 
     def test_rejects_component_loss(self):
         before = module.analyze_faces(6, [(0, 1, 2), (3, 4, 5)])
-        after = module.analyze_faces(6, [(0, 1, 2), (2, 3, 4)])
+        after = module.analyze_faces(6, [(0, 1, 2), (2, 3, 4), (3, 4, 5)])
         self.assertIn("vertex-connected component structure changed",
                       module.compare_topology(before, after))
 
