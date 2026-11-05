@@ -18,6 +18,19 @@ def propose_pairs(vertices, faces, *, materials=None, corner_signatures=None,
     if not math.isfinite(minimum_dot) or not -1 <= minimum_dot <= 1:
         raise ValueError("Invalid coplanarity threshold")
     n = len(vertices)
+    for vertex in vertices:
+        if (len(vertex) != 3 or
+                any(not isinstance(c, (int, float)) or
+                    isinstance(c, bool) or not math.isfinite(c)
+                    for c in vertex)):
+            raise ValueError("Expected finite 3D vertex coordinates")
+    protected = set()
+    for edge in protected_edges:
+        if (len(edge) != 2 or
+                any(type(v) is not int or not 0 <= v < n for v in edge)
+                or edge[0] == edge[1]):
+            raise ValueError("Invalid protected edge")
+        protected.add(tuple(sorted(edge)))
     if materials is not None and len(materials) != len(faces):
         raise ValueError("Material count mismatch")
     if corner_signatures is not None and len(corner_signatures) != len(faces):
@@ -43,7 +56,6 @@ def propose_pairs(vertices, faces, *, materials=None, corner_signatures=None,
         return tuple(x/length for x in cross) if length > 1e-12 else None
 
     normals = [normal(f) for f in faces]
-    protected = {tuple(sorted(e)) for e in protected_edges}
     choices = []
     for edge, adjacent in edges.items():
         if len(adjacent) != 2 or edge in protected:
