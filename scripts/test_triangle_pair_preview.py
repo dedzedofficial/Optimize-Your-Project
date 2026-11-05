@@ -65,6 +65,21 @@ class PairPreviewTests(unittest.TestCase):
                 module.propose_pairs(self.vertices, self.faces,
                                      protected_edges=[bad])
 
+    def test_malformed_optional_inputs_fail_closed(self):
+        for threshold in (True, False, None, "0.75", float("inf")):
+            with self.subTest(threshold=threshold), self.assertRaises(ValueError):
+                module.propose_pairs(self.vertices, self.faces,
+                                     minimum_dot=threshold)
+        for edge in (None, 4, "02"):
+            with self.subTest(edge=edge), self.assertRaises(ValueError):
+                module.propose_pairs(self.vertices, self.faces,
+                                     protected_edges=[edge])
+        for signatures in ([None, ((0, 0), (1, 0), (1, 1))],
+                           [3, ((0, 0), (1, 0), (1, 1))]):
+            with self.subTest(signatures=signatures), self.assertRaises(ValueError):
+                module.propose_pairs(self.vertices, self.faces,
+                                     corner_signatures=signatures)
+
     def test_nonmanifold_edge_not_paired(self):
         vertices = self.vertices + [(0.5, 0.5, 1)]
         faces = self.faces + [(0, 2, 4)]
