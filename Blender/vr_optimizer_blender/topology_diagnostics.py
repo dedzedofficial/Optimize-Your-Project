@@ -3,7 +3,8 @@
 No bpy dependency: usable in CI and by the Blender adapter. This is a gate,
 not a quad generator; a high quad ratio alone never certifies edge flow.
 """
-from collections import Counter, defaultdict
+from collections import Counter
+import math
 
 
 def analyze_faces(vertex_count, faces):
@@ -12,7 +13,7 @@ def analyze_faces(vertex_count, faces):
     A vertex-connected component includes isolated vertices. Boundary and
     nonmanifold counts use undirected edge incidence, not face winding.
     """
-    if vertex_count < 0:
+    if type(vertex_count) is not int or vertex_count < 0:
         raise ValueError("Negative vertex count")
     edge_faces = Counter()
     adjacency = [set() for _ in range(vertex_count)]
@@ -21,7 +22,7 @@ def analyze_faces(vertex_count, faces):
         face = tuple(face)
         if len(face) < 3 or len(set(face)) != len(face):
             raise ValueError("Degenerate polygon vertex indices")
-        if any(not isinstance(v, int) or v < 0 or v >= vertex_count
+        if any(type(v) is not int or v < 0 or v >= vertex_count
                for v in face):
             raise ValueError("Face vertex index out of range")
         polygons.append(face)
@@ -73,6 +74,21 @@ def compare_topology(source, candidate, *, max_triangles=None,
     shape keys, normals, materials, surface deviation and posed deformation.
     """
     failures = []
+    if max_triangles is not None and (
+        isinstance(max_triangles, bool)
+        or not isinstance(max_triangles, (int, float))
+        or not math.isfinite(max_triangles) or max_triangles < 0
+    ):
+        raise ValueError("Invalid triangle budget")
+    if minimum_quad_percent is not None and (
+        isinstance(minimum_quad_percent, bool)
+        or not isinstance(minimum_quad_percent, (int, float))
+        or not math.isfinite(minimum_quad_percent)
+        or not 0 <= minimum_quad_percent <= 100
+    ):
+        raise ValueError("Invalid quad percentage target")
+    if source["loose_vertices"] != candidate["loose_vertices"]:
+        failures.append("loose vertex count changed")
     if max_triangles is not None and candidate["triangle_equivalents"] > max_triangles:
         failures.append("triangle budget exceeded")
     if preserve_components and (
