@@ -114,3 +114,24 @@ del mesh.shape_keys["test_payload"]
 mesh.shape_keys.animation_data_create()
 expect_shape_key_rejection("Animated shape keys")
 mesh.shape_keys.animation_data_clear()
+
+# A mesh may contain an edge with no adjacent faces. Face-only rebuilding
+# would silently drop it, so the conservative preview must reject the input.
+loose_mesh = bpy.data.meshes.new("loose_edge_source")
+loose_mesh.from_pydata([(0, 0, 0), (1, 0, 0), (1, 1, 0),
+                        (0, 1, 0), (2, 0, 0), (3, 0, 0)],
+                       [(4, 5)], [(0, 1, 2), (0, 2, 3)])
+loose_mesh.update()
+loose_obj = bpy.data.objects.new("loose_edge_source", loose_mesh)
+bpy.context.scene.collection.objects.link(loose_obj)
+old_objects = set(bpy.data.objects.keys())
+old_meshes = set(bpy.data.meshes.keys())
+try:
+    create_blender_pair_preview(loose_obj)
+except ValueError as exc:
+    assert "Loose edges" in str(exc), str(exc)
+else:
+    raise AssertionError("Expected rejection of otherwise lost loose edges")
+assert set(bpy.data.objects.keys()) == old_objects
+assert set(bpy.data.meshes.keys()) == old_meshes
+assert len(loose_mesh.edges) == 6
