@@ -90,8 +90,8 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
         corners.append(tuple(
             tuple((tuple(layer.data[loop_index].uv),
                    bool(layer.data[loop_index].pin_uv),
-                   bool(layer.data[loop_index].select),
-                   bool(layer.data[loop_index].select_edge))
+                   bool(getattr(layer.data[loop_index], 'select', False)),
+                   bool(getattr(layer.data[loop_index], 'select_edge', False)))
                   for layer in mesh.uv_layers)
             for loop_index in poly.loop_indices
         ))
@@ -115,8 +115,10 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
                     uv, pinned, selected, edge_selected = signature[layer_index]
                     target.data[loop_index].uv = uv
                     target.data[loop_index].pin_uv = pinned
-                    target.data[loop_index].select = selected
-                    target.data[loop_index].select_edge = edge_selected
+                    if hasattr(target.data[loop_index], 'select'):
+                        target.data[loop_index].select = selected
+                    if hasattr(target.data[loop_index], 'select_edge'):
+                        target.data[loop_index].select_edge = edge_selected
         if mesh.uv_layers:
             new_mesh.uv_layers.active_index = mesh.uv_layers.active_index
             for source_layer, target_layer in zip(mesh.uv_layers, new_mesh.uv_layers):
