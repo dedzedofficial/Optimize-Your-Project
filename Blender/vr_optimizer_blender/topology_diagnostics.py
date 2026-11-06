@@ -1,0 +1,169 @@
+"""Pure-Python topology diagnostics for non-destructive retopology candidates.
+
+No bpy dependency: usable in CI and by the Blender adapter. This is a gate,
+not a quad generator; a high quad ratio alone never certifies edge flow.
+"""
+from collections import Counter
+import math
+
+
+def analyze_faces(vertex_count, faces):
+    """Return reproducible topology statistics for indexed polygon faces.
+
+    A vertex-connected component includes isolated vertices. Boundary and
+    nonmanifold counts use undirected edge incidence, not face winding.
+    """
+    if type(vertex_count) is not int or vertex_count < 0:
+        raise ValueError("Negative vertex count")
+    edge_faces = Counter()
+    directed_edges = Counter()
+    adjacency = [set() for _ in range(vertex_count)]
+    polygons = []
+    for face in faces:
+        face = tuple(face)
+        if len(face) < 3 or len(set(face)) != len(face):
+            raise ValueError("Degenerate polygon vertex indices")
+        if any(type(v) is not int or v < 0 or v >= vertex_count
+               for v in face):
+            raise ValueError("Face vertex index out of range")
+        polygons.append(face)
+        for a, b in zip(face, face[1:] + face[:1]):
+            if a == b:
+                raise ValueError("Zero-length indexed edge")
+            edge_faces[tuple(sorted((a, b)))] += 1
+            directed_edges[(a, b)] += 1
+            adjacency[a].add(b)
+            adjacency[b].add(a)
+    seen = set()
+    parts = []
+    for start in range(vertex_count):
+        if start in seen:
+            continue
+        pending = [start]
+        seen.add(start)
+        size = 0
+        while pending:
+            vertex = pending.pop()
+            size += 1
+            for neighbor in adjacency[vertex] - seen:
+                seen.add(neighbor)
+                pending.append(neighbor)
+        parts.append(size)
+    # Diagnostic only: never flip rigged faces automatically.
+    winding_conflicts = sum(
+        edge_faces[edge] == 2 and (
+            directed_edges[edge] == 2 or
+            directed_edges[(edge[1], edge[0])] == 2)
+        for edge in edge_faces
+    )
+    valences = [len(neighbors) for neighbors in adjacency]
+    tri = sum(len(f) == 3 for f in polygons)
+    quad = sum(len(f) == 4 for f in polygons)
+    ngon = len(polygons) - tri - quad
+    return {
+        "vertices": vertex_count,
+        "faces": len(polygons),
+        "triangles": tri,
+        "quads": quad,
+        "ngons": ngon,
+        "quad_percent": round(100.0 * quad / len(polygons), 4) if polygons else 0.0,
+        "triangle_equivalents": sum(len(f) - 2 for f in polygons),
+        "components": len(parts),
+        "component_vertex_sizes": sorted(parts),
+        "loose_vertices": sum(not neighbors for neighbors in adjacency),
+        "boundary_edges": sum(n == 1 for n in edge_faces.values()),
+        "nonmanifold_edges": sum(n > 2 for n in edge_faces.values()),
+        "edge_count": len(edge_faces),
+        "winding_conflict_edges": winding_conflicts,
+        "valence_four_vertices": sum(v == 4 for v in valences),
+        "high_valence_vertices": sum(v > 6 for v in valences),
+    }
+
+
+def analyze_components(vertex_count, faces):
+    """Audit each vertex-connected island independently.
+
+    Returns deterministic per-component face statistics. Isolated vertices are
+    retained as zero-face components. This never merges disconnected shells.
+    """
+    if type(vertex_count) is not int or vertex_count < 0:
+        raise ValueError("Invalid vertex count")
+    polygons = [tuple(face) for face in faces]
+    # Reuse the central validator, including duplicate/out-of-range indices.
+    analyze_faces(vertex_count, polygons)
+    parent = list(range(vertex_count))
+
+    def root(index):
+        while parent[index] != index:
+            parent[index] = parent[parent[index]]
+            index = parent[index]
+        return index
+
+    for face in polygons:
+        for index in face[1:]:
+            a, b = root(face[0]), root(index)
+            if a != b:
+                parent[max(a, b)] = min(a, b)
+
+    vertices_by_root = {}
+    for index in range(vertex_count):
+        vertices_by_root.setdefault(root(index), []).append(index)
+    faces_by_root = {key: [] for key in vertices_by_root}
+    for face in polygons:
+        faces_by_root[root(face[0])].append(face)
+
+    reports = []
+    for key, indices in sorted(vertices_by_root.items()):
+        local = {value: offset for offset, value in enumerate(indices)}
+        local_faces = [tuple(local[v] for v in face)
+                       for face in faces_by_root[key]]
+        report = analyze_faces(len(indices), local_faces)
+        report["first_vertex"] = indices[0]
+        reports.append(report)
+    return reports
+
+
+def compare_topology(source, candidate, *, max_triangles=None,
+                     preserve_components=True, preserve_component_sizes=False,
+                     preserve_boundary=True, preserve_winding=True,
+                     minimum_quad_percent=None):
+    """Return explicit failed gates; caller must additionally verify UVs, skin,
+    shape keys, normals, materials, surface deviation and posed deformation.
+    """
+    failures = []
+    if max_triangles is not None and (
+        isinstance(max_triangles, bool)
+        or not isinstance(max_triangles, (int, float))
+        or not math.isfinite(max_triangles) or max_triangles < 0
+    ):
+        raise ValueError("Invalid triangle budget")
+    if minimum_quad_percent is not None and (
+        isinstance(minimum_quad_percent, bool)
+        or not isinstance(minimum_quad_percent, (int, float))
+        or not math.isfinite(minimum_quad_percent)
+        or not 0 <= minimum_quad_percent <= 100
+    ):
+        raise ValueError("Invalid quad percentage target")
+    if source["loose_vertices"] != candidate["loose_vertices"]:
+        failures.append("loose vertex count changed")
+    if max_triangles is not None and candidate["triangle_equivalents"] > max_triangles:
+        failures.append("triangle budget exceeded")
+    # Retopology may legitimately change per-island vertex counts.
+    # Require exact sizes only for index-preserving cleanup operations.
+    if preserve_components and (
+        source["components"] != candidate["components"]
+        or (preserve_component_sizes and
+            source["component_vertex_sizes"] != candidate["component_vertex_sizes"])
+    ):
+        failures.append("vertex-connected component structure changed")
+    if preserve_boundary and (
+        source["boundary_edges"] != candidate["boundary_edges"]
+        or source["nonmanifold_edges"] != candidate["nonmanifold_edges"]
+    ):
+        failures.append("boundary/nonmanifold edge counts changed")
+    if preserve_winding and (candidate["winding_conflict_edges"] >
+                             source["winding_conflict_edges"]):
+        failures.append("new winding conflicts introduced")
+    if minimum_quad_percent is not None and candidate["quad_percent"] < minimum_quad_percent:
+        failures.append("quad percentage below target")
+    return failures

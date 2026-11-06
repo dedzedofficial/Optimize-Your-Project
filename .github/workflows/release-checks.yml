@@ -21,6 +21,16 @@ jobs:
         run: python3 scripts/check_release.py
       - name: Test deterministic global triangle budgets
         run: python3 scripts/test_smart_budget.py
+      - name: Test topology diagnostic gates
+        run: python3 scripts/test_topology_diagnostics.py
+      - name: Test seam-aware triangle-pair preview
+        run: python3 scripts/test_triangle_pair_preview.py
+      - name: Test preview topology and provenance invariants
+        run: python3 scripts/test_preview_validation.py
+      - name: Test preview material and loop attribute preservation
+        run: python3 scripts/test_preview_attributes.py
+      - name: Test integrated fail-closed quad preview
+        run: python3 scripts/test_validated_pair_preview.py
       - name: Build Blender 4.2+ extension ZIP
         run: python3 scripts/build_blender_extension.py
       - name: Upload Blender 4.2+ extension
@@ -58,6 +68,8 @@ jobs:
       - name: Test Remesh, LOD and Blender 5.2 slotted Actions
         if: matrix.blender.series == '5.2'
         run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender_52.py'
+      - name: Test non-destructive triangle-pair Blender preview
+        run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender_pair_preview.py'
       - name: Test Blender 4.2+ optimization tools
         run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender_42.py'
       - name: Test Blender 8.8.3 Smart Remesh and LOD regressions

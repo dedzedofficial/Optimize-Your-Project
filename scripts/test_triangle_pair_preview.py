@@ -1,0 +1,112 @@
+"""No-Blender tests for conservative, seam-aware pairing candidates."""
+import importlib.util
+from pathlib import Path
+import unittest
+
+FILE = (Path(__file__).resolve().parents[1] / "Blender" /
+        "vr_optimizer_blender" / "triangle_pair_preview.py")
+spec = importlib.util.spec_from_file_location("triangle_pair_preview", FILE)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+
+class PairPreviewTests(unittest.TestCase):
+    def setUp(self):
+        self.vertices = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]
+        self.faces = [(0, 1, 2), (0, 2, 3)]
+
+    def test_valid_pair_and_protected_edge(self):
+        self.assertEqual(module.propose_pairs(self.vertices, self.faces),
+                         [(0, 1, (0, 2))])
+        self.assertEqual(module.propose_pairs(
+            self.vertices, self.faces, protected_edges={(2, 0)}), [])
+
+    def test_uv_seam_and_material_boundary(self):
+        signatures = [((0, 0), (1, 0), (1, 1)),
+                      ((0.2, 0), (1, 1), (0, 1))]
+        self.assertEqual(module.propose_pairs(
+            self.vertices, self.faces, corner_signatures=signatures), [])
+        self.assertEqual(module.propose_pairs(
+            self.vertices, self.faces, materials=[0, 1]), [])
+        signatures[1] = ((0, 0), (1, 1), (0, 1))
+        self.assertEqual(len(module.propose_pairs(
+            self.vertices, self.faces, corner_signatures=signatures)), 1)
+
+    def test_reject_folded_or_reversed(self):
+        folded = [(0, 1, 2), (0, 3, 2)]
+        self.assertEqual(module.propose_pairs(self.vertices, folded), [])
+        same_winding = [(0, 1, 2), (2, 3, 0)]
+        self.assertEqual(len(module.propose_pairs(
+            self.vertices, same_winding)), 1)
+
+    def test_reject_invalid_geometry(self):
+        with self.assertRaises(ValueError):
+            module.propose_pairs(self.vertices, [(0, 0, 2)])
+        with self.assertRaises(ValueError):
+            module.propose_pairs(self.vertices, self.faces, materials=[0])
+        with self.assertRaises(ValueError):
+            module.propose_pairs(self.vertices, self.faces, minimum_dot=float("nan"))
+
+    def test_concave_and_collinear_quads_rejected(self):
+        concave = [(0, 0, 0), (2, 0, 0), (0.5, 0.2, 0), (0, 2, 0)]
+        self.assertEqual(module.propose_pairs(concave, self.faces), [])
+        collinear = [(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0)]
+        self.assertEqual(module.propose_pairs(collinear, self.faces), [])
+
+    def test_reject_nonfinite_vertices_and_invalid_protected_edges(self):
+        for bad in (float("nan"), float("inf"), -float("inf"), True):
+            vertices = list(self.vertices)
+            vertices[0] = (bad, 0, 0)
+            with self.subTest(bad=str(bad)), self.assertRaises(ValueError):
+                module.propose_pairs(vertices, self.faces)
+        for bad in ((0, 0), (0, 99), (-1, 2), (0,), (0, 2, 3),
+                    (True, 2), (0, 1.5)):
+            with self.subTest(edge=bad), self.assertRaises(ValueError):
+                module.propose_pairs(self.vertices, self.faces,
+                                     protected_edges=[bad])
+
+    def test_malformed_optional_inputs_fail_closed(self):
+        for threshold in (True, False, None, "0.75", float("inf")):
+            with self.subTest(threshold=threshold), self.assertRaises(ValueError):
+                module.propose_pairs(self.vertices, self.faces,
+                                     minimum_dot=threshold)
+        for edge in (None, 4, "02"):
+            with self.subTest(edge=edge), self.assertRaises(ValueError):
+                module.propose_pairs(self.vertices, self.faces,
+                                     protected_edges=[edge])
+        for signatures in ([None, ((0, 0), (1, 0), (1, 1))],
+                           [3, ((0, 0), (1, 0), (1, 1))]):
+            with self.subTest(signatures=signatures), self.assertRaises(ValueError):
+                module.propose_pairs(self.vertices, self.faces,
+                                     corner_signatures=signatures)
+
+    def test_build_face_preview_preserves_source_and_loop_provenance(self):
+        signatures = [((0, 0), (1, 0), (1, 1)),
+                      ((0, 0), (1, 1), (0, 1))]
+        faces, sources, corners = module.build_face_preview(
+            self.vertices, self.faces, materials=[7, 7],
+            corner_signatures=signatures)
+        self.assertEqual(faces, [(0, 1, 2, 3)])
+        self.assertEqual(sources, [(0, 1)])
+        self.assertEqual(corners, [((0, 0), (1, 0), (1, 1), (0, 1))])
+        self.assertEqual(self.faces, [(0, 1, 2), (0, 2, 3)])
+        blocked = module.build_face_preview(
+            self.vertices, self.faces, protected_edges=[(0, 2)])
+        self.assertEqual(blocked, (self.faces, [(0,), (1,)], None))
+
+    def test_build_face_preview_retains_unpaired_triangle(self):
+        vertices = self.vertices + [(3, 0, 0), (4, 0, 0), (3, 1, 0)]
+        faces = self.faces + [(4, 5, 6)]
+        result, sources, corners = module.build_face_preview(vertices, faces)
+        self.assertEqual(result, [(0, 1, 2, 3), (4, 5, 6)])
+        self.assertEqual(sources, [(0, 1), (2,)])
+        self.assertIsNone(corners)
+
+    def test_nonmanifold_edge_not_paired(self):
+        vertices = self.vertices + [(0.5, 0.5, 1)]
+        faces = self.faces + [(0, 2, 4)]
+        self.assertEqual(module.propose_pairs(vertices, faces), [])
+
+
+if __name__ == "__main__":
+    unittest.main()
