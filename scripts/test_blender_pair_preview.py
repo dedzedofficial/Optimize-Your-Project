@@ -111,7 +111,8 @@ except ValueError as exc:
 else:
     raise AssertionError("Expected smooth shading rejection")
 mesh.polygons[0].use_smooth = False
-assert len([o for o in bpy.data.objects if o.name.startswith("source_PairPreview")]) == 1
+# Two successful previews exist (initial and parented). Rejections add none.
+assert len([o for o in bpy.data.objects if o.name.startswith("source_PairPreview")]) == 2
 
 # A late failure after mesh/object allocation must not leak either datablock.
 existing_objects = set(bpy.data.objects.keys())
