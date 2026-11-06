@@ -22,6 +22,19 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
         raise ValueError("Triangle-only input required for this preview")
     if getattr(mesh, "has_custom_normals", False):
         raise ValueError("Custom normals require an explicit transfer implementation")
+    # Shape-key animation and ID properties are not represented by the
+    # coordinate-only transfer below. Reject them before allocating output.
+    keys = mesh.shape_keys
+    if keys is not None:
+        if not keys.use_relative:
+            raise ValueError("Absolute shape keys require explicit timing transfer")
+        if keys.animation_data is not None:
+            raise ValueError("Animated shape keys require explicit action/driver transfer")
+        if keys.keys():
+            raise ValueError("Shape-key custom properties require explicit transfer")
+        for key in keys.key_blocks:
+            if key.keys():
+                raise ValueError("Shape-key block custom properties require explicit transfer")
     if source.parent is not None:
         raise ValueError("Parented objects require explicit transform and rig preservation")
     if source.modifiers:
