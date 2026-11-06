@@ -80,6 +80,28 @@ class PairPreviewTests(unittest.TestCase):
                 module.propose_pairs(self.vertices, self.faces,
                                      corner_signatures=signatures)
 
+    def test_build_face_preview_preserves_source_and_loop_provenance(self):
+        signatures = [((0, 0), (1, 0), (1, 1)),
+                      ((0, 0), (1, 1), (0, 1))]
+        faces, sources, corners = module.build_face_preview(
+            self.vertices, self.faces, materials=[7, 7],
+            corner_signatures=signatures)
+        self.assertEqual(faces, [(0, 1, 2, 3)])
+        self.assertEqual(sources, [(0, 1)])
+        self.assertEqual(corners, [((0, 0), (1, 0), (1, 1), (0, 1))])
+        self.assertEqual(self.faces, [(0, 1, 2), (0, 2, 3)])
+        blocked = module.build_face_preview(
+            self.vertices, self.faces, protected_edges=[(0, 2)])
+        self.assertEqual(blocked, (self.faces, [(0,), (1,)], None))
+
+    def test_build_face_preview_retains_unpaired_triangle(self):
+        vertices = self.vertices + [(3, 0, 0), (4, 0, 0), (3, 1, 0)]
+        faces = self.faces + [(4, 5, 6)]
+        result, sources, corners = module.build_face_preview(vertices, faces)
+        self.assertEqual(result, [(0, 1, 2, 3), (4, 5, 6)])
+        self.assertEqual(sources, [(0, 1), (2,)])
+        self.assertIsNone(corners)
+
     def test_nonmanifold_edge_not_paired(self):
         vertices = self.vertices + [(0.5, 0.5, 1)]
         faces = self.faces + [(0, 2, 4)]
