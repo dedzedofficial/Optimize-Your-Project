@@ -68,7 +68,11 @@ assert parent_preview.data is not mesh
 assert obj.parent is parent
 # Vertex parenting is not equivalent to object parenting: the source can
 # follow a deforming vertex, so it must fail before preview allocation.
-obj.parent = parent
+vertex_parent_mesh = bpy.data.meshes.new("vertex-parent-mesh")
+vertex_parent_mesh.from_pydata([(0, 0, 0)], [], [])
+vertex_parent_obj = bpy.data.objects.new("vertex-parent", vertex_parent_mesh)
+bpy.context.scene.collection.objects.link(vertex_parent_obj)
+obj.parent = vertex_parent_obj
 obj.parent_type = 'VERTEX'
 obj.parent_vertices = (0, 0, 0)
 old_objects = set(bpy.data.objects.keys())
@@ -259,3 +263,38 @@ data_preview, _ = create_blender_pair_preview(loose_obj)
 assert data_preview.material_slots[0].link == 'DATA'
 assert data_preview.material_slots[0].material is material
 print("Object-linked and mesh-linked material preservation passed")
+
+# A BONE-parented mesh must fail closed: copying ordinary OBJECT parenting
+# would lose the bone attachment even when the parent armature is retained.
+armature_data = bpy.data.armatures.new("pair-preview-parent-armature")
+armature_object = bpy.data.objects.new("pair-preview-parent-armature", armature_data)
+bpy.context.scene.collection.objects.link(armature_object)
+loose_obj.parent = armature_object
+loose_obj.parent_type = 'BONE'
+loose_obj.parent_bone = "MissingBone"
+original_parent = loose_obj.parent
+original_parent_type = loose_obj.parent_type
+original_parent_bone = loose_obj.parent_bone
+expect_metadata_rejection(loose_obj, "Bone/vertex parenting")
+assert loose_obj.parent is original_parent
+assert loose_obj.parent_type == original_parent_type
+assert loose_obj.parent_bone == original_parent_bone
+loose_obj.parent_type = 'OBJECT'
+loose_obj.parent = None
+print("Bone parenting fails closed without changing source hierarchy")
+
+# Shape-key vertex-group references and relative-key dependencies must map
+# to the independent preview rather than be lost during face reconstruction.
+smile = mesh.shape_keys.key_blocks["Smile"]
+smile.vertex_group = "Bone"
+extra_key = obj.shape_key_add(name="SmileDetail")
+extra_key.relative_key = smile
+extra_key.data[1].co.z += 0.125
+dependent_preview, _ = create_blender_pair_preview(obj)
+preview_keys = dependent_preview.data.shape_keys.key_blocks
+assert preview_keys["Smile"].vertex_group == "Bone"
+assert preview_keys["SmileDetail"].relative_key is preview_keys["Smile"]
+assert abs(preview_keys["SmileDetail"].data[1].co.z - extra_key.data[1].co.z) < 1e-6
+assert preview_keys["SmileDetail"] is not extra_key
+assert mesh.shape_keys.key_blocks["SmileDetail"].relative_key is smile
+print("Shape-key relative dependencies and vertex-group references preserved")
