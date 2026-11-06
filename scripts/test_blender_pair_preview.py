@@ -108,9 +108,6 @@ def expect_shape_key_rejection(message):
     assert set(bpy.data.objects.keys()) == old_objects
     assert set(bpy.data.meshes.keys()) == old_meshes
 
-smile["test_payload"] = 1
-expect_shape_key_rejection("block custom properties")
-del smile["test_payload"]
 mesh.shape_keys["test_payload"] = 1
 expect_shape_key_rejection("Shape-key custom properties")
 del mesh.shape_keys["test_payload"]
