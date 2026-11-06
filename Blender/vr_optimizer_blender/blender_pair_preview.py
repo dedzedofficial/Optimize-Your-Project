@@ -62,6 +62,16 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
     if any(e.use_edge_sharp for e in mesh.edges):
         raise ValueError("Sharp edges require explicit edge attribute transfer")
 
+    # from_pydata(vertices, [], faces) reconstructs only face-bound edges.
+    # Explicit loose edges would otherwise vanish even though loose vertices
+    # survive through the unchanged vertex array.
+    face_edges = {mesh.loops[loop_index].edge_index
+                  for poly in mesh.polygons for loop_index in poly.loop_indices}
+    loose_edges = [edge.index for edge in mesh.edges if edge.index not in face_edges]
+    if loose_edges:
+        raise ValueError("Loose edges require explicit edge transfer "
+                         f"({len(loose_edges)} unsupported edges)")
+
     vertices = [tuple(v.co) for v in mesh.vertices]
     faces = [tuple(p.vertices) for p in mesh.polygons]
     materials = [p.material_index for p in mesh.polygons]
