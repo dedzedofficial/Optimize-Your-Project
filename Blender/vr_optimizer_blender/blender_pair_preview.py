@@ -31,6 +31,11 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
         raise ValueError("Object animation data require explicit transfer")
     if source.constraints:
         raise ValueError("Object constraints require explicit transfer")
+    # Collection membership is required for a visible, linked preview. Check
+    # before allocating datablocks so an unlinked source fails without cleanup.
+    collections = tuple(source.users_collection)
+    if not collections:
+        raise ValueError("Source must belong to a collection")
     # Mesh material lists alone do not capture per-object material overrides.
     # Reject object-linked slots until they can be copied and validated.
     if any(slot.link == 'OBJECT' for slot in source.material_slots):
@@ -157,9 +162,6 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
                 new_object.vertex_groups[assignment.group].add(
                     [vertex.index], assignment.weight, 'REPLACE')
         # Linking is the last operation so a failure cannot leave a scene object.
-        collections = list(source.users_collection)
-        if not collections:
-            raise ValueError("Source must belong to a collection")
         for collection in collections:
             collection.objects.link(new_object)
         return new_object, result
