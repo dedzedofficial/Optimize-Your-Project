@@ -94,3 +94,26 @@ assert abs(shape_preview.data.shape_keys.key_blocks["Smile"].data[0].co.z - 0.25
 assert abs(shape_preview.data.shape_keys.key_blocks["Smile"].value - 0.6) < 1e-6
 assert shape_preview.vertex_groups["Bone"].lock_weight
 assert abs(mesh.shape_keys.key_blocks["Smile"].data[0].co.z - 0.25) < 1e-6
+
+# Shape-key metadata must not silently disappear from a new preview.
+def expect_shape_key_rejection(message):
+    old_objects = set(bpy.data.objects.keys())
+    old_meshes = set(bpy.data.meshes.keys())
+    try:
+        create_blender_pair_preview(obj)
+    except ValueError as exc:
+        assert message in str(exc), str(exc)
+    else:
+        raise AssertionError("Expected rejection: " + message)
+    assert set(bpy.data.objects.keys()) == old_objects
+    assert set(bpy.data.meshes.keys()) == old_meshes
+
+smile["test_payload"] = 1
+expect_shape_key_rejection("block custom properties")
+del smile["test_payload"]
+mesh.shape_keys["test_payload"] = 1
+expect_shape_key_rejection("Shape-key custom properties")
+del mesh.shape_keys["test_payload"]
+mesh.shape_keys.animation_data_create()
+expect_shape_key_rejection("Animated shape keys")
+mesh.shape_keys.animation_data_clear()
