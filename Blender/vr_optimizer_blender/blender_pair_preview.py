@@ -32,9 +32,9 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
             raise ValueError("Animated shape keys require explicit action/driver transfer")
         if keys.keys():
             raise ValueError("Shape-key custom properties require explicit transfer")
-        for key in keys.key_blocks:
-            if key.keys():
-                raise ValueError("Shape-key block custom properties require explicit transfer")
+        # ShapeKey blocks do not implement IDProperties in Blender 4.2-5.2.
+        # Their RNA settings are copied below; only the Key datablock has
+        # supported IDProperties to check.
     if source.parent is not None:
         raise ValueError("Parented objects require explicit transform and rig preservation")
     if source.modifiers:
