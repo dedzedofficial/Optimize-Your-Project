@@ -27,6 +27,8 @@ assert tuple(tuple(p.vertices) for p in mesh.polygons) == before
 assert len(mesh.polygons) == 2 and len(preview.data.polygons) == 1
 assert report["quad_joins"] == 1
 assert len(preview.data.uv_layers) == 1
+assert preview.data.uv_layers.active_index == mesh.uv_layers.active_index
+assert preview.data.uv_layers[0].active_render == mesh.uv_layers[0].active_render
 assert len(preview.vertex_groups) == 1
 assert abs(preview.data.uv_layers[0].data[0].uv.x) < 1e-6
 assert abs(preview.vertex_groups[0].weight(0) - 0.75) < 1e-6
@@ -62,3 +64,18 @@ else:
     raise AssertionError("Expected smooth shading rejection")
 mesh.polygons[0].use_smooth = False
 assert len([o for o in bpy.data.objects if o.name.startswith("source_PairPreview")]) == 1
+
+# A late failure after mesh/object allocation must not leak either datablock.
+existing_objects = set(bpy.data.objects.keys())
+existing_meshes = set(bpy.data.meshes.keys())
+obj.users_collection[0].objects.unlink(obj)
+try:
+    create_blender_pair_preview(obj)
+except ValueError as exc:
+    assert "collection" in str(exc)
+else:
+    raise AssertionError("Expected missing collection rejection")
+finally:
+    bpy.context.scene.collection.objects.link(obj)
+assert set(bpy.data.objects.keys()) == existing_objects
+assert set(bpy.data.meshes.keys()) == existing_meshes
