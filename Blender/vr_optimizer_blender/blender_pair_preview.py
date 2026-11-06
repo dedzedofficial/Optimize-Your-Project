@@ -36,10 +36,6 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
     collections = tuple(source.users_collection)
     if not collections:
         raise ValueError("Source must belong to a collection")
-    # Mesh material lists alone do not capture per-object material overrides.
-    # Reject object-linked slots until they can be copied and validated.
-    if any(slot.link == 'OBJECT' for slot in source.material_slots):
-        raise ValueError("Object-linked material slots require explicit transfer")
     if any(len(p.vertices) != 3 for p in mesh.polygons):
         raise ValueError("Triangle-only input required for this preview")
     if getattr(mesh, "has_custom_normals", False):
@@ -134,6 +130,15 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
                 target_layer.active_render = source_layer.active_render
 
         new_object = bpy.data.objects.new(source.name + "_PairPreview", new_mesh)
+        # Material slots may override mesh materials at the object level.
+        # Copy link modes and effective materials after creating the object;
+        # copying mesh.materials alone would silently lose OBJECT overrides.
+        if len(new_object.material_slots) != len(source.material_slots):
+            raise ValueError("Material slot count changed during preview construction")
+        for source_slot, target_slot in zip(source.material_slots, new_object.material_slots):
+            target_slot.link = source_slot.link
+            if source_slot.link == "OBJECT":
+                target_slot.material = source_slot.material
         new_object.matrix_world = source.matrix_world.copy()
         # Preserve relative shape-key coordinates on the unchanged vertex indices.
         if mesh.shape_keys is not None:
