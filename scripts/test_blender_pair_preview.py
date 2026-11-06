@@ -39,3 +39,26 @@ else:
     raise AssertionError("Expected fail-closed parent rejection")
 assert len([o for o in bpy.data.objects if o.name.startswith("source_PairPreview")]) == 1
 print("Blender pair preview smoke test passed")
+
+# User-defined POINT attributes must not disappear on the output.
+obj.parent = None
+extra = mesh.attributes.new(name="vertex_payload", type='FLOAT', domain='POINT')
+extra.data[0].value = 0.42
+try:
+    create_blender_pair_preview(obj)
+except ValueError as exc:
+    assert "vertex_payload" in str(exc)
+else:
+    raise AssertionError("Expected unsupported point attribute rejection")
+mesh.attributes.remove(extra)
+
+# Face smoothing changes loop normals; reject until explicitly transferred.
+mesh.polygons[0].use_smooth = True
+try:
+    create_blender_pair_preview(obj)
+except ValueError as exc:
+    assert "Smooth shading" in str(exc)
+else:
+    raise AssertionError("Expected smooth shading rejection")
+mesh.polygons[0].use_smooth = False
+assert len([o for o in bpy.data.objects if o.name.startswith("source_PairPreview")]) == 1
