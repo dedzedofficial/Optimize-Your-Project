@@ -68,7 +68,11 @@ assert parent_preview.data is not mesh
 assert obj.parent is parent
 # Vertex parenting is not equivalent to object parenting: the source can
 # follow a deforming vertex, so it must fail before preview allocation.
-obj.parent = parent
+vertex_parent_mesh = bpy.data.meshes.new("vertex-parent-mesh")
+vertex_parent_mesh.from_pydata([(0, 0, 0)], [], [])
+vertex_parent_obj = bpy.data.objects.new("vertex-parent", vertex_parent_mesh)
+bpy.context.scene.collection.objects.link(vertex_parent_obj)
+obj.parent = vertex_parent_obj
 obj.parent_type = 'VERTEX'
 obj.parent_vertices = (0, 0, 0)
 old_objects = set(bpy.data.objects.keys())
