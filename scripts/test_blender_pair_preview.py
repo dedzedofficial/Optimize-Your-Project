@@ -191,3 +191,13 @@ assert {collection.name for collection in multi_preview.users_collection} == mem
 assert {collection.name for collection in loose_obj.users_collection} == membership_before
 assert multi_preview.data is not loose_mesh
 print("Multiple collection memberships preserved")
+
+# Per-object material overrides are not equivalent to mesh material slots.
+# Reject rather than quietly assigning the shared mesh material on preview.
+material = bpy.data.materials.new("pair-preview-material-override")
+loose_mesh.materials.append(material)
+loose_obj.material_slots[0].link = 'OBJECT'
+expect_metadata_rejection(loose_obj, "Object-linked material slots")
+loose_obj.material_slots[0].link = 'DATA'
+assert create_blender_pair_preview(loose_obj)[1]["quad_joins"] == 1
+print("Object-linked material override rejection passed")
