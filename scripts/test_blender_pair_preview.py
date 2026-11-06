@@ -66,6 +66,22 @@ for left, right in zip(parent_preview.matrix_world, obj.matrix_world):
     assert max(abs(a - b) for a, b in zip(left, right)) < 1e-6
 assert parent_preview.data is not mesh
 assert obj.parent is parent
+# Vertex parenting is not equivalent to object parenting: the source can
+# follow a deforming vertex, so it must fail before preview allocation.
+obj.parent = parent
+obj.parent_type = 'VERTEX'
+obj.parent_vertices = (0, 0, 0)
+old_objects = set(bpy.data.objects.keys())
+old_meshes = set(bpy.data.meshes.keys())
+try:
+    create_blender_pair_preview(obj)
+except ValueError as exc:
+    assert "Bone/vertex parenting" in str(exc)
+else:
+    raise AssertionError("Expected vertex-parent rejection")
+assert set(bpy.data.objects.keys()) == old_objects
+assert set(bpy.data.meshes.keys()) == old_meshes
+obj.parent_type = 'OBJECT'
 obj.parent = None
 obj.location = (0, 0, 0)
 print("Blender pair preview smoke test passed")
