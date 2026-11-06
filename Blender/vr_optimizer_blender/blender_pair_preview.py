@@ -31,6 +31,10 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
         raise ValueError("Object animation data require explicit transfer")
     if source.constraints:
         raise ValueError("Object constraints require explicit transfer")
+    # Mesh material lists alone do not capture per-object material overrides.
+    # Reject object-linked slots until they can be copied and validated.
+    if any(slot.link == 'OBJECT' for slot in source.material_slots):
+        raise ValueError("Object-linked material slots require explicit transfer")
     if any(len(p.vertices) != 3 for p in mesh.polygons):
         raise ValueError("Triangle-only input required for this preview")
     if getattr(mesh, "has_custom_normals", False):
