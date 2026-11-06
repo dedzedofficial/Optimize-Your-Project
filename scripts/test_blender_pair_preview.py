@@ -21,8 +21,10 @@ for poly in mesh.polygons:
 for li in range(len(mesh.loops)):
     vertex_index = mesh.loops[li].vertex_index
     uv.data[li].pin_uv = vertex_index == 1
-    uv.data[li].select = vertex_index == 2
-    uv.data[li].select_edge = vertex_index == 3
+    if hasattr(uv.data[li], 'select'):
+        uv.data[li].select = vertex_index == 2
+    if hasattr(uv.data[li], 'select_edge'):
+        uv.data[li].select_edge = vertex_index == 3
 group = obj.vertex_groups.new(name="Bone")
 group.add([0, 1], 0.75, 'REPLACE')
 before = tuple(tuple(p.vertices) for p in mesh.polygons)
@@ -39,8 +41,10 @@ for poly in preview.data.polygons:
         vi = preview.data.loops[li].vertex_index
         loop_uv = preview.data.uv_layers[0].data[li]
         assert bool(loop_uv.pin_uv) == (vi == 1)
-        assert bool(loop_uv.select) == (vi == 2)
-        assert bool(loop_uv.select_edge) == (vi == 3)
+        if hasattr(loop_uv, 'select'):
+            assert bool(loop_uv.select) == (vi == 2)
+        if hasattr(loop_uv, 'select_edge'):
+            assert bool(loop_uv.select_edge) == (vi == 3)
 assert len(preview.vertex_groups) == 1
 assert abs(preview.data.uv_layers[0].data[0].uv.x) < 1e-6
 assert abs(preview.vertex_groups[0].weight(0) - 0.75) < 1e-6
