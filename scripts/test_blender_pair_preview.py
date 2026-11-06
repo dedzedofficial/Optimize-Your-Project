@@ -21,8 +21,10 @@ for poly in mesh.polygons:
 for li in range(len(mesh.loops)):
     vertex_index = mesh.loops[li].vertex_index
     uv.data[li].pin_uv = vertex_index == 1
-    uv.data[li].select = vertex_index == 2
-    uv.data[li].select_edge = vertex_index == 3
+    if hasattr(uv.data[li], 'select'):
+        uv.data[li].select = vertex_index == 2
+    if hasattr(uv.data[li], 'select_edge'):
+        uv.data[li].select_edge = vertex_index == 3
 group = obj.vertex_groups.new(name="Bone")
 group.add([0, 1], 0.75, 'REPLACE')
 before = tuple(tuple(p.vertices) for p in mesh.polygons)
@@ -39,8 +41,10 @@ for poly in preview.data.polygons:
         vi = preview.data.loops[li].vertex_index
         loop_uv = preview.data.uv_layers[0].data[li]
         assert bool(loop_uv.pin_uv) == (vi == 1)
-        assert bool(loop_uv.select) == (vi == 2)
-        assert bool(loop_uv.select_edge) == (vi == 3)
+        if hasattr(loop_uv, 'select'):
+            assert bool(loop_uv.select) == (vi == 2)
+        if hasattr(loop_uv, 'select_edge'):
+            assert bool(loop_uv.select_edge) == (vi == 3)
 assert len(preview.vertex_groups) == 1
 assert abs(preview.data.uv_layers[0].data[0].uv.x) < 1e-6
 assert abs(preview.vertex_groups[0].weight(0) - 0.75) < 1e-6
@@ -144,3 +148,34 @@ assert len(loose_mesh.edges) == 6
 assert loose_report["quad_joins"] == 1
 assert len(loose_preview.data.vertices) == len(loose_mesh.vertices)
 print("Loose edge preservation passed")
+
+# Metadata that cannot be copied must be rejected before allocating objects.
+def expect_metadata_rejection(source, expected):
+    old_objects = set(bpy.data.objects.keys())
+    old_meshes = set(bpy.data.meshes.keys())
+    try:
+        create_blender_pair_preview(source)
+    except ValueError as exc:
+        assert expected in str(exc), str(exc)
+    else:
+        raise AssertionError("Expected metadata rejection: " + expected)
+    assert set(bpy.data.objects.keys()) == old_objects
+    assert set(bpy.data.meshes.keys()) == old_meshes
+
+loose_mesh["author_tag"] = "keep"
+expect_metadata_rejection(loose_obj, "Mesh custom properties")
+del loose_mesh["author_tag"]
+loose_obj["author_tag"] = "keep"
+expect_metadata_rejection(loose_obj, "Object custom properties")
+del loose_obj["author_tag"]
+loose_obj.animation_data_create()
+expect_metadata_rejection(loose_obj, "Object animation data")
+loose_obj.animation_data_clear()
+loose_mesh.animation_data_create()
+expect_metadata_rejection(loose_obj, "Mesh animation data")
+loose_mesh.animation_data_clear()
+constraint = loose_obj.constraints.new('LIMIT_LOCATION')
+expect_metadata_rejection(loose_obj, "Object constraints")
+loose_obj.constraints.remove(constraint)
+assert create_blender_pair_preview(loose_obj)[1]["quad_joins"] == 1
+print("Metadata rejection and recovery passed")

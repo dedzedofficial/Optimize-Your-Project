@@ -18,6 +18,19 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
     if source.type != 'MESH':
         raise ValueError("Expected a mesh object")
     mesh = source.data
+    # This preview copies geometry and a narrow set of explicit properties,
+    # not arbitrary datablock/object metadata or animation bindings.
+    # Reject such sources rather than producing an apparently equivalent mesh.
+    if mesh.keys():
+        raise ValueError("Mesh custom properties require explicit transfer")
+    if mesh.animation_data is not None:
+        raise ValueError("Mesh animation data require explicit transfer")
+    if source.keys():
+        raise ValueError("Object custom properties require explicit transfer")
+    if source.animation_data is not None:
+        raise ValueError("Object animation data require explicit transfer")
+    if source.constraints:
+        raise ValueError("Object constraints require explicit transfer")
     if any(len(p.vertices) != 3 for p in mesh.polygons):
         raise ValueError("Triangle-only input required for this preview")
     if getattr(mesh, "has_custom_normals", False):
@@ -77,8 +90,8 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
         corners.append(tuple(
             tuple((tuple(layer.data[loop_index].uv),
                    bool(layer.data[loop_index].pin_uv),
-                   bool(layer.data[loop_index].select),
-                   bool(layer.data[loop_index].select_edge))
+                   bool(getattr(layer.data[loop_index], 'select', False)),
+                   bool(getattr(layer.data[loop_index], 'select_edge', False)))
                   for layer in mesh.uv_layers)
             for loop_index in poly.loop_indices
         ))
@@ -102,8 +115,10 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
                     uv, pinned, selected, edge_selected = signature[layer_index]
                     target.data[loop_index].uv = uv
                     target.data[loop_index].pin_uv = pinned
-                    target.data[loop_index].select = selected
-                    target.data[loop_index].select_edge = edge_selected
+                    if hasattr(target.data[loop_index], 'select'):
+                        target.data[loop_index].select = selected
+                    if hasattr(target.data[loop_index], 'select_edge'):
+                        target.data[loop_index].select_edge = edge_selected
         if mesh.uv_layers:
             new_mesh.uv_layers.active_index = mesh.uv_layers.active_index
             for source_layer, target_layer in zip(mesh.uv_layers, new_mesh.uv_layers):
