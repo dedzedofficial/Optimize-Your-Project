@@ -75,7 +75,7 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
     corners = []
     for poly in mesh.polygons:
         corners.append(tuple(
-            tuple(tuple(layer.data[loop_index].uv) for layer in mesh.uv_layers)
+            tuple((tuple(layer.data[loop_index].uv),\n                   bool(layer.data[loop_index].pin_uv),\n                   bool(layer.data[loop_index].select),\n                   bool(layer.data[loop_index].select_edge))\n                  for layer in mesh.uv_layers)
             for loop_index in poly.loop_indices
         ))
     result = validated_pair_preview(
@@ -95,7 +95,7 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
             target = new_mesh.uv_layers.new(name=layer.name)
             for poly, signatures in zip(new_mesh.polygons, result["corners"]):
                 for loop_index, signature in zip(poly.loop_indices, signatures):
-                    target.data[loop_index].uv = signature[layer_index]
+                    uv, pinned, selected, edge_selected = signature[layer_index]\n                    target.data[loop_index].uv = uv\n                    target.data[loop_index].pin_uv = pinned\n                    target.data[loop_index].select = selected\n                    target.data[loop_index].select_edge = edge_selected
         if mesh.uv_layers:
             new_mesh.uv_layers.active_index = mesh.uv_layers.active_index
             for source_layer, target_layer in zip(mesh.uv_layers, new_mesh.uv_layers):
