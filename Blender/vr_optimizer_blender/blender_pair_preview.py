@@ -46,6 +46,11 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
     if mesh.attributes.get("custom_normal") is not None:
         raise ValueError("Custom normals require an explicit transfer implementation")
 
+    if any(p.use_smooth for p in mesh.polygons):
+        raise ValueError("Smooth shading requires explicit normal preservation")
+    if any(e.use_edge_sharp for e in mesh.edges):
+        raise ValueError("Sharp edges require explicit edge attribute transfer")
+
     vertices = [tuple(v.co) for v in mesh.vertices]
     faces = [tuple(p.vertices) for p in mesh.polygons]
     materials = [p.material_index for p in mesh.polygons]
