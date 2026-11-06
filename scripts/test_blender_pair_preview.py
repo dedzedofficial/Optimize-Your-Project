@@ -96,6 +96,23 @@ finally:
 assert set(bpy.data.objects.keys()) == existing_objects
 assert set(bpy.data.meshes.keys()) == existing_meshes
 
+# Collection preflight must run before topology validation and allocation.
+# Even a non-triangle unlinked source should fail on collection membership.
+obj.users_collection[0].objects.unlink(obj)
+mesh.polygons[0].use_smooth = True
+try:
+    expect_collection_error = False
+    try:
+        create_blender_pair_preview(obj)
+    except ValueError as exc:
+        expect_collection_error = "collection" in str(exc)
+    assert expect_collection_error
+    assert set(bpy.data.objects.keys()) == existing_objects
+    assert set(bpy.data.meshes.keys()) == existing_meshes
+finally:
+    mesh.polygons[0].use_smooth = False
+    bpy.context.scene.collection.objects.link(obj)
+
 # Relative shape keys and group lock settings are point-domain and must survive.
 group.lock_weight = True
 basis = obj.shape_key_add(name="Basis")
