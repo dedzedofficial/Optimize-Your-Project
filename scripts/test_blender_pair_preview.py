@@ -179,3 +179,15 @@ expect_metadata_rejection(loose_obj, "Object constraints")
 loose_obj.constraints.remove(constraint)
 assert create_blender_pair_preview(loose_obj)[1]["quad_joins"] == 1
 print("Metadata rejection and recovery passed")
+
+# Multi-collection membership must be preserved, not reduced to the first.
+secondary = bpy.data.collections.new("pair-preview-secondary")
+bpy.context.scene.collection.children.link(secondary)
+secondary.objects.link(loose_obj)
+membership_before = {collection.name for collection in loose_obj.users_collection}
+multi_preview, multi_report = create_blender_pair_preview(loose_obj)
+assert multi_report["quad_joins"] == 1
+assert {collection.name for collection in multi_preview.users_collection} == membership_before
+assert {collection.name for collection in loose_obj.users_collection} == membership_before
+assert multi_preview.data is not loose_mesh
+print("Multiple collection memberships preserved")

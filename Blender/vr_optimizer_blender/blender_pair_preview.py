@@ -156,7 +156,8 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
         collections = list(source.users_collection)
         if not collections:
             raise ValueError("Source must belong to a collection")
-        collections[0].objects.link(new_object)
+        for collection in collections:
+            collection.objects.link(new_object)
         return new_object, result
     except Exception:
         if new_object is not None:
