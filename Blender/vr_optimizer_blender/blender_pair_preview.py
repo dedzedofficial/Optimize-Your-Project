@@ -20,8 +20,6 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
     mesh = source.data
     if any(len(p.vertices) != 3 for p in mesh.polygons):
         raise ValueError("Triangle-only input required for this preview")
-    if mesh.shape_keys is not None:
-        raise ValueError("Shape keys require an explicit transfer implementation")
     if getattr(mesh, "has_custom_normals", False):
         raise ValueError("Custom normals require an explicit transfer implementation")
     if source.parent is not None:
@@ -85,9 +83,28 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
 
         new_object = bpy.data.objects.new(source.name + "_PairPreview", new_mesh)
         new_object.matrix_world = source.matrix_world.copy()
+        # Preserve relative shape-key coordinates on the unchanged vertex indices.
+        if mesh.shape_keys is not None:
+            keys = mesh.shape_keys
+            if not keys.use_relative:
+                raise ValueError("Absolute shape keys require explicit timing transfer")
+            for key in keys.key_blocks:
+                target = new_object.shape_key_add(name=key.name, from_mix=False)
+                for index, point in enumerate(key.data):
+                    target.data[index].co = point.co
+                target.value = key.value
+                target.slider_min = key.slider_min
+                target.slider_max = key.slider_max
+                target.mute = key.mute
+                target.vertex_group = key.vertex_group
+                target.interpolation = key.interpolation
+            output_keys = new_object.data.shape_keys.key_blocks
+            for key, target in zip(keys.key_blocks, output_keys):
+                target.relative_key = output_keys[key.relative_key.name]
         # Copy vertex groups by index: unchanged vertex order and positions.
         for group in source.vertex_groups:
-            new_object.vertex_groups.new(name=group.name)
+            new_group = new_object.vertex_groups.new(name=group.name)
+            new_group.lock_weight = group.lock_weight
         for vertex in mesh.vertices:
             for assignment in vertex.groups:
                 new_object.vertex_groups[assignment.group].add(
