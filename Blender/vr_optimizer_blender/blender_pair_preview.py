@@ -53,8 +53,8 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
         # ShapeKey blocks do not implement IDProperties in Blender 4.2-5.2.
         # Their RNA settings are copied below; only the Key datablock has
         # supported IDProperties to check.
-    if source.parent is not None:
-        raise ValueError("Parented objects require explicit transform and rig preservation")
+    if source.parent is not None and source.parent_type != "OBJECT":
+        raise ValueError("Bone/vertex parenting requires explicit preservation")
     if source.modifiers:
         raise ValueError("Modifiers require an explicit preservation implementation")
     # Blender's corner-domain attributes include normals, colors and arbitrary
@@ -139,7 +139,15 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
             target_slot.link = source_slot.link
             if source_slot.link == "OBJECT":
                 target_slot.material = source_slot.material
-        new_object.matrix_world = source.matrix_world.copy()
+        # Preserve ordinary object parenting, including the parent inverse and
+        # local basis. Bone/vertex parenting is deliberately rejected above.
+        if source.parent is not None:
+            new_object.parent = source.parent
+            new_object.parent_type = source.parent_type
+            new_object.matrix_parent_inverse = source.matrix_parent_inverse.copy()
+            new_object.matrix_basis = source.matrix_basis.copy()
+        else:
+            new_object.matrix_world = source.matrix_world.copy()
         # Preserve relative shape-key coordinates on the unchanged vertex indices.
         if mesh.shape_keys is not None:
             keys = mesh.shape_keys
