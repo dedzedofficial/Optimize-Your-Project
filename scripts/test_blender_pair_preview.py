@@ -115,8 +115,7 @@ mesh.shape_keys.animation_data_create()
 expect_shape_key_rejection("Animated shape keys")
 mesh.shape_keys.animation_data_clear()
 
-# A mesh may contain an edge with no adjacent faces. Face-only rebuilding
-# would silently drop it, so the conservative preview must reject the input.
+# A standalone edge must survive reconstruction without modifying the source.
 loose_mesh = bpy.data.meshes.new("loose_edge_source")
 loose_mesh.from_pydata([(0, 0, 0), (1, 0, 0), (1, 1, 0),
                         (0, 1, 0), (2, 0, 0), (3, 0, 0)],
@@ -124,14 +123,12 @@ loose_mesh.from_pydata([(0, 0, 0), (1, 0, 0), (1, 1, 0),
 loose_mesh.update()
 loose_obj = bpy.data.objects.new("loose_edge_source", loose_mesh)
 bpy.context.scene.collection.objects.link(loose_obj)
-old_objects = set(bpy.data.objects.keys())
-old_meshes = set(bpy.data.meshes.keys())
-try:
-    create_blender_pair_preview(loose_obj)
-except ValueError as exc:
-    assert "Loose edges" in str(exc), str(exc)
-else:
-    raise AssertionError("Expected rejection of otherwise lost loose edges")
-assert set(bpy.data.objects.keys()) == old_objects
-assert set(bpy.data.meshes.keys()) == old_meshes
+source_edges = {tuple(sorted(edge.vertices)) for edge in loose_mesh.edges}
+loose_preview, loose_report = create_blender_pair_preview(loose_obj)
+output_edges = {tuple(sorted(edge.vertices)) for edge in loose_preview.data.edges}
+assert (4, 5) in output_edges
+assert output_edges == source_edges - {(0, 2)}
 assert len(loose_mesh.edges) == 6
+assert loose_report["quad_joins"] == 1
+assert len(loose_preview.data.vertices) == len(loose_mesh.vertices)
+print("Loose edge preservation passed")
