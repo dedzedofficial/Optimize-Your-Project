@@ -79,3 +79,18 @@ finally:
     bpy.context.scene.collection.objects.link(obj)
 assert set(bpy.data.objects.keys()) == existing_objects
 assert set(bpy.data.meshes.keys()) == existing_meshes
+
+# Relative shape keys and group lock settings are point-domain and must survive.
+group.lock_weight = True
+basis = obj.shape_key_add(name="Basis")
+smile = obj.shape_key_add(name="Smile")
+smile.data[0].co.z = 0.25
+smile.value = 0.6
+smile.slider_max = 2.0
+shape_preview, _ = create_blender_pair_preview(obj)
+assert shape_preview.data.shape_keys is not mesh.shape_keys
+assert [k.name for k in shape_preview.data.shape_keys.key_blocks] == ["Basis", "Smile"]
+assert abs(shape_preview.data.shape_keys.key_blocks["Smile"].data[0].co.z - 0.25) < 1e-6
+assert abs(shape_preview.data.shape_keys.key_blocks["Smile"].value - 0.6) < 1e-6
+assert shape_preview.vertex_groups["Bone"].lock_weight
+assert abs(mesh.shape_keys.key_blocks["Smile"].data[0].co.z - 0.25) < 1e-6
