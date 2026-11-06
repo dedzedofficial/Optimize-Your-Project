@@ -209,12 +209,25 @@ assert {collection.name for collection in loose_obj.users_collection} == members
 assert multi_preview.data is not loose_mesh
 print("Multiple collection memberships preserved")
 
-# Per-object material overrides are not equivalent to mesh material slots.
-# Reject rather than quietly assigning the shared mesh material on preview.
-material = bpy.data.materials.new("pair-preview-material-override")
+# Object-linked material overrides must retain their effective material and
+# link mode independently of the mesh's shared material slots.
+material = bpy.data.materials.new("pair-preview-mesh-material")
+override = bpy.data.materials.new("pair-preview-object-override")
 loose_mesh.materials.append(material)
 loose_obj.material_slots[0].link = 'OBJECT'
-expect_metadata_rejection(loose_obj, "Object-linked material slots")
+loose_obj.material_slots[0].material = override
+override_preview, override_report = create_blender_pair_preview(loose_obj)
+assert override_report["quad_joins"] == 1
+assert override_preview.material_slots[0].link == 'OBJECT'
+assert override_preview.material_slots[0].material is override
+assert override_preview.data.materials[0] is material
+assert loose_obj.material_slots[0].link == 'OBJECT'
+assert loose_obj.material_slots[0].material is override
+# Mutating the new object's override must not change the original.
+override_preview.material_slots[0].material = material
+assert loose_obj.material_slots[0].material is override
 loose_obj.material_slots[0].link = 'DATA'
-assert create_blender_pair_preview(loose_obj)[1]["quad_joins"] == 1
-print("Object-linked material override rejection passed")
+data_preview, _ = create_blender_pair_preview(loose_obj)
+assert data_preview.material_slots[0].link == 'DATA'
+assert data_preview.material_slots[0].material is material
+print("Object-linked and mesh-linked material preservation passed")
