@@ -18,6 +18,19 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
     if source.type != 'MESH':
         raise ValueError("Expected a mesh object")
     mesh = source.data
+    # This preview copies geometry and a narrow set of explicit properties,
+    # not arbitrary datablock/object metadata or animation bindings.
+    # Reject such sources rather than producing an apparently equivalent mesh.
+    if mesh.keys():
+        raise ValueError("Mesh custom properties require explicit transfer")
+    if mesh.animation_data is not None:
+        raise ValueError("Mesh animation data require explicit transfer")
+    if source.keys():
+        raise ValueError("Object custom properties require explicit transfer")
+    if source.animation_data is not None:
+        raise ValueError("Object animation data require explicit transfer")
+    if source.constraints:
+        raise ValueError("Object constraints require explicit transfer")
     if any(len(p.vertices) != 3 for p in mesh.polygons):
         raise ValueError("Triangle-only input required for this preview")
     if getattr(mesh, "has_custom_normals", False):
