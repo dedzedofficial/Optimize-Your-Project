@@ -78,6 +78,10 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
             for poly, signatures in zip(new_mesh.polygons, result["corners"]):
                 for loop_index, signature in zip(poly.loop_indices, signatures):
                     target.data[loop_index].uv = signature[layer_index]
+        if mesh.uv_layers:
+            new_mesh.uv_layers.active_index = mesh.uv_layers.active_index
+            for source_layer, target_layer in zip(mesh.uv_layers, new_mesh.uv_layers):
+                target_layer.active_render = source_layer.active_render
 
         new_object = bpy.data.objects.new(source.name + "_PairPreview", new_mesh)
         new_object.matrix_world = source.matrix_world.copy()
@@ -97,6 +101,7 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
     except Exception:
         if new_object is not None:
             bpy.data.objects.remove(new_object, do_unlink=True)
-        else:
+        # Remove the orphan mesh as well as the object on any failure.
+        if new_mesh.users == 0:
             bpy.data.meshes.remove(new_mesh)
         raise
