@@ -125,3 +125,63 @@ def propose_pairs(vertices, faces, *, materials=None, corner_signatures=None,
             used.update((i, j))
             result.append((i, j, edge))
     return result
+
+
+def build_face_preview(vertices, faces, *, materials=None, corner_signatures=None,
+                       protected_edges=(), minimum_dot=0.75):
+    """Build a data-only, non-destructive triangle-join preview.
+
+    Returns (new_faces, source_face_groups, new_corner_signatures).
+    Vertex indices and positions remain unchanged. Each output face records
+    its original source face indices. This does not transfer Blender loop
+    layers, shape keys or skinning; callers must verify those separately.
+    """
+    pairs = propose_pairs(
+        vertices, faces, materials=materials,
+        corner_signatures=corner_signatures, protected_edges=protected_edges,
+        minimum_dot=minimum_dot)
+    paired = {}
+    for i, j, edge in pairs:
+        # Collect the directed boundary of the two source triangles.
+        boundary = []
+        for fi in (i, j):
+            face = faces[fi]
+            boundary.extend((a, b) for a, b in
+                            zip(face, face[1:] + face[:1])
+                            if tuple(sorted((a, b))) != edge)
+        successors = {a: b for a, b in boundary}
+        start = min(successors)
+        loop = [start]
+        for _ in range(3):
+            loop.append(successors[loop[-1]])
+        if successors[loop[-1]] != start or len(set(loop)) != 4:
+            raise ValueError("Invalid candidate boundary")
+        paired[i] = (j, tuple(loop))
+        paired[j] = (i, tuple(loop))
+
+    output_faces = []
+    sources = []
+    output_corners = [] if corner_signatures is not None else None
+    visited = set()
+    for fi, face in enumerate(faces):
+        if fi in visited:
+            continue
+        if fi in paired:
+            other, new_face = paired[fi]
+            source = (min(fi, other), max(fi, other))
+            visited.update(source)
+        else:
+            new_face, source = tuple(face), (fi,)
+            visited.add(fi)
+        output_faces.append(new_face)
+        sources.append(source)
+        if output_corners is not None:
+            corners = []
+            for vertex in new_face:
+                matches = [corner_signatures[index][faces[index].index(vertex)]
+                           for index in source if vertex in faces[index]]
+                if not matches or any(value != matches[0] for value in matches[1:]):
+                    raise ValueError("Ambiguous loop attribute at merged vertex")
+                corners.append(matches[0])
+            output_corners.append(tuple(corners))
+    return output_faces, sources, output_corners
