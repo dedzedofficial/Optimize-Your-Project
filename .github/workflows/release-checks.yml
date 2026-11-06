@@ -68,6 +68,8 @@ jobs:
       - name: Test Remesh, LOD and Blender 5.2 slotted Actions
         if: matrix.blender.series == '5.2'
         run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender_52.py'
+      - name: Test non-destructive triangle-pair Blender preview
+        run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender_pair_preview.py'
       - name: Test Blender 4.2+ optimization tools
         run: '"$RUNNER_TEMP/blender/blender" --background --factory-startup --python-exit-code 1 --python scripts/test_blender_42.py'
       - name: Test Blender 8.8.3 Smart Remesh and LOD regressions
