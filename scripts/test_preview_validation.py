@@ -30,6 +30,13 @@ class PreviewValidationTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     module.validate_preview(self.source, [face], self.sources)
 
+    def test_rejects_reversed_quad_winding(self):
+        with self.assertRaisesRegex(ValueError, "winding"):
+            module.validate_preview(self.source, [(0, 3, 2, 1)], self.sources)
+
+    def test_accepts_rotated_quad_start(self):
+        self.assertTrue(module.validate_preview(self.source, [(2, 3, 0, 1)], self.sources))
+
     def test_rejects_unpaired_changes(self):
         with self.assertRaises(ValueError):
             module.validate_preview(self.source, [(1, 0, 2), self.source[1]], [(0,), (1,)])
