@@ -48,14 +48,26 @@ for poly in preview.data.polygons:
 assert len(preview.vertex_groups) == 1
 assert abs(preview.data.uv_layers[0].data[0].uv.x) < 1e-6
 assert abs(preview.vertex_groups[0].weight(0) - 0.75) < 1e-6
-obj.parent = bpy.data.objects.new("rig-placeholder", None)
-try:
-    create_blender_pair_preview(obj)
-except ValueError as exc:
-    assert "Parented" in str(exc)
-else:
-    raise AssertionError("Expected fail-closed parent rejection")
-assert len([o for o in bpy.data.objects if o.name.startswith("source_PairPreview")]) == 1
+parent = bpy.data.objects.new("rig-placeholder", None)
+bpy.context.scene.collection.objects.link(parent)
+parent.location = (3.0, -2.0, 1.0)
+obj.parent = parent
+obj.matrix_parent_inverse = parent.matrix_world.inverted()
+obj.location = (0.25, 0.5, -0.75)
+parent_preview, parent_report = create_blender_pair_preview(obj)
+assert parent_report["quad_joins"] == 1
+assert parent_preview.parent is parent
+assert parent_preview.parent_type == obj.parent_type
+for left, right in zip(parent_preview.matrix_parent_inverse, obj.matrix_parent_inverse):
+    assert max(abs(a - b) for a, b in zip(left, right)) < 1e-6
+for left, right in zip(parent_preview.matrix_basis, obj.matrix_basis):
+    assert max(abs(a - b) for a, b in zip(left, right)) < 1e-6
+for left, right in zip(parent_preview.matrix_world, obj.matrix_world):
+    assert max(abs(a - b) for a, b in zip(left, right)) < 1e-6
+assert parent_preview.data is not mesh
+assert obj.parent is parent
+obj.parent = None
+obj.location = (0, 0, 0)
 print("Blender pair preview smoke test passed")
 
 # User-defined POINT attributes must not disappear on the output.
