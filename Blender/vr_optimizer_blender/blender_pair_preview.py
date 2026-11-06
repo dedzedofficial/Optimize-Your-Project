@@ -24,6 +24,8 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
         raise ValueError("Shape keys require an explicit transfer implementation")
     if getattr(mesh, "has_custom_normals", False):
         raise ValueError("Custom normals require an explicit transfer implementation")
+    if source.parent is not None:
+        raise ValueError("Parented objects require explicit transform and rig preservation")
     if source.modifiers:
         raise ValueError("Modifiers require an explicit preservation implementation")
     # Blender's corner-domain attributes include normals, colors and arbitrary
