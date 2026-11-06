@@ -33,6 +33,20 @@ def validate_preview(source_faces, output_faces, provenance):
                 raise ValueError("Invalid quad")
             if set(output) != set(source_faces[group[0]]) | set(source_faces[group[1]]):
                 raise ValueError("Quad vertex correspondence changed")
+            # Compare directed exterior edges, not just vertex sets. A reversed
+            # quad has identical undirected incidence but flips face winding.
+            source_edges = Counter()
+            for index in group:
+                face = source_faces[index]
+                source_edges.update(zip(face, face[1:] + face[:1]))
+            exterior = Counter()
+            for (a, b), count in source_edges.items():
+                remaining = count - source_edges.get((b, a), 0)
+                if remaining > 0:
+                    exterior[(a, b)] = remaining
+            output_edges = Counter(zip(output, output[1:] + output[:1]))
+            if output_edges != exterior:
+                raise ValueError("Quad boundary winding or edge order changed")
     if sorted(seen) != list(range(len(source_faces))):
         raise ValueError("Source faces lost or duplicated")
 
