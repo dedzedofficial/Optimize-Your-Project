@@ -9,8 +9,8 @@ from .validated_pair_preview import validated_pair_preview
 def create_blender_pair_preview(source, *, minimum_dot=0.75):
     """Return (new_object, report), leaving source untouched.
 
-    This first bridge supports triangle-only meshes without shape keys, custom
-    split normals, non-UV corner attributes or modifiers. Unsupported cases
+    This bridge supports triangle-only face topology and preserves loose edges,
+    but rejects unsupported normals, attributes and modifiers. Unsupported cases
     raise before creating a new object. No implicit destructive fallback.
     """
     import bpy
@@ -62,15 +62,12 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
     if any(e.use_edge_sharp for e in mesh.edges):
         raise ValueError("Sharp edges require explicit edge attribute transfer")
 
-    # from_pydata(vertices, [], faces) reconstructs only face-bound edges.
-    # Explicit loose edges would otherwise vanish even though loose vertices
-    # survive through the unchanged vertex array.
+    # Preserve explicit edges not referenced by any face. Their endpoints keep
+    # their original indices because the preview never reindexes vertices.
     face_edges = {mesh.loops[loop_index].edge_index
                   for poly in mesh.polygons for loop_index in poly.loop_indices}
     loose_edges = [edge.index for edge in mesh.edges if edge.index not in face_edges]
-    if loose_edges:
-        raise ValueError("Loose edges require explicit edge transfer "
-                         f"({len(loose_edges)} unsupported edges)")
+    loose_edge_pairs = [tuple(mesh.edges[index].vertices) for index in loose_edges]
 
     vertices = [tuple(v.co) for v in mesh.vertices]
     faces = [tuple(p.vertices) for p in mesh.polygons]
@@ -88,7 +85,7 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
     new_mesh = bpy.data.meshes.new(mesh.name + "_PairPreview")
     new_object = None
     try:
-        new_mesh.from_pydata(vertices, [], result["faces"])
+        new_mesh.from_pydata(vertices, loose_edge_pairs, result["faces"])
         new_mesh.update()
         for material in mesh.materials:
             new_mesh.materials.append(material)
