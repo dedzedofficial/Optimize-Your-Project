@@ -18,7 +18,7 @@ uv = mesh.uv_layers.new(name="UVMap")
 for poly in mesh.polygons:
     for li in poly.loop_indices:
         uv.data[li].uv = mesh.vertices[mesh.loops[li].vertex_index].co.xy
-group = obj.vertex_groups.new(name="Bone")
+for li in range(len(mesh.loops)):\n    vertex_index = mesh.loops[li].vertex_index\n    uv.data[li].pin_uv = vertex_index == 1\n    uv.data[li].select = vertex_index == 2\n    uv.data[li].select_edge = vertex_index == 3\ngroup = obj.vertex_groups.new(name="Bone")
 group.add([0, 1], 0.75, 'REPLACE')
 before = tuple(tuple(p.vertices) for p in mesh.polygons)
 preview, report = create_blender_pair_preview(obj)
@@ -29,7 +29,7 @@ assert report["quad_joins"] == 1
 assert len(preview.data.uv_layers) == 1
 assert preview.data.uv_layers.active_index == mesh.uv_layers.active_index
 assert preview.data.uv_layers[0].active_render == mesh.uv_layers[0].active_render
-assert len(preview.vertex_groups) == 1
+for poly in preview.data.polygons:\n    for li in poly.loop_indices:\n        vi = preview.data.loops[li].vertex_index\n        loop_uv = preview.data.uv_layers[0].data[li]\n        assert bool(loop_uv.pin_uv) == (vi == 1)\n        assert bool(loop_uv.select) == (vi == 2)\n        assert bool(loop_uv.select_edge) == (vi == 3)\nassert len(preview.vertex_groups) == 1
 assert abs(preview.data.uv_layers[0].data[0].uv.x) < 1e-6
 assert abs(preview.vertex_groups[0].weight(0) - 0.75) < 1e-6
 obj.parent = bpy.data.objects.new("rig-placeholder", None)
