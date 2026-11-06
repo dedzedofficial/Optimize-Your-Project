@@ -31,9 +31,20 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
     # Blender's corner-domain attributes include normals, colors and arbitrary
     # user data. Do not discard any such data silently.
     supported = {layer.name for layer in mesh.uv_layers}
+    # Blender exposes built-in topology fields in mesh.attributes. All other
+    # user-defined attributes must be transferred explicitly, not dropped.
+    builtins = {"position", "material_index", "sharp_face", "sharp_edge", ".edge_verts", ".corner_vert", ".corner_edge"}
     for attr in mesh.attributes:
-        if attr.domain == 'CORNER' and attr.name not in supported and not attr.is_internal:
-            raise ValueError("Unsupported corner attribute: " + attr.name)
+        if attr.name in builtins or attr.is_internal:
+            continue
+        if attr.domain == 'CORNER' and attr.name in supported:
+            continue
+        raise ValueError("Unsupported mesh attribute: " + attr.name +
+                         " (" + attr.domain + ")")
+    # Some Blender versions expose authored split normals through the native
+    # custom_normal attribute instead of has_custom_normals.
+    if mesh.attributes.get("custom_normal") is not None:
+        raise ValueError("Custom normals require an explicit transfer implementation")
 
     vertices = [tuple(v.co) for v in mesh.vertices]
     faces = [tuple(p.vertices) for p in mesh.polygons]
