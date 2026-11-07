@@ -67,8 +67,7 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
                 armature_modifier.use_bone_envelopes or
                 not armature_modifier.use_vertex_groups or
                 armature_modifier.vertex_group or
-                armature_modifier.invert_vertex_group or
-                armature_modifier.keys()):
+                armature_modifier.invert_vertex_group):
             raise ValueError("Unsupported Armature modifier settings")
     # Blender's corner-domain attributes include normals, colors and arbitrary
     # user data. Do not discard any such data silently.

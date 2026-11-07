@@ -407,6 +407,20 @@ assert set(bpy.data.objects.keys()) == rig_objects_before
 assert set(bpy.data.meshes.keys()) == rig_meshes_before
 assert skin_snapshot(weight_obj) == rig_weights_before
 rig_modifier.use_bone_envelopes = False
+# A vertex-group mask changes the deformation semantics and must be rejected
+# before any preview datablocks are allocated.
+rig_modifier.vertex_group = weight_obj.vertex_groups[0].name
+mask_objects_before = set(bpy.data.objects.keys())
+mask_meshes_before = set(bpy.data.meshes.keys())
+try:
+    create_blender_pair_preview(weight_obj)
+except ValueError as exc:
+    assert "Armature modifier settings" in str(exc), str(exc)
+else:
+    raise AssertionError("Masked Armature deformation must fail closed")
+assert set(bpy.data.objects.keys()) == mask_objects_before
+assert set(bpy.data.meshes.keys()) == mask_meshes_before
+rig_modifier.vertex_group = ""
 weight_obj.modifiers.remove(rig_modifier)
 assert create_blender_pair_preview(weight_obj)[1]["quad_joins"] == 1
 print("Single Armature modifier transfer, unsupported settings and source isolation passed")
