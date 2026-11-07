@@ -431,3 +431,6 @@ runpy.run_path(str(Path(__file__).with_name('test_blender_pair_pose.py')), run_n
 
 # Compare evaluated Blender Armature deformation on actual posed bones.
 runpy.run_path(str(Path(__file__).with_name('test_blender_pair_armature_pose.py')), run_name='__main__')
+
+# Exercise multi-UV seam safety on all supported Blender runtime jobs.
+runpy.run_path(str(Path(__file__).with_name('test_blender_pair_multi_uv.py')), run_name='__main__')
