@@ -375,31 +375,41 @@ seam_case(split_material=True)
 print("UV seam and material boundary pairing guards passed")
 
 
-# A rigged object with an ARMATURE modifier must not be presented as a
-# deformation-preserving preview. The bridge currently rejects modifiers;
-# this regression protects against accidentally bypassing that guard.
+# A single supported Armature modifier is transferred without touching the
+# source rig, skin assignments or mesh. Unsupported envelope mode fails closed.
 rig_data = bpy.data.armatures.new("pair-preview-deformation-rig")
 rig_obj = bpy.data.objects.new("pair-preview-deformation-rig", rig_data)
 bpy.context.scene.collection.objects.link(rig_obj)
 rig_modifier = weight_obj.modifiers.new("Skin", 'ARMATURE')
 rig_modifier.object = rig_obj
+rig_modifier.use_deform_preserve_volume = True
+rig_weights_before = skin_snapshot(weight_obj)
+rigged_preview, rigged_report = create_blender_pair_preview(weight_obj)
+assert rigged_report["quad_joins"] == 1
+assert rigged_preview.data is not weight_obj.data
+assert skin_snapshot(weight_obj) == rig_weights_before
+assert skin_snapshot(rigged_preview) == rig_weights_before
+assert len(rigged_preview.modifiers) == 1
+assert rigged_preview.modifiers[0].type == 'ARMATURE'
+assert rigged_preview.modifiers[0].object.name == rig_obj.name
+assert rigged_preview.modifiers[0].use_deform_preserve_volume
+assert rig_modifier.object.name == rig_obj.name
+rig_modifier.use_bone_envelopes = True
 rig_objects_before = set(bpy.data.objects.keys())
 rig_meshes_before = set(bpy.data.meshes.keys())
-rig_weights_before = skin_snapshot(weight_obj)
 try:
     create_blender_pair_preview(weight_obj)
 except ValueError as exc:
-    assert "Modifiers" in str(exc), str(exc)
+    assert "Armature modifier settings" in str(exc), str(exc)
 else:
-    raise AssertionError("Rigged mesh preview must fail closed until deformation transfer exists")
+    raise AssertionError("Envelope deformation must fail closed")
 assert set(bpy.data.objects.keys()) == rig_objects_before
 assert set(bpy.data.meshes.keys()) == rig_meshes_before
 assert skin_snapshot(weight_obj) == rig_weights_before
-assert weight_obj.modifiers[0].name == rig_modifier.name
-assert rig_modifier.object.name == rig_obj.name
+rig_modifier.use_bone_envelopes = False
 weight_obj.modifiers.remove(rig_modifier)
 assert create_blender_pair_preview(weight_obj)[1]["quad_joins"] == 1
-print("Armature modifier rejection, source isolation and recovery passed")
+print("Single Armature modifier transfer, unsupported settings and source isolation passed")
 
 # Exercise weighted-pose correspondence in the existing Blender CI entrypoint.
 import runpy
