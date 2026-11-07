@@ -294,10 +294,10 @@ extra_key.data[1].co.z += 0.125
 dependent_preview, _ = create_blender_pair_preview(obj)
 preview_keys = dependent_preview.data.shape_keys.key_blocks
 assert preview_keys["Smile"].vertex_group == "Bone"
-assert preview_keys["SmileDetail"].relative_key is preview_keys["Smile"]
+assert preview_keys["SmileDetail"].relative_key.name == preview_keys["Smile"].name
 assert abs(preview_keys["SmileDetail"].data[1].co.z - extra_key.data[1].co.z) < 1e-6
 assert preview_keys["SmileDetail"] is not extra_key
-assert mesh.shape_keys.key_blocks["SmileDetail"].relative_key is smile
+assert mesh.shape_keys.key_blocks["SmileDetail"].relative_key.name == smile.name
 print("Shape-key relative dependencies and vertex-group references preserved")
 
 # Verify exact sparse skin-weight correspondence across multiple groups.
