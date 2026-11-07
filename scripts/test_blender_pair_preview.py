@@ -400,3 +400,7 @@ assert rig_modifier.object.name == rig_obj.name
 weight_obj.modifiers.remove(rig_modifier)
 assert create_blender_pair_preview(weight_obj)[1]["quad_joins"] == 1
 print("Armature modifier rejection, source isolation and recovery passed")
+
+# Exercise weighted-pose correspondence in the existing Blender CI entrypoint.
+import runpy
+runpy.run_path(str(Path(__file__).with_name('test_blender_pair_pose.py')), run_name='__main__')
