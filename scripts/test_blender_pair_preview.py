@@ -395,8 +395,8 @@ else:
 assert set(bpy.data.objects.keys()) == rig_objects_before
 assert set(bpy.data.meshes.keys()) == rig_meshes_before
 assert skin_snapshot(weight_obj) == rig_weights_before
-assert weight_obj.modifiers[0] is rig_modifier
-assert rig_modifier.object is rig_obj
+assert weight_obj.modifiers[0].name == rig_modifier.name
+assert rig_modifier.object.name == rig_obj.name
 weight_obj.modifiers.remove(rig_modifier)
 assert create_blender_pair_preview(weight_obj)[1]["quad_joins"] == 1
 print("Armature modifier rejection, source isolation and recovery passed")
