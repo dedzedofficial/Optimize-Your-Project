@@ -6,6 +6,7 @@ and coordinates, not remeshing or reconstructed edge flow.
 import math
 import bpy
 from mathutils import Matrix
+from vr_optimizer_blender.blender_pair_preview import create_blender_pair_preview
 
 # Imported by the existing Blender smoke entrypoint.
 arm_data = bpy.data.armatures.new("pose-parity-rig")
