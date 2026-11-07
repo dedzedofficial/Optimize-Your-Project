@@ -115,6 +115,23 @@ pose_displacement = largest_displacement(reference_positions, posed_positions)
 shape_displacement = largest_displacement(reference_positions, flexed_positions)
 assert pose_displacement > 1e-3, ("Armature did not deform the mesh", pose_displacement)
 assert shape_displacement > 1e-3, ("Shape key did not deform the mesh", shape_displacement)
+# Changing only the preview's shape-key value must not mutate the source.
+# Check both stored values and evaluated positions, rather than merely
+# comparing independent mesh datablock identities.
+source_flex = pose_mesh.shape_keys.key_blocks["Flex"]
+preview_flex = preview.data.shape_keys.key_blocks["Flex"]
+assert source_flex.value == 0.0 and preview_flex.value == 0.0
+neutral_source = evaluated_positions(pose_obj)
+try:
+    preview_flex.value = 0.8
+    bpy.context.view_layer.update()
+    assert source_flex.value == 0.0
+    assert largest_displacement(neutral_source, evaluated_positions(pose_obj)) <= 1e-5
+    assert largest_displacement(neutral_source, evaluated_positions(preview)) > 1e-3
+finally:
+    preview_flex.value = 0.0
+    bpy.context.view_layer.update()
+assert largest_displacement(evaluated_positions(pose_obj), evaluated_positions(preview)) <= 1e-5
 assert tuple(tuple(p.vertices) for p in pose_mesh.polygons) == source_faces
 print("Pose displacement:", pose_displacement, "shape-key displacement:", shape_displacement)
 print("Actual Blender Armature pose parity passed: 6 pose/shape-key combinations, 4 vertices, max error", max_error)
