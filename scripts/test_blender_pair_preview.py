@@ -294,10 +294,10 @@ extra_key.data[1].co.z += 0.125
 dependent_preview, _ = create_blender_pair_preview(obj)
 preview_keys = dependent_preview.data.shape_keys.key_blocks
 assert preview_keys["Smile"].vertex_group == "Bone"
-assert preview_keys["SmileDetail"].relative_key is preview_keys["Smile"]
+assert preview_keys["SmileDetail"].relative_key.name == preview_keys["Smile"].name
 assert abs(preview_keys["SmileDetail"].data[1].co.z - extra_key.data[1].co.z) < 1e-6
 assert preview_keys["SmileDetail"] is not extra_key
-assert mesh.shape_keys.key_blocks["SmileDetail"].relative_key is smile
+assert mesh.shape_keys.key_blocks["SmileDetail"].relative_key.name == smile.name
 print("Shape-key relative dependencies and vertex-group references preserved")
 
 # Verify exact sparse skin-weight correspondence across multiple groups.
@@ -336,3 +336,40 @@ weight_preview.vertex_groups["Left"].add([0], 0.9, 'REPLACE')
 assert skin_snapshot(weight_obj) == weights_before
 assert skin_snapshot(weight_preview) != weights_before
 print("Sparse multi-group skin-weight correspondence and isolation passed")
+
+
+# Attribute discontinuities across a shared edge must block pairing.
+# These are synthetic meshes, not a claim of deformation-aware retopology.
+def seam_case(*, split_uv=False, split_material=False):
+    seam_mesh = bpy.data.meshes.new("seam-test-mesh")
+    seam_mesh.from_pydata([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)],
+                          [], [(0, 1, 2), (0, 2, 3)])
+    seam_mesh.update()
+    seam_obj = bpy.data.objects.new("seam-test-source", seam_mesh)
+    bpy.context.scene.collection.objects.link(seam_obj)
+    layer = seam_mesh.uv_layers.new(name="UVMap")
+    for poly in seam_mesh.polygons:
+        for loop_index in poly.loop_indices:
+            vi = seam_mesh.loops[loop_index].vertex_index
+            layer.data[loop_index].uv = seam_mesh.vertices[vi].co.xy
+            if split_uv and poly.index == 1:
+                layer.data[loop_index].uv.x += 0.125
+    if split_material:
+        seam_mesh.materials.append(bpy.data.materials.new("seam-mat-a"))
+        seam_mesh.materials.append(bpy.data.materials.new("seam-mat-b"))
+        seam_mesh.polygons[1].material_index = 1
+    original_faces = tuple(tuple(poly.vertices) for poly in seam_mesh.polygons)
+    original_uv = tuple(tuple(layer.data[li].uv) for li in range(len(seam_mesh.loops)))
+    result_obj, result = create_blender_pair_preview(seam_obj)
+    assert tuple(tuple(poly.vertices) for poly in seam_mesh.polygons) == original_faces
+    assert tuple(tuple(layer.data[li].uv) for li in range(len(seam_mesh.loops))) == original_uv
+    expected_joins = 0 if (split_uv or split_material) else 1
+    assert result["quad_joins"] == expected_joins
+    assert len(result_obj.data.polygons) == 2 - expected_joins
+    assert result_obj.data is not seam_mesh
+    return result
+
+seam_case()
+seam_case(split_uv=True)
+seam_case(split_material=True)
+print("UV seam and material boundary pairing guards passed")
