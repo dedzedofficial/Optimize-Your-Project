@@ -373,3 +373,30 @@ seam_case()
 seam_case(split_uv=True)
 seam_case(split_material=True)
 print("UV seam and material boundary pairing guards passed")
+
+
+# A rigged object with an ARMATURE modifier must not be presented as a
+# deformation-preserving preview. The bridge currently rejects modifiers;
+# this regression protects against accidentally bypassing that guard.
+rig_data = bpy.data.armatures.new("pair-preview-deformation-rig")
+rig_obj = bpy.data.objects.new("pair-preview-deformation-rig", rig_data)
+bpy.context.scene.collection.objects.link(rig_obj)
+rig_modifier = weight_obj.modifiers.new("Skin", 'ARMATURE')
+rig_modifier.object = rig_obj
+rig_objects_before = set(bpy.data.objects.keys())
+rig_meshes_before = set(bpy.data.meshes.keys())
+rig_weights_before = skin_snapshot(weight_obj)
+try:
+    create_blender_pair_preview(weight_obj)
+except ValueError as exc:
+    assert "Modifiers" in str(exc), str(exc)
+else:
+    raise AssertionError("Rigged mesh preview must fail closed until deformation transfer exists")
+assert set(bpy.data.objects.keys()) == rig_objects_before
+assert set(bpy.data.meshes.keys()) == rig_meshes_before
+assert skin_snapshot(weight_obj) == rig_weights_before
+assert weight_obj.modifiers[0] is rig_modifier
+assert rig_modifier.object is rig_obj
+weight_obj.modifiers.remove(rig_modifier)
+assert create_blender_pair_preview(weight_obj)[1]["quad_joins"] == 1
+print("Armature modifier rejection, source isolation and recovery passed")
