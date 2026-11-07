@@ -55,8 +55,21 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
         # supported IDProperties to check.
     if source.parent is not None and source.parent_type != "OBJECT":
         raise ValueError("Bone/vertex parenting requires explicit preservation")
+    # A single vertex-group Armature modifier can be copied without changing
+    # vertex indices. Other modifier stacks need explicit evaluation semantics.
+    armature_modifier = None
     if source.modifiers:
-        raise ValueError("Modifiers require an explicit preservation implementation")
+        if len(source.modifiers) != 1 or source.modifiers[0].type != 'ARMATURE':
+            raise ValueError("Only a single Armature modifier is supported")
+        armature_modifier = source.modifiers[0]
+        if (armature_modifier.object is None or
+                armature_modifier.object.type != 'ARMATURE' or
+                armature_modifier.use_bone_envelopes or
+                not armature_modifier.use_vertex_groups or
+                armature_modifier.vertex_group or
+                armature_modifier.invert_vertex_group or
+                armature_modifier.keys()):
+            raise ValueError("Unsupported Armature modifier settings")
     # Blender's corner-domain attributes include normals, colors and arbitrary
     # user data. Do not discard any such data silently.
     supported = {layer.name for layer in mesh.uv_layers}
@@ -174,6 +187,18 @@ def create_blender_pair_preview(source, *, minimum_dot=0.75):
             for assignment in vertex.groups:
                 new_object.vertex_groups[assignment.group].add(
                     [vertex.index], assignment.weight, 'REPLACE')
+        # Preserve supported armature deformation only after weight transfer.
+        # The preview references the same rig but owns its independent mesh.
+        if armature_modifier is not None:
+            target_modifier = new_object.modifiers.new(armature_modifier.name, 'ARMATURE')
+            target_modifier.object = armature_modifier.object
+            target_modifier.use_vertex_groups = armature_modifier.use_vertex_groups
+            target_modifier.use_bone_envelopes = armature_modifier.use_bone_envelopes
+            target_modifier.use_deform_preserve_volume = armature_modifier.use_deform_preserve_volume
+            target_modifier.show_viewport = armature_modifier.show_viewport
+            target_modifier.show_render = armature_modifier.show_render
+            target_modifier.show_in_editmode = armature_modifier.show_in_editmode
+            target_modifier.show_on_cage = armature_modifier.show_on_cage
         # Linking is the last operation so a failure cannot leave a scene object.
         for collection in collections:
             collection.objects.link(new_object)
