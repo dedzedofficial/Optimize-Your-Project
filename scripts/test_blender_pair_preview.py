@@ -428,3 +428,6 @@ print("Single Armature modifier transfer, unsupported settings and source isolat
 # Exercise weighted-pose correspondence in the existing Blender CI entrypoint.
 import runpy
 runpy.run_path(str(Path(__file__).with_name('test_blender_pair_pose.py')), run_name='__main__')
+
+# Compare evaluated Blender Armature deformation on actual posed bones.
+runpy.run_path(str(Path(__file__).with_name('test_blender_pair_armature_pose.py')), run_name='__main__')
