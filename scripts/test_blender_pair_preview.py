@@ -299,3 +299,40 @@ assert abs(preview_keys["SmileDetail"].data[1].co.z - extra_key.data[1].co.z) < 
 assert preview_keys["SmileDetail"] is not extra_key
 assert mesh.shape_keys.key_blocks["SmileDetail"].relative_key is smile
 print("Shape-key relative dependencies and vertex-group references preserved")
+
+# Verify exact sparse skin-weight correspondence across multiple groups.
+# The preview must not invent assignments for unweighted vertices or normalize
+# intentional partial weights; vertex indices are deliberately unchanged.
+weight_mesh = bpy.data.meshes.new("weight-correspondence-source")
+weight_mesh.from_pydata([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0),
+                         (2, 0, 0)], [], [(0, 1, 2), (0, 2, 3)])
+weight_mesh.update()
+weight_obj = bpy.data.objects.new("weight-correspondence-source", weight_mesh)
+bpy.context.scene.collection.objects.link(weight_obj)
+left = weight_obj.vertex_groups.new(name="Left")
+right = weight_obj.vertex_groups.new(name="Right")
+unused = weight_obj.vertex_groups.new(name="Unused")
+left.add([0], 0.25, 'REPLACE')
+right.add([0], 0.65, 'REPLACE')
+left.add([1, 2], 1.0, 'REPLACE')
+right.add([3], 0.4, 'REPLACE')
+unused.lock_weight = True
+
+def skin_snapshot(mesh_object):
+    return tuple(tuple(sorted((mesh_object.vertex_groups[a.group].name,
+                               round(a.weight, 7)) for a in v.groups))
+                 for v in mesh_object.data.vertices)
+
+weights_before = skin_snapshot(weight_obj)
+weight_preview, weight_report = create_blender_pair_preview(weight_obj)
+assert weight_report["quad_joins"] == 1
+assert skin_snapshot(weight_obj) == weights_before
+assert skin_snapshot(weight_preview) == weights_before
+assert [g.name for g in weight_preview.vertex_groups] == ["Left", "Right", "Unused"]
+assert weight_preview.vertex_groups["Unused"].lock_weight
+assert not weight_preview.data.vertices[4].groups
+# The output must be independent, including subsequent weight edits.
+weight_preview.vertex_groups["Left"].add([0], 0.9, 'REPLACE')
+assert skin_snapshot(weight_obj) == weights_before
+assert skin_snapshot(weight_preview) != weights_before
+print("Sparse multi-group skin-weight correspondence and isolation passed")
