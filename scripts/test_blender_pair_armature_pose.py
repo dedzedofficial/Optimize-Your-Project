@@ -70,6 +70,11 @@ pose_cases = (
     (math.radians(-35), math.radians(40)),
 )
 max_error = 0.0
+# A parity test that only compares two inert objects can pass even if the rig
+# or shape keys never deform. Require independently observable movement.
+reference_positions = None
+posed_positions = None
+flexed_positions = None
 try:
     for flex_value in (0.0, 0.8):
       pose_mesh.shape_keys.key_blocks["Flex"].value = flex_value
@@ -81,6 +86,12 @@ try:
           arm_obj.pose.bones["Tip"].rotation_euler.z = tip_angle
           bpy.context.view_layer.update()
           original = evaluated_positions(pose_obj)
+          if flex_value == 0.0 and root_angle == 0.0 and tip_angle == 0.0:
+              reference_positions = original
+          elif flex_value == 0.0 and posed_positions is None:
+              posed_positions = original
+          elif flex_value > 0.0 and root_angle == 0.0 and tip_angle == 0.0:
+              flexed_positions = original
           result = evaluated_positions(preview)
           assert len(original) == len(result) == 4
           for a, b in zip(original, result):
@@ -94,5 +105,16 @@ finally:
         bone.rotation_euler = (0, 0, 0)
     bpy.context.view_layer.update()
 
+assert reference_positions is not None and posed_positions is not None and flexed_positions is not None
+
+def largest_displacement(a, b):
+    return max(max(abs(x - y) for x, y in zip(v1, v2))
+               for v1, v2 in zip(a, b))
+
+pose_displacement = largest_displacement(reference_positions, posed_positions)
+shape_displacement = largest_displacement(reference_positions, flexed_positions)
+assert pose_displacement > 1e-3, ("Armature did not deform the mesh", pose_displacement)
+assert shape_displacement > 1e-3, ("Shape key did not deform the mesh", shape_displacement)
 assert tuple(tuple(p.vertices) for p in pose_mesh.polygons) == source_faces
+print("Pose displacement:", pose_displacement, "shape-key displacement:", shape_displacement)
 print("Actual Blender Armature pose parity passed: 6 pose/shape-key combinations, 4 vertices, max error", max_error)
