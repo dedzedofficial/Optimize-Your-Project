@@ -8,12 +8,12 @@ function Run-Python([string[]]$Arguments) {
 }
 Push-Location $Root
 try {
-    Run-Python @('scripts/check_no_em_dashes.py')
-    Run-Python @('scripts/check_release.py')
-    Run-Python @('scripts/test_smart_budget.py')
+    Run-Python -Arguments @('scripts/check_no_em_dashes.py')
+    Run-Python -Arguments @('scripts/check_release.py')
+    Run-Python -Arguments @('scripts/test_smart_budget.py')
     if ($Build) {
-        Run-Python @('scripts/build_blender.py')
-        Run-Python @('scripts/build_blender_extension.py')
+        Run-Python -Arguments @('scripts/build_blender.py')
+        Run-Python -Arguments @('scripts/build_blender_extension.py')
     }
     Write-Host "Local Optimize-Your-Project checks passed. GitHub Actions was not used."
 } finally { Pop-Location }
