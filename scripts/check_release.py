@@ -25,6 +25,7 @@ def version_tuple(value):
 
 # The project feed follows the current Unity release. Blender can remain on its own
 # integration version when a Unity-only hotfix is shipped.
+assert versions.get("feature_release") == "v0.8.8.4"
 assert versions["version"] == versions["unity"] == unity_manifest["version"]
 assert versions["unity_tag"] == "v" + versions["unity"]
 assert versions["unity_url"].endswith("/releases/tag/" + versions["unity_tag"])
