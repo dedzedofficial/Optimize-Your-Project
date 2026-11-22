@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using NUnit.Framework;
 
 namespace FISHHWB.VROptimizer
@@ -67,6 +68,35 @@ namespace FISHHWB.VROptimizer
             Assert.IsFalse(VRUpdateBackupMaintenance.TryDeleteManagedBackup(backup, root));
             Assert.IsTrue(File.Exists(sentinel));
             Assert.IsTrue(File.Exists(Path.Combine(backup, "manifest.json")));
+        }
+
+        [Test]
+        public void ModifiedBackupFilesCannotBeAutoDeleted()
+        {
+            var record = new VRUpdateBackupRecord
+            {
+                Directory = backup,
+                ManifestFingerprint = Hash(Path.Combine(backup, "manifest.json")),
+                LockFingerprint = Hash(Path.Combine(backup, "packages-lock.json"))
+            };
+            Assert.IsTrue(VRUpdateBackupMaintenance.BackupSnapshotUnchanged(record));
+            File.WriteAllText(Path.Combine(backup, "packages-lock.json"), "{\"changed\":true}");
+            Assert.IsFalse(VRUpdateBackupMaintenance.BackupSnapshotUnchanged(record));
+            Assert.IsTrue(File.Exists(Path.Combine(backup, "manifest.json")));
+        }
+
+        [Test]
+        public void MissingBackupManifestFingerprintCannotBeVerified()
+        {
+            var record = new VRUpdateBackupRecord { Directory = backup };
+            Assert.IsFalse(VRUpdateBackupMaintenance.BackupSnapshotUnchanged(record));
+        }
+
+        static string Hash(string path)
+        {
+            using (var sha = SHA256.Create())
+            using (var stream = File.OpenRead(path))
+                return Convert.ToBase64String(sha.ComputeHash(stream));
         }
 
         [Test]
