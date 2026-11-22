@@ -11,7 +11,6 @@ from bpy.app.handlers import persistent
 
 _addon_id = None
 _status = "Automatic extension updates have not run yet."
-_next_check = 0.0
 _sync_started_at = 0.0
 _sync_pending = False
 
@@ -28,20 +27,20 @@ def _allowed():
 
 
 def _schedule(seconds=8.0):
-    if not _allowed() or bpy.app.timers.is_registered(_sync_repositories):
-        return
-    if time.monotonic() < _next_check:
+    if (not _allowed() or _sync_pending or
+            bpy.app.timers.is_registered(_sync_repositories) or
+            bpy.app.timers.is_registered(_upgrade_when_ready)):
         return
     bpy.app.timers.register(_sync_repositories, first_interval=seconds)
 
 
 def _sync_repositories():
-    global _status, _sync_pending, _sync_started_at, _next_check
+    global _status, _sync_pending, _sync_started_at
     if not _allowed():
         _status = "Automatic updates skipped: offline or disabled."
         return None
 
-    # Prevent repeated downloads when someone switches .blend files frequently.
+    # One scan per project load; do not overlap an existing scan or install.
     try:
         if not bpy.ops.extensions.repo_sync_all.poll():
             _status = "Extension repository sync unavailable; use Preferences > Extensions."
@@ -50,7 +49,6 @@ def _sync_repositories():
         if 'CANCELLED' in result:
             _status = "Extension repository sync was cancelled."
             return None
-        _next_check = time.monotonic() + 6 * 3600
         _status = "Checking configured online extension repositories..."
         _sync_started_at = time.monotonic()
         _sync_pending = True
