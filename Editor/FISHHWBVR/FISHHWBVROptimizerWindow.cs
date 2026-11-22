@@ -420,7 +420,7 @@ namespace FISHHWB.VROptimizer
             GUILayout.Space(4);
             bool autoUpdate = VRProjectAutoUpdater.Enabled;
             bool nextAutoUpdate = EditorGUILayout.ToggleLeft(
-                "Auto-update compatible packages on project load", autoUpdate);
+                "Auto-update all supported packages on project load", autoUpdate);
             if (nextAutoUpdate != autoUpdate)
             {
                 VRProjectAutoUpdater.Enabled = nextAutoUpdate;
@@ -429,9 +429,10 @@ namespace FISHHWB.VROptimizer
                     : "Automatic updates disabled for this project.";
             }
             EditorGUILayout.HelpBox(
-                "Only direct registry patch releases and the official Git-installed " +
+                "All direct registry packages with newer Unity-compatible stable releases " +
+                "and the official Git-installed " +
                 "Optimize Your Project package are updated. Other Git/VCC packages, " +
-                "Asset Store files and incompatible upgrades are never overwritten. " +
+                "Asset Store files and unmanaged/incompatible packages are not overwritten. " +
                 "A Packages manifest backup is created before changes.",
                 MessageType.Info);
             EditorGUILayout.LabelField(VRProjectAutoUpdater.Report, mutedStyle);
