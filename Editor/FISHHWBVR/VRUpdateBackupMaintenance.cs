@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
@@ -15,6 +16,8 @@ namespace FISHHWB.VROptimizer
         public string Directory;
         public string[] ExpectedPackages;
         public string Status;
+        public string ManifestFingerprint;
+        public string LockFingerprint;
     }
 
     // Only backups created by our own auto-updater are eligible for removal.
@@ -69,6 +72,8 @@ namespace FISHHWB.VROptimizer
             {
                 Directory = directory,
                 ExpectedPackages = (string[])expectedPackages.Clone(),
+                ManifestFingerprint = Fingerprint(Path.Combine(directory, "manifest.json")),
+                LockFingerprint = Fingerprint(Path.Combine(directory, "packages-lock.json")),
                 Status = Installing
             });
         }
@@ -198,6 +203,11 @@ namespace FISHHWB.VROptimizer
                 Retain("The project package manifest or lock file is missing. Backup retained.");
                 return;
             }
+            if (!BackupSnapshotUnchanged(record))
+            {
+                Retain("An original backup snapshot was modified or missing. Backup retained.");
+                return;
+            }
             if (!TryDeleteManagedBackup(record.Directory, Root))
             {
                 Retain("A backup file was changed or could not be safely removed. Backup retained.");
@@ -212,6 +222,35 @@ namespace FISHHWB.VROptimizer
         static void Retain(string message)
         {
             VRProjectAutoUpdater.ReportBackupStatus(message);
+        }
+
+        static string Fingerprint(string path)
+        {
+            if (!File.Exists(path)) return null;
+            using (var sha = SHA256.Create())
+            using (var stream = File.OpenRead(path))
+                return Convert.ToBase64String(sha.ComputeHash(stream));
+        }
+
+        internal static bool BackupSnapshotUnchanged(VRUpdateBackupRecord record)
+        {
+            if (record == null || string.IsNullOrEmpty(record.ManifestFingerprint) ||
+                string.IsNullOrEmpty(record.Directory))
+                return false;
+            try
+            {
+                return string.Equals(record.ManifestFingerprint,
+                           Fingerprint(Path.Combine(record.Directory, "manifest.json")),
+                           StringComparison.Ordinal) &&
+                       string.Equals(record.LockFingerprint,
+                           Fingerprint(Path.Combine(record.Directory, "packages-lock.json")),
+                           StringComparison.Ordinal);
+            }
+            catch (Exception error) when (error is IOException ||
+                                           error is UnauthorizedAccessException)
+            {
+                return false;
+            }
         }
 
         // Expected entry format is name|version|source. Source must be Registry
