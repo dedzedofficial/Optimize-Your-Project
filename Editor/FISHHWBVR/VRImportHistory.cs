@@ -98,11 +98,11 @@ namespace FISHHWB.VROptimizer
                 if (lines.Count < 15) lines.Add(record.Job + ": " + path);
             }
             return "Last import batch: " + lastBatch.Count
-                + " change(s) eligible for fingerprint-checked restore."
+                + " recorded change(s). Restore eligibility is checked when restoring."
                 + "\n" + string.Join("\n", lines.ToArray())
-                + (lastBatch.Count > 15 ? "\\n... more not shown" : "")
-                + (missing > 0 ? "\\nMissing assets: " + missing : "")
-                + "\\nRestoring checks for later source/importer edits. No changes made.";
+                + (lastBatch.Count - missing > lines.Count ? "\n... more not shown" : "")
+                + (missing > 0 ? "\nMissing assets: " + missing : "")
+                + "\nRestoring checks for later source/importer edits. No changes made.";
         }
 
         internal string RestoreLastBatch()

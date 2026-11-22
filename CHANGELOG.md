@@ -10,6 +10,14 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
+## Unreleased - Unity unused-asset cleanup safety and recovery
+
+- Exclude user-protected import-history assets from deletion candidates, alongside runtime-use paths, asset labels, and AssetBundle markers.
+- Include serialized package asset dependencies when looking for inbound references to project assets.
+- Refuse permanent deletion while open scenes have unsaved changes; after both confirmations, rescan candidate paths and asset GUID identity to prevent deletion of changed or replaced candidates.
+- Fix the import-history restore preview's line breaks and clarify that restorable status is verified during restore, not guaranteed by the preview.
+- Add Unity EditMode regression tests for unreferenced and serialized-referenced textures, user protection, Resources protection, candidate-set drift, GUID replacement, and recovery-preview formatting. Unity runtime tests still require a Unity Editor installation.
+
 ## Unreleased - documentation and source text style
 
 - Audited all repository text files on the game-ready feature branch for em dash punctuation. No existing occurrences required replacement.
