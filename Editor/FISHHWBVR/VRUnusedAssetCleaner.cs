@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace FISHHWB.VROptimizer
 {
@@ -13,7 +14,7 @@ namespace FISHHWB.VROptimizer
             if (!ValidFolder(folder))
                 return "Unused asset report: choose an existing folder under Assets first.";
 
-            var candidates = FindUnused(folder, out int protectedDynamic, out int unsupported);
+            var candidates = FindUnused(folder, out int protectedAssets, out int unsupported);
             string filename = EditorUtility.SaveFilePanel(
                 "Export unused asset dry-run report", "", "OptimizeYourProject-UnusedAssets.csv", "csv");
             if (string.IsNullOrEmpty(filename))
@@ -26,12 +27,12 @@ namespace FISHHWB.VROptimizer
                     writer.WriteLine("Status,Asset Path");
                     foreach (string path in candidates)
                         writer.WriteLine("\"Candidate\",\"" + path.Replace("\"", "\"\"") + "\"");
-                    writer.WriteLine("\"Protected dynamic-use assets\",\"" + protectedDynamic + "\"");
+                    writer.WriteLine("\"Protected assets (dynamic or user)\",\"" + protectedAssets + "\"");
                     writer.WriteLine("\"Unsupported asset types\",\"" + unsupported + "\"");
                     writer.WriteLine("\"Caution\",\"Runtime-only references cannot always be detected\"");
                 }
                 return "Unused asset dry-run report exported: " + candidates.Count +
-                       " candidates; " + protectedDynamic + " protected dynamic-use assets; " +
+                       " candidates; " + protectedAssets + " protected assets; " +
                        unsupported + " unsupported. Nothing deleted. File: " + filename;
             }
             catch (Exception error)
@@ -46,10 +47,14 @@ namespace FISHHWB.VROptimizer
             if (!ValidFolder(folder))
                 return "Unused asset cleanup: choose an existing folder under Assets first.";
 
-            var candidates = FindUnused(folder, out int protectedDynamic, out int unsupported);
+            // Unsaved scene references are absent from serialized dependency scans.
+            if (HasUnsavedOpenScenes())
+                return "Unused asset cleanup stopped: save or discard changes in open scenes first. Nothing was deleted.";
+
+            var candidates = FindUnused(folder, out int protectedAssets, out int unsupported);
             if (candidates.Count == 0)
                 return "Unused asset cleanup: no conservative deletion candidates found. " +
-                       protectedDynamic + " dynamic-use assets protected, " + unsupported + " unsupported asset types ignored.";
+                       protectedAssets + " protected assets, " + unsupported + " unsupported asset types ignored.";
 
             string preview = BuildPreview(candidates, 12);
             if (!EditorUtility.DisplayDialog(
@@ -71,6 +76,14 @@ namespace FISHHWB.VROptimizer
                 "Permanent Delete",
                 "Cancel"))
                 return "Unused asset cleanup cancelled at the final warning. Nothing was deleted.";
+
+            // Re-check immediately before permanent deletion. The folder or dependency
+            // graph may have changed while the two confirmation dialogs were open.
+            if (HasUnsavedOpenScenes())
+                return "Unused asset cleanup stopped: open scenes now have unsaved changes. Nothing was deleted.";
+            var refreshed = FindUnused(folder, out _, out _);
+            if (!CandidateSetUnchanged(candidates, refreshed))
+                return "Unused asset cleanup stopped: the candidate list changed during review. Run it again. Nothing was deleted.";
 
             int deleted = 0;
             int failed = 0;
@@ -101,9 +114,9 @@ namespace FISHHWB.VROptimizer
                    " failed. This action does not use Unity Undo.";
         }
 
-        internal static List<string> FindUnused(string folder, out int protectedDynamic, out int unsupported)
+        internal static List<string> FindUnused(string folder, out int protectedAssets, out int unsupported)
         {
-            protectedDynamic = 0;
+            protectedAssets = 0;
             unsupported = 0;
             var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -113,9 +126,9 @@ namespace FISHHWB.VROptimizer
                 if (string.IsNullOrEmpty(path) || AssetDatabase.IsValidFolder(path) || !path.StartsWith("Assets/", StringComparison.Ordinal))
                     continue;
 
-                if (ProtectedDynamicPath(path) || HasExternalUsageMarker(path))
+                if (ProtectedDynamicPath(path) || HasExternalUsageMarker(path) || VRImportHistory.instance.Protected(path))
                 {
-                    protectedDynamic++;
+                    protectedAssets++;
                     continue;
                 }
 
@@ -135,7 +148,11 @@ namespace FISHHWB.VROptimizer
             var referenced = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var owner in AssetDatabase.GetAllAssetPaths())
             {
-                if (string.IsNullOrEmpty(owner) || !owner.StartsWith("Assets/", StringComparison.Ordinal) || AssetDatabase.IsValidFolder(owner))
+                // Serialized package assets can also depend on assets in this project.
+                if (string.IsNullOrEmpty(owner) ||
+                    !(owner.StartsWith("Assets/", StringComparison.Ordinal) ||
+                      owner.StartsWith("Packages/", StringComparison.Ordinal)) ||
+                    AssetDatabase.IsValidFolder(owner))
                     continue;
 
                 foreach (var dependency in AssetDatabase.GetDependencies(owner, false))
@@ -149,6 +166,25 @@ namespace FISHHWB.VROptimizer
             var result = new List<string>(candidates);
             result.Sort(StringComparer.OrdinalIgnoreCase);
             return result;
+        }
+
+        internal static bool CandidateSetUnchanged(IList<string> reviewed, IList<string> current)
+        {
+            if (reviewed == null || current == null || reviewed.Count != current.Count)
+                return false;
+            var previous = new HashSet<string>(reviewed, StringComparer.OrdinalIgnoreCase);
+            return previous.Count == reviewed.Count && previous.SetEquals(current);
+        }
+
+        static bool HasUnsavedOpenScenes()
+        {
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                if (scene.IsValid() && scene.isDirty)
+                    return true;
+            }
+            return false;
         }
 
         static bool SafeCandidateType(UnityEngine.Object asset)
