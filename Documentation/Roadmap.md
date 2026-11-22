@@ -43,7 +43,7 @@ Do not label surface-preserving decimation as QuadriFlow retopology. A budget is
 ## v0.8.8.4 automatic-update delivery (in development)
 
 - Unity 0.8.9: all-installed-package scanning and stable latest-compatible registry upgrades on project start (including major/minor releases), official Git package update, pre-change project manifest backups, offline/batch/dirty-scene guards, and an opt-out toggle.
-- Blender 8.8.4: automatic configured online extension repository checks, native extension upgrades when supported, preferences toggle, offline guard and session throttle.
+- Blender 8.8.4: automatic configured online extension repository checks, native extension upgrades when supported, preferences toggle, offline guard and no overlapping update requests.
 - Validation gates: packaging checks, Blender-free unit tests, Unity EditMode tests and supported Blender version tests. No claims that every installed asset can be updated: classic imports and untracked sources require their publisher's workflow.
 
 ## Current baseline: v0.8.8
