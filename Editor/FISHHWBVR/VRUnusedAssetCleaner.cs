@@ -56,6 +56,7 @@ namespace FISHHWB.VROptimizer
                 return "Unused asset cleanup: no conservative deletion candidates found. " +
                        protectedAssets + " protected assets, " + unsupported + " unsupported asset types ignored.";
 
+            var reviewedIdentities = CandidateIdentities(candidates);
             string preview = BuildPreview(candidates, 12);
             if (!EditorUtility.DisplayDialog(
                 "Review unused asset cleanup",
@@ -82,7 +83,7 @@ namespace FISHHWB.VROptimizer
             if (HasUnsavedOpenScenes())
                 return "Unused asset cleanup stopped: open scenes now have unsaved changes. Nothing was deleted.";
             var refreshed = FindUnused(folder, out _, out _);
-            if (!CandidateSetUnchanged(candidates, refreshed))
+            if (!CandidateSetUnchanged(candidates, refreshed) || !CandidateIdentitiesUnchanged(reviewedIdentities))
                 return "Unused asset cleanup stopped: the candidate list changed during review. Run it again. Nothing was deleted.";
 
             int deleted = 0;
@@ -174,6 +175,24 @@ namespace FISHHWB.VROptimizer
                 return false;
             var previous = new HashSet<string>(reviewed, StringComparer.OrdinalIgnoreCase);
             return previous.Count == reviewed.Count && previous.SetEquals(current);
+        }
+
+        internal static Dictionary<string, string> CandidateIdentities(IList<string> candidates)
+        {
+            var identities = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string path in candidates)
+                identities[path] = AssetDatabase.AssetPathToGUID(path);
+            return identities;
+        }
+
+        internal static bool CandidateIdentitiesUnchanged(IDictionary<string, string> reviewed)
+        {
+            if (reviewed == null) return false;
+            foreach (var item in reviewed)
+                if (string.IsNullOrEmpty(item.Value) ||
+                    !string.Equals(item.Value, AssetDatabase.AssetPathToGUID(item.Key), StringComparison.Ordinal))
+                    return false;
+            return true;
         }
 
         static bool HasUnsavedOpenScenes()
