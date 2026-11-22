@@ -91,6 +91,7 @@ The cleaner is intentionally conservative:
 - it protects Resources, StreamingAssets, Editor, Plugins, Gizmos, Addressable-related paths, labelled assets and AssetBundle assets,
 - it shows candidate examples before deletion,
 - it requires a second explicit permanent-delete confirmation,
+- it honors assets explicitly protected in import history, checks serialized project/package dependencies, refuses deletion with unsaved open-scene changes, and rechecks both candidate paths and GUIDs after the confirmation dialogs,
 - it clearly states that Unity Undo cannot restore deleted asset files,
 - it warns that runtime-only string/reflection/custom-loader references cannot always be detected.
 
