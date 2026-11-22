@@ -112,6 +112,7 @@ namespace FISHHWB.VROptimizer
             message = manual ? "Checking for updates..." : null;
 
             request = UnityWebRequest.Get(FeedUrl);
+            request.timeout = 12;
             request.SetRequestHeader("User-Agent", "Optimize-Your-Project-Unity");
             operation = request.SendWebRequest();
             EditorApplication.update -= Poll;

@@ -1,4 +1,4 @@
-"""Blender 4.2+ runtime tests for Smart Remesh 8.8.3."""
+"""Blender 4.2+ runtime tests for Smart Remesh 8.8.4."""
 import importlib.util
 from pathlib import Path
 import sys
@@ -35,7 +35,7 @@ class SmartOptimize088Tests(unittest.TestCase):
         return bpy.context.active_object
 
     def test_version_and_operator_registered(self):
-        self.assertEqual(extension.bl_info["version"], (8, 8, 3))
+        self.assertEqual(extension.bl_info["version"], (8, 8, 4))
         obj = self.cube()
         self.assertTrue(bpy.ops.fishhwb.smart_optimize.poll())
         self.assertIsNotNone(obj)
@@ -694,4 +694,4 @@ finally:
     extension.unregister()
 
 if not outcome.wasSuccessful():
-    raise RuntimeError("Blender 8.8.3 regression suite failed.")
+    raise RuntimeError("Blender 8.8.4 regression suite failed.")

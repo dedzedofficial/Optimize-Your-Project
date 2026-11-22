@@ -2,7 +2,7 @@
 bl_info = {
     "name": "Optimize Your Project for Blender",
     "author": "FISHHWB | Ded Zed",
-    "version": (8, 8, 3),
+    "version": (8, 8, 4),
     "blender": (4, 2, 0),
     "location": "View3D > Sidebar > FISHHWB",
     "description": "Remesh, LOD and optional collision proxy tools",

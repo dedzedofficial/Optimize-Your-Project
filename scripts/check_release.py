@@ -1,5 +1,6 @@
 """Static release, packaging and metadata checks for Optimize Your Project."""
 import json
+import ast
 import os
 import re
 from pathlib import Path
@@ -24,6 +25,7 @@ def version_tuple(value):
 
 # The project feed follows the current Unity release. Blender can remain on its own
 # integration version when a Unity-only hotfix is shipped.
+assert versions.get("feature_release") == "v0.8.8.4"
 assert versions["version"] == versions["unity"] == unity_manifest["version"]
 assert versions["unity_tag"] == "v" + versions["unity"]
 assert versions["unity_url"].endswith("/releases/tag/" + versions["unity_tag"])
@@ -40,6 +42,10 @@ assert extension_manifest["type"] == "add-on"
 assert extension_manifest["license"] == ["SPDX:GPL-3.0-or-later"]
 assert extension_manifest["blender_version_min"] == "4.2.0"
 assert len(extension_manifest["tagline"]) <= 64
+
+# Parse the Blender-independent updater module before packaging its code.
+ast.parse((root / "Blender/vr_optimizer_blender/auto_updates.py").read_text(encoding="utf-8"))
+subprocess.run([sys.executable, "scripts/test_project_auto_updates.py"], cwd=root, check=True)
 
 # Immutable Unity packages cannot generate missing metadata in PackageCache.
 # Every editor source/assembly asset must therefore ship with its .meta file.
@@ -70,6 +76,7 @@ for required in [
     "VRUIRaycastOptimizer.Optimize",
     "VRUnusedAssetCleaner.DeleteUnused",
     "VRUnusedAssetCleaner.ExportDryRunReport",
+    "VRProjectAutoUpdater.Enabled",
 ]:
     assert required in window, required
 assert "RunQuickOptimize" not in window
@@ -96,6 +103,24 @@ for required in [
 ]:
     assert required in localization, required
 assert localization.count("OYPLanguage.") >= 14
+
+updater = (root / "Editor/FISHHWBVR/VRProjectAutoUpdater.cs").read_text(encoding="utf-8")
+for required in ["[InitializeOnLoad]", "Client.List(false, true)", "Client.AddAndRemove",
+                 "IsCompatibleRelease", "TrustedGitOrigin", "BackupManifests",
+                 "SceneManager.sceneCount", "SessionState.SetBool"]:
+    assert required in updater, required
+assert Path(str(root / "Editor/FISHHWBVR/VRProjectAutoUpdater.cs") + ".meta").is_file()
+backup_maintenance = (root / "Editor/FISHHWBVR/VRUpdateBackupMaintenance.cs").read_text(encoding="utf-8")
+for required in ["EditorUtility.scriptCompilationFailed", "Client.List(true, true)",
+                 "ExpectedPackagesVerified", "TryDeleteManagedBackup", "SafeBackupDirectory",
+                 "VerifyOnNextEditorLaunch", "MarkTransactionFailed"]:
+    assert required in backup_maintenance, required
+for required in ["VRUpdateBackupMaintenance.RecordPending", "VRUpdateBackupMaintenance.MarkTransactionSucceeded",
+                 "VRUpdateBackupMaintenance.MarkTransactionFailed",
+                 "VRUpdateBackupMaintenance.VerifyOnNextEditorLaunch"]:
+    assert required in updater, required
+assert (root / "Editor/Tests/VRUpdateBackupMaintenanceTests.cs").is_file()
+assert Path(str(root / "Editor/FISHHWBVR/VRUpdateBackupMaintenance.cs") + ".meta").is_file()
 
 unused_cleaner = (root / "Editor/FISHHWBVR/VRUnusedAssetCleaner.cs").read_text(encoding="utf-8")
 for required in [
@@ -250,6 +275,7 @@ with ZipFile(extension_archive) as package:
         "Blender/EXTENSION_LICENSE.txt",
         "Blender/vr_optimizer_blender/__init__.py",
         "Blender/vr_optimizer_blender/deform_transfer.py",
+        "Blender/vr_optimizer_blender/auto_updates.py",
         "Blender/vr_optimizer_blender/tools_42.py",
         "Blender/vr_optimizer_blender/v08_tools.py",
         "Blender/vr_optimizer_blender/v088_tools.py",

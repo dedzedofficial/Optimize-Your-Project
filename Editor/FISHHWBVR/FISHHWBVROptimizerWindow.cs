@@ -418,6 +418,25 @@ namespace FISHHWB.VROptimizer
             if (!showAdvanced) return;
 
             GUILayout.Space(4);
+            bool autoUpdate = VRProjectAutoUpdater.Enabled;
+            bool nextAutoUpdate = EditorGUILayout.ToggleLeft(
+                "Auto-update all supported packages on project load", autoUpdate);
+            if (nextAutoUpdate != autoUpdate)
+            {
+                VRProjectAutoUpdater.Enabled = nextAutoUpdate;
+                summary = nextAutoUpdate
+                    ? "Automatic updates enabled for the next project launch."
+                    : "Automatic updates disabled for this project.";
+            }
+            EditorGUILayout.HelpBox(
+                "All direct registry packages with newer Unity-compatible stable releases " +
+                "and the official Git-installed " +
+                "Optimize Your Project package are updated. Other Git/VCC packages, " +
+                "Asset Store files and unmanaged/incompatible packages are not overwritten. " +
+                "A Packages manifest backup is created before changes.",
+                MessageType.Info);
+            EditorGUILayout.LabelField(VRProjectAutoUpdater.Report, mutedStyle);
+            GUILayout.Space(4);
             showPresets = EditorGUILayout.Foldout(
                 showPresets, "Local Project Presets", true);
             if (showPresets)
