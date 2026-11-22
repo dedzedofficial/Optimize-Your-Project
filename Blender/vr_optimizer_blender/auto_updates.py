@@ -42,7 +42,6 @@ def _sync_repositories():
         return None
 
     # Prevent repeated downloads when someone switches .blend files frequently.
-    _next_check = time.monotonic() + 6 * 3600
     try:
         if not bpy.ops.extensions.repo_sync_all.poll():
             _status = "Extension repository sync unavailable; use Preferences > Extensions."
@@ -51,6 +50,7 @@ def _sync_repositories():
         if 'CANCELLED' in result:
             _status = "Extension repository sync was cancelled."
             return None
+        _next_check = time.monotonic() + 6 * 3600
         _status = "Checking configured online extension repositories..."
         _sync_started_at = time.monotonic()
         _sync_pending = True
