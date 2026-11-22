@@ -71,7 +71,15 @@ def _upgrade_when_ready():
     wm = bpy.context.window_manager
     count = getattr(wm, "extensions_updates", None) if wm else None
     elapsed = time.monotonic() - _sync_started_at
-    if count == 0 and elapsed < 45.0:
+    # Blender can use negative update counts as a repository-check-in-progress
+    # sentinel. Never start upgrading while that scan is still running.
+    if isinstance(count, int) and count < 0:
+        if elapsed < 120.0:
+            return 3.0
+        _status = "Extension repository check timed out. No upgrades attempted."
+        _sync_pending = False
+        return None
+    if count == 0 and elapsed < 12.0:
         return 3.0
     if count == 0:
         _status = "Extension check finished; no updates were reported."
@@ -85,7 +93,9 @@ def _upgrade_when_ready():
             _status = "Updates may be available; open Preferences > Extensions to install them."
             return None
         result = bpy.ops.extensions.package_upgrade_all('INVOKE_DEFAULT', use_active_only=False)
-        _status = ("Blender extension updates queued; review Preferences > Extensions."
+        _status = ((str(count) + " Blender extension update(s) queued; review Preferences > Extensions."
+                   if isinstance(count, int) and count > 0 else
+                   "Blender extension upgrades requested; review Preferences > Extensions.")
                    if 'CANCELLED' not in result else
                    "Blender extension updates were cancelled.")
     except (RuntimeError, AttributeError, TypeError) as error:
