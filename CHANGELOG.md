@@ -14,7 +14,7 @@
 
 - Unity version 0.8.9: run one startup Package Manager scan; scan all installed packages and update direct registry dependencies to their latest stable release compatible with the Unity Editor, including minor and major releases and the official Git-installed Optimize Your Project package when its release tag is newer.
 - Unity: record installed/current/updateable/untracked package totals, let Package Manager resolve indirect dependencies, skip built-in, embedded, local, VCC/third-party Git and prerelease dependencies; refuse to mutate while an open scene is dirty, and write project manifest backups to Library before attempting the transaction. Provide an Advanced Settings toggle and session update status.
-- Blender version 8.8.4: use the native Extensions repository sync and upgrade operators on application and .blend load, respecting online access and a six-hour same-session throttle. Add extension preferences toggle and sidebar status.
+- Blender version 8.8.4: use the native Extensions repository sync and upgrade operators on application and .blend load, respecting online access and preventing overlapping update requests. Add extension preferences toggle and sidebar status.
 - Add Unity EditMode policy tests, Blender-free lifecycle tests, and static release packaging gates.
 - Classic Asset Store uploads, Blender files, manual scripts, engine upgrades and operating-system software remain outside the updater's supported automation.
 
