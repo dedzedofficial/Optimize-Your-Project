@@ -2,9 +2,15 @@
 
 <img src="../Editor/FISHHWBVR/Icons/Optimize-Your-Project.png" alt="Optimize Your Project" width="112">
 
-**Current Blender version: 8.8.3**
+**Next Blender version: 8.8.4 (v0.8.8.4 automatic-updates feature)**
 
 The sidebar is intentionally minimal. Select a mesh in **Object Mode**, press **N** in the 3D Viewport, and open the **FISHHWB** tab.
+
+## Automatic extension updates (v8.8.4)
+
+The add-on schedules an update check after Blender starts and when a .blend file opens. It uses Blender's **configured online extension repositories** and its built-in **Sync** and **Upgrade All** operators. It will not overwrite classic add-ons installed by hand, downloaded assets, Python scripts or files inside your project. Blender's offline mode always disables network checks. The check is throttled to once every six hours within the same Blender session.
+
+Automatic updates are enabled by default. Disable them in **Edit > Preferences > Get Extensions**, locate **Optimize Your Project**, and turn off **Auto-update extensions on project load**. The FISHHWB sidebar shows the current update status. Updates may require a restart, and if Blender reports a blocked operation, use its own Extensions preferences for review.
 
 ## Install / Download Optimize Your Project
 
@@ -12,9 +18,9 @@ Supported Blender 4.2+ builds can install this ZIP as an extension.
 
 1. Open the latest successful **Check release packages** build on GitHub:
    https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
-2. Download artifact **optimize-your-project-blender-8.8.3** and extract the artifact container ZIP if GitHub wraps it.
-3. Install **optimize-your-project-blender-extension-8.8.3.zip** using **Edit > Preferences > Get Extensions > Install from Disk**. Do not unzip the extension ZIP itself.
-4. Disable/remove any previously installed 0.8.5/0.8.8 duplicate extension, restart Blender, and enable the 8.8.3 extension.
+2. Download artifact **optimize-your-project-blender-8.8.4** and extract the artifact container ZIP if GitHub wraps it.
+3. Install **optimize-your-project-blender-extension-8.8.4.zip** using **Edit > Preferences > Get Extensions > Install from Disk**. Do not unzip the extension ZIP itself.
+4. Disable/remove any previously installed 0.8.5/0.8.8 duplicate extension, restart Blender, and enable the 8.8.4 extension.
 
 ## Sidebar layout
 
