@@ -10,6 +10,14 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
+## Upcoming v0.8.8.4 feature release - managed project startup updates
+
+- Unity version 0.8.9: run one startup Package Manager scan; update only direct registry dependencies with eligible stable same-minor patch versions and the official Git-installed Optimize Your Project package when its release tag is newer.
+- Unity: skip built-in, embedded, local, VCC/third-party Git and prerelease dependencies; refuse to mutate while an open scene is dirty, and write project manifest backups to Library before attempting the transaction. Provide an Advanced Settings toggle and session update status.
+- Blender version 8.8.4: use the native Extensions repository sync and upgrade operators on application and .blend load, respecting online access and a six-hour same-session throttle. Add extension preferences toggle and sidebar status.
+- Add Unity EditMode policy tests, Blender-free lifecycle tests, and static release packaging gates.
+- Classic Asset Store uploads, Blender files, manual scripts, engine upgrades and operating-system software remain outside the updater's supported automation.
+
 ## Unreleased - documentation and source text style
 
 - Audited all repository text files on the game-ready feature branch for em dash punctuation. No existing occurrences required replacement.
