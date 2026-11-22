@@ -11,6 +11,7 @@ try {
     Run-Python -Arguments @('scripts/check_no_em_dashes.py')
     Run-Python -Arguments @('scripts/check_release.py')
     Run-Python -Arguments @('scripts/test_smart_budget.py')
+    Run-Python -Arguments @('scripts/test_project_auto_updates.py')
     if ($Build) {
         Run-Python -Arguments @('scripts/build_blender.py')
         Run-Python -Arguments @('scripts/build_blender_extension.py')
