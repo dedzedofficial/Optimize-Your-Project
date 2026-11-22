@@ -76,6 +76,16 @@ class ProjectAutoUpdateTests(unittest.TestCase):
         self.assertFalse(queued)
         self.assertEqual([], blender.app.handlers.load_post)
 
+    def test_next_project_load_checks_again_after_previous_run(self):
+        updater, blender, queued, _ = load_updater(count=1)
+        updater.register("test.optimize_your_project")
+        updater._sync_repositories()
+        queued.pop(updater._sync_repositories, None)
+        updater._upgrade_when_ready()
+        queued.pop(updater._upgrade_when_ready, None)
+        updater._after_project_loaded(None)
+        self.assertIn(updater._sync_repositories, queued)
+
     def test_offline_prevents_network_actions(self):
         updater, blender, queued, _ = load_updater(online=False)
         updater.register("test.optimize_your_project")
