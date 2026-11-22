@@ -10,7 +10,7 @@
   <a href="CHANGELOG.md"><strong>Changelog</strong></a>
 </p>
 
-**Unity v0.8.8 + Blender v8.8.3 | General developer optimization tools | FISHHWB | Ded Zed**
+**Automatic Updates feature v0.8.8.4 | Unity v0.8.9 + Blender v8.8.4 | FISHHWB | Ded Zed**
 
 Optimize Your Project is a free general developer optimization toolkit focused on turning repetitive project cleanup and optimization work into clear, guarded actions. Unity and Blender share one project release version, with more engine integrations planned under the same safety and localization rules.
 
@@ -24,10 +24,10 @@ Open **Window > Package Manager**, press **+**, choose **Add package from git UR
 https://github.com/dedzedofficial/Optimize-Your-Project.git
 ```
 
-For fixed v0.8.8:
+For fixed Unity v0.8.9 (once the release tag is published):
 
 ```text
-https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.8.8
+https://github.com/dedzedofficial/Optimize-Your-Project.git#v0.8.9
 ```
 
 ### Blender 4.2+
@@ -38,10 +38,10 @@ Open the latest successful release-check workflow:
 
 https://github.com/dedzedofficial/Optimize-Your-Project/actions/workflows/release-checks.yml
 
-Download the `optimize-your-project-blender-8.8.3` artifact and install:
+Download the `optimize-your-project-blender-8.8.4` artifact and install:
 
 ```text
-optimize-your-project-blender-extension-8.8.3.zip
+optimize-your-project-blender-extension-8.8.4.zip
 ```
 
 Use **Edit > Preferences > Get Extensions > Install from Disk** and choose the ZIP without extracting it. Then press **N** in the 3D Viewport and open the **FISHHWB** tab.
@@ -53,6 +53,18 @@ vcc://vpm/addRepo?url=https%3A%2F%2Fdedzedofficial.github.io%2FOptimize-Your-Pro
 ```
 
 The Unity package does not require a VR SDK for normal projects.
+
+## v0.8.8.4: Automatic Project Updates (upcoming)
+
+Opening a project automatically checks installed managed packages and extensions, without modifying scene meshes, images, materials or other authored assets. Automatic updates are enabled by default and can be turned off.
+
+**Unity (technical version 0.8.9):** When Unity loads the Editor, Optimize Your Project uses the Package Manager to apply compatible **stable patch** updates to installed, direct registry dependencies. It can also update Optimize Your Project itself if installed from this repository's official Git URL and if a newer valid release tag is available. It skips unsupported sources, other Git dependencies, VCC-managed packages, embedded or local packages, preview versions, and major/minor upgrades. Any open unsaved scene prevents automatic package mutation. Before installing, the tool saves copies of `Packages/manifest.json` and `Packages/packages-lock.json` under `Library/OptimizeYourProject/UpdateBackups/`. View or disable this feature in the existing **Advanced Settings** section of the Optimize Your Project window. Changes use a single Package Manager transaction and may trigger a script reload. The tool does not upgrade the Unity Editor itself.
+
+**Blender (technical version 8.8.4):** When Blender starts or a .blend project opens, the extension checks its already configured remote extension repositories using Blender's native Extensions operators, then requests updates for any available installed extensions. Checks are throttled to once every six hours of Blender uptime and respect Blender's offline/privacy setting. Disable this in **Edit > Preferences > Get Extensions > Optimize Your Project** preferences. No .blend contents, manually installed scripts or local asset libraries are modified automatically. The native extension updater may require a Blender restart for changed add-ons.
+
+**Limits:** "All assets" cannot safely mean every imported asset or manually installed tool. Classic Asset Store imports, arbitrary files, system programs and third-party installers do not have a universal trusted update mechanism. For incompatible or untracked installs, use the original package publisher's supported update workflow. Back up projects and inspect release notes before larger upgrades.
+
+The feature is called **v0.8.8.4**; Unity and Blender package manifests must use valid three-component versions, **0.8.9** and **8.8.4**. This is source code in a development pull request until release tags and runtime validation are complete.
 
 ## What's new in v0.8.8
 
