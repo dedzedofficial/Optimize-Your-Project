@@ -318,7 +318,8 @@ namespace FISHHWB.VROptimizer
                 foreach (string file in files)
                 {
                     string name = Path.GetFileName(file);
-                    if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) != 0)
+                    var attributes = File.GetAttributes(file);
+                    if ((attributes & (FileAttributes.ReparsePoint | FileAttributes.ReadOnly)) != 0)
                         return false;
                     if (name == "manifest.json") manifestPresent = true;
                     else if (name != "packages-lock.json") return false;
