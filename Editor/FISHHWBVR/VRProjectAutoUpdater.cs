@@ -12,13 +12,15 @@ namespace FISHHWB.VROptimizer
 {
     // Project-scoped, once-per-Editor-session updates. Never touch Asset Store
     // imports, embedded/local packages, VRChat/VCC Git packages or built-in modules.
-    // Batch only direct, stable, compatible registry patch releases and our own
-    // Git package when it originates from the official repository.
+    // Update every direct registry package with a newer stable release compatible
+    // with this Unity Editor, plus our verified official Git package.
+    // Transitive dependencies are resolved by the Package Manager transaction.
     [InitializeOnLoad]
     internal static class VRProjectAutoUpdater
     {
         const string SessionKey = "FISHHWB.VROptimizer.AutoUpdate.v0884.Ran";
         const string ReportKey = "FISHHWB.VROptimizer.AutoUpdate.v0884.Report";
+        const string ScanKey = "FISHHWB.VROptimizer.AutoUpdate.v0884.Scan";
         const string Repository = "https://github.com/dedzedofficial/Optimize-Your-Project.git";
         const string GitPackage = "com.fishhwb.vr-optimizer";
         const string PreferencePrefix = "FISHHWB.VROptimizer.AutoUpdate.v0884.";
@@ -33,7 +35,8 @@ namespace FISHHWB.VROptimizer
             get => EditorPrefs.GetBool(PreferenceKey, true);
             set => EditorPrefs.SetBool(PreferenceKey, value);
         }
-        internal static string Report => SessionState.GetString(ReportKey, "Startup updates have not run in this Editor session.");
+        internal static string Report => SessionState.GetString(ReportKey, "Startup updates have not run in this Editor session.")
+            + "\n" + SessionState.GetString(ScanKey, "");
 
         static VRProjectAutoUpdater()
         {
@@ -102,33 +105,70 @@ namespace FISHHWB.VROptimizer
             }
 
             var updates = new List<string>();
+            int installedCount = 0, indirectCount = 0, currentCount = 0, unmanagedCount = 0;
+            var examples = new List<string>();
             foreach (PackageInfo installed in listRequest.Result)
             {
-                if (installed == null || !installed.isDirectDependency)
-                    continue;
+                if (installed == null) continue;
+                installedCount++;
 
-                if (installed.source == PackageSource.Registry &&
-                    installed.versions != null &&
-                    IsCompatiblePatch(installed.version, installed.versions.latestCompatible))
+                // All resolved packages are inventoried. Only direct dependencies
+                // are independently editable; Unity resolves indirect versions.
+                if (!installed.isDirectDependency)
                 {
-                    updates.Add(installed.name + "@" + installed.versions.latestCompatible);
+                    indirectCount++;
+                    continue;
+                }
+
+                if (installed.source == PackageSource.Registry)
+                {
+                    string candidate = installed.versions == null
+                        ? null : installed.versions.latestCompatible;
+                    if (IsCompatibleRelease(installed.version, candidate))
+                    {
+                        updates.Add(installed.name + "@" + candidate);
+                        if (examples.Count < 12)
+                            examples.Add(installed.name + ": " + installed.version + " -> " + candidate);
+                    }
+                    else if (string.Equals(installed.version, candidate, StringComparison.Ordinal))
+                        currentCount++;
+                    else
+                        unmanagedCount++; // Unknown, preview or unavailable compatible version.
                 }
                 else if (installed.name == GitPackage &&
                          installed.source == PackageSource.Git &&
-                         TrustedGitOrigin(installed.packageId) &&
-                         VRUpdateChecker.HasUpdate &&
-                         SafeTag(VRUpdateChecker.LatestTag))
+                         TrustedGitOrigin(installed.packageId))
                 {
-                    updates.Add(Repository + "#" + VRUpdateChecker.LatestTag);
+                    if (VRUpdateChecker.HasUpdate && SafeTag(VRUpdateChecker.LatestTag))
+                    {
+                        updates.Add(Repository + "#" + VRUpdateChecker.LatestTag);
+                        if (examples.Count < 12)
+                            examples.Add(installed.name + ": " + installed.version +
+                                         " -> " + VRUpdateChecker.LatestTag);
+                    }
+                    else
+                        currentCount++;
                 }
+                else
+                    unmanagedCount++; // Embedded, local, built-in or other vendor-managed source.
             }
             listRequest = null;
             updates.Sort(StringComparer.Ordinal);
             targets = updates.ToArray();
+            string scan = "Checked " + installedCount + " installed packages: " +
+                targets.Length + " eligible update(s), " + currentCount + " current, " +
+                indirectCount + " dependency-managed, " + unmanagedCount +
+                " unsupported/untracked. All installed packages were checked; " +
+                "only directly managed packages are changed.";
+            if (examples.Count > 0)
+                scan += "\nAvailable updates:\n" + string.Join("\n", examples.ToArray()) +
+                    (targets.Length > examples.Count ? "\n...and " +
+                     (targets.Length - examples.Count) + " more." : "");
+            SessionState.SetString(ScanKey, scan);
             if (targets.Length == 0)
             {
                 SessionState.SetString(ReportKey,
-                    "No eligible updates. Non-registry packages, incompatible and feature upgrades were left unchanged.");
+                    "No eligible managed updates. Other package sources remain untouched.");
                 return;
             }
             if (!Enabled || !Ready)
@@ -167,13 +207,16 @@ namespace FISHHWB.VROptimizer
             targets = null;
         }
 
-        internal static bool IsCompatiblePatch(string current, string available)
+        internal static bool IsCompatibleRelease(string current, string available)
         {
-            // No prereleases, four-part versions, major or minor changes, downgrades.
+            // latestCompatible comes from Unity, so cross-major/minor releases
+            // are eligible, but never accept prereleases or downgrades.
             if (!TryTriple(current, out int major, out int minor, out int patch) ||
                 !TryTriple(available, out int newerMajor, out int newerMinor, out int newerPatch))
                 return false;
-            return major == newerMajor && minor == newerMinor && newerPatch > patch;
+            return newerMajor > major ||
+                   (newerMajor == major && newerMinor > minor) ||
+                   (newerMajor == major && newerMinor == minor && newerPatch > patch);
         }
 
         static bool TryTriple(string text, out int major, out int minor, out int patch)
