@@ -109,6 +109,12 @@ namespace FISHHWB.VROptimizer
                     "Previous package update failed. Its backup was retained for recovery.");
                 return;
             }
+            if (record.Status != Installing && record.Status != Installed)
+            {
+                VRProjectAutoUpdater.ReportBackupStatus(
+                    "Unknown update verification status. Backup retained for review.");
+                return;
+            }
             if (!SafeBackupDirectory(record.Directory, Root))
             {
                 VRProjectAutoUpdater.ReportBackupStatus(
