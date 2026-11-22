@@ -106,7 +106,7 @@ assert localization.count("OYPLanguage.") >= 14
 
 updater = (root / "Editor/FISHHWBVR/VRProjectAutoUpdater.cs").read_text(encoding="utf-8")
 for required in ["[InitializeOnLoad]", "Client.List(false, true)", "Client.AddAndRemove",
-                 "IsCompatiblePatch", "TrustedGitOrigin", "BackupManifests",
+                 "IsCompatibleRelease", "TrustedGitOrigin", "BackupManifests",
                  "SceneManager.sceneCount", "SessionState.SetBool"]:
     assert required in updater, required
 assert Path(str(root / "Editor/FISHHWBVR/VRProjectAutoUpdater.cs") + ".meta").is_file()
