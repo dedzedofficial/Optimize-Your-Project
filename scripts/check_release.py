@@ -70,6 +70,7 @@ for required in [
     "VRUIRaycastOptimizer.Optimize",
     "VRUnusedAssetCleaner.DeleteUnused",
     "VRUnusedAssetCleaner.ExportDryRunReport",
+    "VRProjectAutoUpdater.Enabled",
 ]:
     assert required in window, required
 assert "RunQuickOptimize" not in window
@@ -96,6 +97,13 @@ for required in [
 ]:
     assert required in localization, required
 assert localization.count("OYPLanguage.") >= 14
+
+updater = (root / "Editor/FISHHWBVR/VRProjectAutoUpdater.cs").read_text(encoding="utf-8")
+for required in ["[InitializeOnLoad]", "Client.List(false, true)", "Client.AddAndRemove",
+                 "IsCompatiblePatch", "TrustedGitOrigin", "BackupManifests",
+                 "SceneManager.sceneCount", "SessionState.SetBool"]:
+    assert required in updater, required
+assert Path(str(root / "Editor/FISHHWBVR/VRProjectAutoUpdater.cs") + ".meta").is_file()
 
 unused_cleaner = (root / "Editor/FISHHWBVR/VRUnusedAssetCleaner.cs").read_text(encoding="utf-8")
 for required in [
@@ -250,6 +258,7 @@ with ZipFile(extension_archive) as package:
         "Blender/EXTENSION_LICENSE.txt",
         "Blender/vr_optimizer_blender/__init__.py",
         "Blender/vr_optimizer_blender/deform_transfer.py",
+        "Blender/vr_optimizer_blender/auto_updates.py",
         "Blender/vr_optimizer_blender/tools_42.py",
         "Blender/vr_optimizer_blender/v08_tools.py",
         "Blender/vr_optimizer_blender/v088_tools.py",
