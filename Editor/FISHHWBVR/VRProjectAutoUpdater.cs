@@ -28,6 +28,13 @@ namespace FISHHWB.VROptimizer
         static ListRequest listRequest;
         static AddAndRemoveRequest upgradeRequest;
         static string[] targets;
+        static string[] expectedPackages;
+
+        internal static void ReportBackupStatus(string status)
+        {
+            SessionState.SetString(ReportKey, status);
+            Debug.Log("Optimize Your Project backup maintenance: " + status);
+        }
 
         internal static string PreferenceKey => PreferencePrefix + Application.dataPath;
         internal static bool Enabled
@@ -49,6 +56,11 @@ namespace FISHHWB.VROptimizer
                 return;
             // Mark before requests to avoid an infinite update/recompile loop.
             SessionState.SetBool(SessionKey, true);
+            if (!Application.isBatchMode && VRUpdateBackupMaintenance.HasPending)
+            {
+                VRUpdateBackupMaintenance.VerifyOnNextEditorLaunch();
+                return; // Verify a prior update before trying another one.
+            }
             if (!Enabled || Application.isBatchMode)
             {
                 SessionState.SetString(ReportKey, Enabled ? "Skipped in batch mode." : "Automatic project updates disabled.");
@@ -105,6 +117,7 @@ namespace FISHHWB.VROptimizer
             }
 
             var updates = new List<string>();
+            var expected = new List<string>();
             int installedCount = 0, indirectCount = 0, currentCount = 0, unmanagedCount = 0;
             var examples = new List<string>();
             foreach (PackageInfo installed in listRequest.Result)
@@ -127,6 +140,7 @@ namespace FISHHWB.VROptimizer
                     if (IsCompatibleRelease(installed.version, candidate))
                     {
                         updates.Add(installed.name + "@" + candidate);
+                        expected.Add(installed.name + "|" + candidate + "|registry");
                         if (examples.Count < 12)
                             examples.Add(installed.name + ": " + installed.version + " -> " + candidate);
                     }
@@ -142,6 +156,7 @@ namespace FISHHWB.VROptimizer
                     if (VRUpdateChecker.HasUpdate && SafeTag(VRUpdateChecker.LatestTag))
                     {
                         updates.Add(Repository + "#" + VRUpdateChecker.LatestTag);
+                        expected.Add(GitPackage + "|" + VRUpdateChecker.LatestVersion + "|git");
                         if (examples.Count < 12)
                             examples.Add(installed.name + ": " + installed.version +
                                          " -> " + VRUpdateChecker.LatestTag);
@@ -155,6 +170,7 @@ namespace FISHHWB.VROptimizer
             listRequest = null;
             updates.Sort(StringComparer.Ordinal);
             targets = updates.ToArray();
+            expectedPackages = expected.ToArray();
             string scan = "Checked " + installedCount + " installed packages: " +
                 targets.Length + " eligible update(s), " + currentCount + " current, " +
                 indirectCount + " dependency-managed, " + unmanagedCount +
@@ -180,6 +196,7 @@ namespace FISHHWB.VROptimizer
             try
             {
                 string backup = BackupManifests();
+                VRUpdateBackupMaintenance.RecordPending(backup, expectedPackages);
                 SessionState.SetString(ReportKey,
                     "Installing " + targets.Length + " compatible update(s). Manifest backup: " + backup);
                 upgradeRequest = Client.AddAndRemove(targets, Array.Empty<string>());
@@ -187,6 +204,7 @@ namespace FISHHWB.VROptimizer
             }
             catch (Exception error)
             {
+                VRUpdateBackupMaintenance.MarkTransactionFailed();
                 Fail("Automatic updates not started: " + error.Message);
             }
         }
@@ -197,6 +215,8 @@ namespace FISHHWB.VROptimizer
                 return;
             EditorApplication.update -= PollUpgrade;
             bool succeeded = upgradeRequest.Status == StatusCode.Success;
+            if (succeeded) VRUpdateBackupMaintenance.MarkTransactionSucceeded();
+            else VRUpdateBackupMaintenance.MarkTransactionFailed();
             string result = succeeded
                 ? "Package Manager completed " + targets.Length + " update request(s). Review Unity Console and test the project."
                 : "Package Manager update failed: " +
@@ -205,6 +225,7 @@ namespace FISHHWB.VROptimizer
             Debug.Log("Optimize Your Project auto-update: " + result);
             upgradeRequest = null;
             targets = null;
+            expectedPackages = null;
         }
 
         internal static bool IsCompatibleRelease(string current, string available)
