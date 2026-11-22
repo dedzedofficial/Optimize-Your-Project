@@ -40,6 +40,12 @@ Unity and Blender share one project version. Blender support starts at **4.2** a
 
 Do not label surface-preserving decimation as QuadriFlow retopology. A budget is a ceiling, not proof of game readiness; preserve or reject details that cannot safely fit.
 
+## v0.8.8.4 automatic-update delivery (in development)
+
+- Unity 0.8.9: compatible direct registry patch upgrades on project start, official Git package update, pre-change project manifest backups, offline/batch/dirty-scene guards, and an opt-out toggle.
+- Blender 8.8.4: automatic configured online extension repository checks, native extension upgrades when supported, preferences toggle, offline guard and session throttle.
+- Validation gates: packaging checks, Blender-free unit tests, Unity EditMode tests and supported Blender version tests. No claims that every installed asset can be updated: classic imports and untracked sources require their publisher's workflow.
+
 ## Current baseline: v0.8.8
 
 Blender 0.8.8 implements the Smart Optimize preview, source-preserving optional combined workflows, guarded PBR atlases and configurable LOD/collider budgets. Unity 0.8.8 adds a non-destructive CSV report of unused-asset candidates. Existing Unity and Blender actions remain available.
