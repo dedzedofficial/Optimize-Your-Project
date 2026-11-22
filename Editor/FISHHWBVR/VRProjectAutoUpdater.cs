@@ -207,6 +207,9 @@ namespace FISHHWB.VROptimizer
             string project = Path.GetDirectoryName(Application.dataPath);
             string directory = Path.Combine(project, "Library", "OptimizeYourProject", "UpdateBackups",
                 DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff"));
+            string manifest = Path.Combine(project, "Packages", "manifest.json");
+            if (!File.Exists(manifest))
+                throw new FileNotFoundException("Unity package manifest is missing; refusing automatic updates.", manifest);
             Directory.CreateDirectory(directory);
             foreach (string name in new[] { "manifest.json", "packages-lock.json" })
             {
