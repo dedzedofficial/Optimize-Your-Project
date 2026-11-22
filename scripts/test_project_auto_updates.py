@@ -109,6 +109,17 @@ class ProjectAutoUpdateTests(unittest.TestCase):
         self.assertEqual(0, blender.ops.extensions.package_upgrade_all.call_count)
         self.assertIn("no updates", updater.status())
 
+    def test_repository_checking_sentinel_never_starts_upgrade(self):
+        updater, blender, _, _ = load_updater(count=-1)
+        updater.register("test.optimize_your_project")
+        updater._sync_repositories()
+        self.assertEqual(3.0, updater._upgrade_when_ready())
+        blender.ops.extensions.package_upgrade_all.assert_not_called()
+        updater._sync_started_at = time.monotonic() - 121
+        self.assertIsNone(updater._upgrade_when_ready())
+        blender.ops.extensions.package_upgrade_all.assert_not_called()
+        self.assertIn("timed out", updater.status())
+
     def test_sync_unavailable_fails_closed(self):
         updater, blender, _, _ = load_updater()
         updater.register("test.optimize_your_project")
