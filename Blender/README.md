@@ -8,7 +8,7 @@ The sidebar is intentionally minimal. Select a mesh in **Object Mode**, press **
 
 ## Automatic extension updates (v8.8.4)
 
-The add-on schedules an update check after Blender starts and when a .blend file opens. It uses Blender's **configured online extension repositories** and its built-in **Sync** and **Upgrade All** operators. It will not overwrite classic add-ons installed by hand, downloaded assets, Python scripts or files inside your project. Blender's offline mode always disables network checks. The check is throttled to once every six hours within the same Blender session.
+The add-on schedules an update check after Blender starts and when a .blend file opens. It uses Blender's **configured online extension repositories** and its built-in **Sync** and **Upgrade All** operators. It will not overwrite classic add-ons installed by hand, downloaded assets, Python scripts or files inside your project. Blender's offline mode always disables network checks. Each project load requests a new check, without starting duplicate checks while a previous update request is in progress.
 
 Automatic updates are enabled by default. Disable them in **Edit > Preferences > Get Extensions**, locate **Optimize Your Project**, and turn off **Auto-update extensions on project load**. The FISHHWB sidebar shows the current update status. Updates may require a restart, and if Blender reports a blocked operation, use its own Extensions preferences for review.
 
