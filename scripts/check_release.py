@@ -1,5 +1,6 @@
 """Static release, packaging and metadata checks for Optimize Your Project."""
 import json
+import ast
 import os
 import re
 from pathlib import Path
@@ -40,6 +41,10 @@ assert extension_manifest["type"] == "add-on"
 assert extension_manifest["license"] == ["SPDX:GPL-3.0-or-later"]
 assert extension_manifest["blender_version_min"] == "4.2.0"
 assert len(extension_manifest["tagline"]) <= 64
+
+# Parse the Blender-independent updater module before packaging its code.
+ast.parse((root / "Blender/vr_optimizer_blender/auto_updates.py").read_text(encoding="utf-8"))
+subprocess.run([sys.executable, "scripts/test_project_auto_updates.py"], cwd=root, check=True)
 
 # Immutable Unity packages cannot generate missing metadata in PackageCache.
 # Every editor source/assembly asset must therefore ship with its .meta file.
