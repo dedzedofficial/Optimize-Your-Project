@@ -6,18 +6,22 @@ namespace FISHHWB.VROptimizer
     {
         [TestCase("1.2.3", "1.2.4", true)]
         [TestCase("0.8.8", "0.8.9", true)]
+        [TestCase("1.2.3", "1.3.0", true)]
+        [TestCase("1.2.3", "2.0.0", true)]
+        [TestCase("2.9.9", "3.0.0", true)]
         [TestCase("1.2.3", "1.2.3", false)]
         [TestCase("1.2.4", "1.2.3", false)]
-        [TestCase("1.2.3", "1.3.0", false)]
-        [TestCase("1.2.3", "2.0.0", false)]
+        [TestCase("1.3.0", "1.2.9", false)]
+        [TestCase("2.0.0", "1.9.9", false)]
         [TestCase("1.2.3", "1.2.4-preview.1", false)]
         [TestCase("1.2.3", "1.2.4.5", false)]
         [TestCase("1.2.3-preview.1", "1.2.4", false)]
         [TestCase("", "1.2.4", false)]
-        public void OnlyStableSameMinorPatchUpgradesAreAutomatic(
+        [TestCase("1.2.3", "", false)]
+        public void LatestStableCompatibleReleaseMayUpgradePatchMinorOrMajor(
             string installed, string available, bool expected)
         {
-            Assert.AreEqual(expected, VRProjectAutoUpdater.IsCompatiblePatch(installed, available));
+            Assert.AreEqual(expected, VRProjectAutoUpdater.IsCompatibleRelease(installed, available));
         }
 
         [Test]
