@@ -108,6 +108,18 @@ namespace FISHHWB.VROptimizer
         }
 
         [Test]
+        public void LastBatchPreviewUsesReadableLinesAndDoesNotGuaranteeRestorability()
+        {
+            Assert.AreEqual(VRActionOutcome.Changed,
+                new VRImportBatch().Apply(path, "test", "policy", ChangeFilter));
+            string preview = VRImportHistory.instance.LastBatchPreview();
+            Assert.That(preview, Does.Contain("\ntest: " + path));
+            Assert.That(preview, Does.Contain("\nRestoring checks"));
+            Assert.That(preview, Does.Contain("Restore eligibility is checked when restoring"));
+            Assert.IsFalse(preview.Contains("\\n"));
+        }
+
+        [Test]
         public void SuccessfulImportCanBeRestored()
         {
             var before = ((TextureImporter)AssetImporter.GetAtPath(path)).filterMode;
