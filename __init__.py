@@ -9,10 +9,11 @@ from .Blender.vr_optimizer_blender import tools_42 as _tools42
 from .Blender.vr_optimizer_blender import v08_tools as _v08
 from .Blender.vr_optimizer_blender import v088_tools as _v088
 from .Blender.vr_optimizer_blender import smart_remesh as _smart
+from .Blender.vr_optimizer_blender import auto_updates as _auto
 
 bl_info = dict(_addon.bl_info)
 bl_info.update({
-    "version": (8, 8, 3),
+    "version": (8, 8, 4),
     "blender": (4, 2, 0),
     "description": "One-click Remesh, LOD, Clean Mesh, lightmap and static-mesh optimization tools",
 })
@@ -55,7 +56,7 @@ _set_translation('title', {
     'IT': 'OTTIMIZZA IL PROGETTO', 'NL': 'OPTIMALISEER JE PROJECT', 'PL': 'OPTYMALIZUJ PROJEKT',
     'TR': 'PROJENİ OPTİMİZE ET',
 })
-_set_translation('subtitle', {code: 'Blender v8.8.3' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
+_set_translation('subtitle', {code: 'Blender v8.8.4' for code, _, _ in _addon.LANGUAGE_ITEMS if code != 'AUTO'})
 _set_translation('smart_optimize', {
     'EN': 'SMART OPTIMIZE (PREVIEW)', 'JA': 'スマート最適化 (プレビュー)',
     'ZH': '智能优化 (预览)', 'ZT': '智慧最佳化 (預覽)', 'KO': '스마트 최적화 (미리보기)',
@@ -290,6 +291,10 @@ def _draw_core_080(self, context):
         materials.prop(context.scene, 'fishhwb_atlas_size',
                        text='Texture Atlas Resolution')
 
+    update_status = layout.box()
+    update_status.label(text='Extension Updates', icon='FILE_REFRESH')
+    update_status.label(text=_auto.status()[:72])
+
 
 
 
@@ -297,9 +302,27 @@ _addon.FISHHWB_PT_optimizer.draw = _draw_core_080
 _tools42.classes = tuple(cls for cls in _tools42.classes if cls is not _tools42.FISHHWB_PT_optimizer_42)
 
 
+class FISHHWB_AddonPreferences(bpy.types.AddonPreferences):
+    bl_idname = __package__ or "optimize_your_project"
+
+    auto_update_extensions: bpy.props.BoolProperty(
+        name="Auto-update extensions on project load",
+        default=True,
+        description="Check existing online Blender extension repositories when a project opens and upgrade available extensions",
+    )
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "auto_update_extensions")
+        layout.label(text="Only configured online extensions can update; manual add-ons and assets are not changed.")
+        layout.label(text="Blender's offline mode is always respected.")
+        layout.label(text=_auto.status()[:100])
+
+
 def register():
     if bpy.app.version < (4, 2, 0):
         raise RuntimeError("Optimize Your Project for Blender requires Blender 4.2 or newer.")
+    bpy.utils.register_class(FISHHWB_AddonPreferences)
     _v08.install_remesh_guard(_addon)
     _addon.register()
     try:
@@ -307,6 +330,7 @@ def register():
         _v08.register(_addon)
         _v088.register(_addon)
         _smart.register()
+        _auto.register(__package__ or "optimize_your_project")
     except Exception:
         try:
             try:
@@ -318,12 +342,15 @@ def register():
             _tools42.unregister()
         finally:
             _addon.unregister()
+            bpy.utils.unregister_class(FISHHWB_AddonPreferences)
         raise
 
 
 def unregister():
+    _auto.unregister()
     _smart.unregister()
     _v088.unregister()
     _v08.unregister()
     _tools42.unregister()
     _addon.unregister()
+    bpy.utils.unregister_class(FISHHWB_AddonPreferences)
