@@ -110,6 +110,17 @@ for required in ["[InitializeOnLoad]", "Client.List(false, true)", "Client.AddAn
                  "SceneManager.sceneCount", "SessionState.SetBool"]:
     assert required in updater, required
 assert Path(str(root / "Editor/FISHHWBVR/VRProjectAutoUpdater.cs") + ".meta").is_file()
+backup_maintenance = (root / "Editor/FISHHWBVR/VRUpdateBackupMaintenance.cs").read_text(encoding="utf-8")
+for required in ["EditorUtility.scriptCompilationFailed", "Client.List(true, true)",
+                 "ExpectedPackagesVerified", "TryDeleteManagedBackup", "SafeBackupDirectory",
+                 "VerifyOnNextEditorLaunch", "MarkTransactionFailed"]:
+    assert required in backup_maintenance, required
+for required in ["VRUpdateBackupMaintenance.RecordPending", "VRUpdateBackupMaintenance.MarkTransactionSucceeded",
+                 "VRUpdateBackupMaintenance.MarkTransactionFailed",
+                 "VRUpdateBackupMaintenance.VerifyOnNextEditorLaunch"]:
+    assert required in updater, required
+assert (root / "Editor/Tests/VRUpdateBackupMaintenanceTests.cs").is_file()
+assert Path(str(root / "Editor/FISHHWBVR/VRUpdateBackupMaintenance.cs") + ".meta").is_file()
 
 unused_cleaner = (root / "Editor/FISHHWBVR/VRUnusedAssetCleaner.cs").read_text(encoding="utf-8")
 for required in [
