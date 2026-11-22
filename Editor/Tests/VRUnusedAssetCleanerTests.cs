@@ -89,6 +89,24 @@ namespace FISHHWB.VROptimizer
         }
 
         [Test]
+        public void ReplacementAtSamePathIsNotTheReviewedAsset()
+        {
+            var before = VRUnusedAssetCleaner.CandidateIdentities(new[] { texturePath });
+            Assert.IsTrue(VRUnusedAssetCleaner.CandidateIdentitiesUnchanged(before));
+            Assert.IsTrue(AssetDatabase.DeleteAsset(texturePath));
+
+            var texture = new Texture2D(16, 16, TextureFormat.RGBA32, false);
+            try { File.WriteAllBytes(texturePath, texture.EncodeToPNG()); }
+            finally { UnityEngine.Object.DestroyImmediate(texture); }
+            AssetDatabase.ImportAsset(texturePath, ImportAssetOptions.ForceSynchronousImport);
+
+            Assert.IsFalse(VRUnusedAssetCleaner.CandidateIdentitiesUnchanged(before));
+            Assert.IsTrue(VRUnusedAssetCleaner.CandidateSetUnchanged(
+                new List<string> { texturePath }, new List<string> { texturePath }),
+                "Paths alone cannot prove the reviewed asset is still present.");
+        }
+
+        [Test]
         public void CandidateSetChangesRequireAnotherReview()
         {
             var reviewed = new List<string> { "Assets/A.png", "Assets/B.png" };
